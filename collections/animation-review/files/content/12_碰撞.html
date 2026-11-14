@@ -1,0 +1,648 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>第十三部分　碰撞检测与碰撞响应 · KYSIIN.ARCHIVE</title>
+<script src="../../../../assets/variant.js"></script>
+<link rel="stylesheet" href="../../../../assets/local-fonts.css" />
+<link rel="stylesheet" href="../../../../assets/endfield.css" />
+<link rel="stylesheet" href="../../../../assets/mathjax/mathjax.css" />
+<style>
+  body { --tri-h: 3px; --topbar-h: 3.1rem; }
+  body > .ef-tri { position: sticky; top: 0; z-index: 61; }
+  .topbar { position:sticky; top:var(--tri-h); z-index:60;
+    display:flex; align-items:center; gap:1.5rem; padding:.85rem var(--ef-pad);
+    border-bottom:1px solid var(--ef-rule); background:var(--ef-panel); }
+  .topbar .brand { margin:0; font-family:var(--ef-font-ui); font-size:.95rem;
+    font-stretch:var(--ef-wider); font-weight:800; letter-spacing:.08em;
+    text-decoration:none; color:var(--ef-ink); }
+  .topbar nav { display:flex; align-items:center; gap:1.25rem; margin-left:auto; }
+  .topbar nav a { text-decoration:none; color:var(--ef-ink-2); }
+  .foot { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between;
+    gap:1rem; padding:1.5rem var(--ef-pad) 2.5rem; border-top:1px solid var(--ef-rule);
+    color:var(--ef-ink-2); font-size:.875rem; }
+  @media (max-width: 959px) { .ef-spread { grid-template-columns:minmax(0,1fr); }
+    .ef-sheet { border-right:0; border-bottom:1px solid var(--ef-rule); } }
+  @media (max-width:760px) { .topbar { flex-wrap:wrap; gap:.75rem; }
+    .topbar nav { order:3; width:100%; margin-left:0; } }
+
+  .title { margin:1.5rem 0 1rem; font-size:clamp(var(--ef-t-title),5vw,var(--ef-t-h1));
+    font-weight:700; line-height:1.3; }
+  .ef-prose { margin-top:1.75rem; }
+  .ef-prose img { max-width:100%; height:auto; border:1px solid var(--ef-rule); background:#fff; }
+  .ef-prose table { width:100%; border-collapse:collapse; font-size:.9rem; }
+  .ef-prose th, .ef-prose td { border-bottom:1px solid var(--ef-rule); padding:.45rem .6rem; text-align:left; }
+  .ef-prose th { font-family:var(--ef-font-ui); font-stretch:var(--ef-wide); font-size:.8rem; }
+  /* 代码块：整块一个背景；块内的 code 不再带行内边框/内边距 */
+  .ef-prose pre { overflow:auto; margin:1rem 0; padding:.9rem 1rem;
+    background:var(--ef-chip); border-left:3px solid var(--ef-rule);
+    font-size:.85rem; line-height:1.6; tab-size:4; }
+  .ef-prose pre code { display:block; padding:0; border:0; background:none;
+    font-family:var(--ef-font-mono); font-size:.85rem; line-height:1.6; white-space:pre; }
+  .ef-prose :not(pre) > code { font-family:var(--ef-font-mono); font-size:.88em;
+    padding:.1em .35em; border:1px solid var(--ef-rule); background:var(--ef-paper); }
+  .ef-prose blockquote { border-left:3px solid var(--ef-ink); margin:1rem 0; padding:.25rem 0 .25rem 1rem;
+    color:var(--ef-ink-2); }
+
+  /* —— 公式：绝不超出正文栏；行间公式可横向滚动 —— */
+  .ef-prose mjx-container { max-width:100%; }
+  .ef-prose mjx-container[display="true"] { display:block; text-align:center; margin:1.1em 0;
+    max-width:100%; overflow-x:auto; overflow-y:hidden; padding:2px 0; }
+  .ef-prose mjx-container[jax="CHTML"] { font-size:1.02em; }
+  .eq { overflow-x:auto; overflow-y:hidden; max-width:100%; padding:2px 0; }
+  .eq mjx-container[display="true"] { margin:.35em 0; }
+
+  .toc ol { margin:0; padding:0; list-style:none; border-left:1px solid var(--ef-rule); }
+  .toc a { display:block; margin-left:-1px; padding:.22rem 0 .22rem .7rem;
+    border-left:3px solid transparent; color:var(--ef-ink-2); font-size:.85rem;
+    overflow-wrap:anywhere; }
+  .toc a:hover { color:var(--ef-ink); border-left-color:var(--ef-trace); }
+  .toc .lvl3 { padding-left:1.3rem; font-size:.8rem; }
+  .back { margin:2rem 0 0; display:flex; flex-wrap:wrap; gap:.75rem; }
+
+  /* —— 三栏铺满：两侧栏贴边，中间正文吃掉所有剩余宽度 —— */
+  .ef-spread { max-width: none; margin: 0; }
+
+  @media (min-width: 1180px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(11rem, 12vw, 14rem) minmax(0, 1fr) clamp(13rem, 14vw, 17rem);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+  }
+  @media (min-width: 960px) and (max-width: 1179px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(10rem, 12vw, 12rem) minmax(0, 1fr);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+    .ef-spread.has-rail > .toc-aside { display: none; }
+  }
+  @media (min-width: 960px) {
+    .ef-spread > .ef-margin {
+      position: sticky;
+      top: calc(var(--tri-h) + var(--topbar-h));
+      align-self: start;
+      max-height: calc(100vh - var(--tri-h) - var(--topbar-h));
+      overflow-y: auto;
+      scrollbar-width: thin;
+      padding: clamp(1.5rem, 3vw, 2.5rem) 1rem;
+    }
+    /* 两侧栏往屏幕边缘靠，别在页边留空 */
+    .ef-spread > .rail-aside { padding-left: .75rem; padding-right: 1.25rem; }
+    .ef-spread > .toc-aside { padding-left: 1.25rem; padding-right: .75rem; }
+    /* 正文左右留呼吸，但不限制宽度 */
+    .ef-spread > .ef-sheet { padding-left: clamp(2rem, 3.5vw, 4rem); padding-right: clamp(2rem, 3.5vw, 4rem); }
+    /* 套件把正文限制在 40rem；中间栏变宽后这里放开，让文字铺满 */
+    .ef-sheet .ef-prose,
+    .ef-sheet .ef-lede,
+    .ef-sheet .title,
+    .ef-sheet .ef-read,
+    .ef-sheet .ef-facts,
+    .ef-sheet .ef-empty,
+    .ef-sheet .ef-notice { max-width: none; }
+  }
+  .ef-margin .toc a { font-size: .74rem; line-height: 1.5; }
+  .toc a[aria-current] { color: var(--ef-ink); border-left-color: var(--ef-trace); font-weight: 600; }
+  .rail-head { display: block; margin: 0 0 .5rem; padding-bottom: .35rem;
+    border-bottom: 1px solid var(--ef-rule); font-size: .68rem; line-height: 1.5; }
+  .rail-head span { display: inline; }
+  .rail-head span + span { display: block; color: var(--ef-ink-2); }
+  .rail-aside .toc a { padding-top: .3rem; padding-bottom: .3rem; }
+  .rail-tree { list-style:none; margin:0; padding:0; }
+  .rail-tree .tree-name { display:block; padding:.35rem .2rem .35rem .6rem;
+    border-left:3px solid transparent; font-size:.76rem; font-weight:600; color:var(--ef-ink); }
+  .rail-tree .tree-label { display:inline; }
+  .rail-tree .tree-name .ef-field { font-size:.68rem; color:var(--ef-ink-2); margin-left:.35rem;
+    white-space:nowrap; }
+  .rail-tree .tree-group.is-open > .tree-name { border-left-color:var(--ef-trace); }
+  .rail-tree .tree-items { list-style:none; margin:.1rem 0 .5rem; padding:0 0 0 .6rem;
+    border-left:1px solid var(--ef-rule); }
+  .rail-tree .tree-items a { padding-left:.6rem; font-size:.72rem; line-height:1.45; }
+  .tree-row { display:flex; align-items:stretch; gap:.15rem; }
+  .tree-row .tree-name { flex:1 1 auto; min-width:0; }
+  .tree-toggle { flex:none; width:1.55rem; min-height:1.9rem; display:grid; place-items:center;
+    padding:0; border:1px solid var(--ef-rule); background:var(--ef-panel); color:var(--ef-ink-2);
+    cursor:pointer; transition:color .12s var(--ef-ease), border-color .12s var(--ef-ease), background .12s var(--ef-ease); }
+  .tree-toggle:hover { color:var(--ef-ink); border-color:var(--ef-ink); background:var(--ef-chip); }
+  .tree-toggle svg { width:.7rem; height:.7rem; transition:transform .15s var(--ef-ease); }
+  .tree-toggle[aria-expanded="true"] svg { transform:rotate(90deg); }
+  .rail-tree .tree-items[hidden] { display:none; }
+  /* 滚动条统一样式在 assets/local-fonts.css 里定义（页面/侧栏/搜索共用） */
+
+  /* 窄屏：正文优先，两侧栏排到后面 */
+  @media (max-width: 959px) {
+    .ef-spread.has-rail > .ef-sheet { order: 1; }
+    .ef-spread.has-rail > .rail-aside { order: 2; border-top: 1px solid var(--ef-rule); }
+    .ef-spread.has-rail > .toc-aside { order: 3; }
+  }
+
+  /* —— 复习笔记：PDF 下载 —— */
+  .pdf-dl { display:flex; flex-wrap:wrap; align-items:center; gap:.75rem; margin:1.1rem 0 0; }
+  .pdf-dl .ef-btn { border-color:var(--ef-ink); }
+
+  /* —— 打印 / 导出 PDF：只留正文 —— */
+  @page { size:A4; margin:16mm 14mm 18mm; }
+  @media print {
+    html, body { background:#fff !important; }
+    .topbar, .foot, .ef-tri, .rail-aside, .toc-aside, .back, .pdf-dl,
+    .ef-crumb, .ef-eyebrow, .ef-facts, .ef-notice { display:none !important; }
+    .ef-spread, .ef-spread.has-rail { display:block !important; max-width:none !important; }
+    .ef-sheet { border:0 !important; padding:0 !important; background:#fff !important; }
+    .ef-sheet .ef-prose, .ef-sheet .ef-lede, .ef-sheet .title { max-width:none !important; }
+    .title { margin:0 0 1rem; }
+    /* 打印用系统字体：体积小、离线打开不依赖自托管字体 */
+    body, .ef-prose, .title, .ef-lede, .ef-facts,
+    h1, h2, h3, h4, h5, h6 { font-family:"Microsoft YaHei UI","Microsoft YaHei","PingFang SC",sans-serif !important; }
+    .ef-prose pre, .ef-prose code { font-family:Consolas,"Cascadia Mono",monospace !important; }
+    .ef-prose { margin-top:1rem; }
+    .ef-prose pre { white-space:pre-wrap; word-break:break-word; }
+    .ef-prose pre code { white-space:pre-wrap; }
+    .ef-prose img, .ef-prose svg, mjx-container { max-width:100% !important; }
+    a { color:inherit !important; text-decoration:none !important; }
+    .ef-prose h2, .ef-prose h3 { break-after:avoid; }
+    .ef-prose pre, .ef-prose table, .eq { break-inside:avoid; }
+  }
+
+</style>
+</head>
+<body class="ef ef-contours">
+<div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+<header class="topbar">
+  <a class="brand" href="../../../../index.html">KYSIIN.ARCHIVE</a>
+  <nav class="ef-field" aria-label="主导航">
+    <a href="../../../../index.html">首页</a>
+    <a href="../../index.html" aria-current="page">计算机动画</a>
+  </nav>
+  <span data-search-slot></span>
+  <button class="ef-btn small" type="button" data-theme-toggle>切换深浅</button>
+</header>
+
+<article class="ef-spread has-rail">
+  <aside class="ef-margin rail-aside" aria-label="本课程分区">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>计算机动画</span><span>3 区</span></p>
+      <ol class="rail-tree">
+        <li class="tree-group is-open">
+          <div class="tree-row">
+            <a class="tree-name" href="../../index.html#sec-%E7%AB%A0%E8%8A%82"><span class="tree-label">章节</span><span class="ef-field">13</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="true" aria-label="收起 章节"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items">
+            <li><a href="01_基础.html">第一部分　考试概况与复习方法</a></li>
+            <li><a href="02_原则.html">第三部分　动画的12条基本原则</a></li>
+            <li><a href="03_朝向.html">第四部分　物体朝向的表示与四元数</a></li>
+            <li><a href="04_二维渐变.html">第五部分　二维形状渐变与图像 Morphing</a></li>
+            <li><a href="05_三维渐变.html">第六部分　三维形状渐变（3D Morphing）</a></li>
+            <li><a href="06_粒子群组.html">第七部分　粒子系统、元球与群组动画</a></li>
+            <li><a href="07_关节动画.html">第八部分　关节动画：正向运动学与逆向运动学</a></li>
+            <li><a href="08_运动捕获.html">第九部分　运动捕获、角色绑定与表情动画</a></li>
+            <li><a href="09_变形.html">第十部分　变形（Deformation）</a></li>
+            <li><a href="10_布料.html">第十一部分　布料动画</a></li>
+            <li><a href="11_隐式曲面.html">第十二部分　隐式曲面与元球自动拟合</a></li>
+            <li><a href="12_碰撞.html" aria-current="page">第十三部分　碰撞检测与碰撞响应</a></li>
+            <li><a href="13_数值积分.html">第十四部分　数值积分与物理动画基础</a></li>
+          </ol>
+        </li>
+        <li class="tree-group">
+          <div class="tree-row">
+            <a class="tree-name" href="../../index.html#sec-%E4%B8%93%E9%A2%98"><span class="tree-label">专题</span><span class="ef-field">3</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="false" aria-label="展开 专题"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items" hidden>
+            <li><a href="14_判断题.html">第十五部分　判断题易错点（123 条自查）</a></li>
+            <li><a href="15_问答.html">第十六部分　问答题预测与答题模板</a></li>
+            <li><a href="16_附录.html">第十七部分　附录</a></li>
+          </ol>
+        </li>
+        <li class="tree-group">
+          <div class="tree-row">
+            <a class="tree-name" href="../../index.html#sec-%E5%AE%9E%E9%AA%8C"><span class="tree-label">实验</span><span class="ef-field">2</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="false" aria-label="展开 实验"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items" hidden>
+            <li><a href="../../../clothlab-src/files/README.html">ClothLab — 基于质点-弹簧模型的布料动画与碰撞响应</a></li>
+            <li><a href="../../../clothlab-src/files/选题与规划.html">计算机动画课程设计 · 选题与实施规划</a></li>
+          </ol>
+        </li>
+      </ol>
+      <p class="ef-actions" style="margin:.9rem 0 0">
+        <a class="ef-btn small" href="../../index.html">返回课程</a>
+      </p>
+    </div>
+  </aside>
+  <div class="ef-sheet">
+    <p class="ef-eyebrow slash">Course / Article</p>
+    <p class="ef-crumb ef-field"><a href="../../../../index.html">首页</a><a href="../../index.html">计算机动画</a><span>章节</span><span>content</span></p>
+    <ul class="ef-facts ef-field">
+      <li>章节</li>
+      <li>3,436 字</li>
+      <li>2026.11.15</li>
+      <li>11 个小节</li>
+    </ul>
+    <h1 class="title ef-read">第十三部分　碰撞检测与碰撞响应</h1>
+    <div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+    <p class="ef-actions pdf-dl"><a class="ef-btn" href="%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%8A%A8%E7%94%BB-%E7%AC%AC%E5%8D%81%E4%B8%89%E9%83%A8%E5%88%86%20%E7%A2%B0%E6%92%9E%E6%A3%80%E6%B5%8B%E4%B8%8E%E7%A2%B0%E6%92%9E%E5%93%8D%E5%BA%94.pdf" download>下载 PDF</a><span class="ef-field">离线 / 打印版</span></p>
+    
+    <div class="ef-prose">
+<h2 id="121-碰撞处理包括哪三个问题">12.1 碰撞处理包括哪三个问题</h2>
+<table>
+<thead>
+<tr>
+<th>问题</th>
+<th>英文</th>
+<th>要回答什么</th>
+<th>输出</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>① <strong>碰撞检测</strong></td>
+<td>collision detection</td>
+<td>"两个物体<strong>是否</strong>相交？<strong>何时</strong>相交？"</td>
+<td>布尔结果 / 首次碰撞时间（TOI）</td>
+</tr>
+<tr>
+<td>② <strong>碰撞确认（确定）</strong></td>
+<td>collision determination</td>
+<td>"交在<strong>哪里</strong>？<strong>法向</strong>是什么？穿透<strong>多深</strong>？接触区域多大？"</td>
+<td>接触点、法向、穿透深度、接触流形（contact manifold）</td>
+</tr>
+<tr>
+<td>③ <strong>碰撞响应</strong></td>
+<td>collision response</td>
+<td>"相交后<strong>运动/形状如何改变</strong>？"</td>
+<td>新的速度/位置/形变（反弹、摩擦、约束、形变）</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>三个问题层层递进：检测决定"要不要处理"，确认给出"处理的几何数据"，响应决定"怎么处理"。实际系统还包含<strong>加速结构（broad phase）</strong>与<strong>更新/剔除</strong>等工程问题，但理论核心是这三个。</p>
+</blockquote>
+<h2 id="122-碰撞检测中如何选择包围体">12.2 碰撞检测中如何选择包围体</h2>
+<p><strong>包围体（bounding volume）</strong> 是包住物体的简单几何体，用于<strong>快速排除</strong>明显不相交的物体对（broad phase）。选择时权衡四个指标：</p>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>紧致性（tightness）</strong></td>
+<td>包围体越贴合物体，"误报"越少（narrow phase 调用越少）</td>
+</tr>
+<tr>
+<td><strong>测试速度</strong></td>
+<td>两个包围体求交的开销</td>
+</tr>
+<tr>
+<td><strong>更新速度</strong></td>
+<td>物体运动后重新计算包围体的开销（动态场景很关键）</td>
+</tr>
+<tr>
+<td><strong>内存 / 构建时间</strong></td>
+<td>存储与预处理成本</td>
+</tr>
+</tbody>
+</table>
+<p><strong>常见包围体对比</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>包围体</th>
+<th>紧致性</th>
+<th>求交测试</th>
+<th>动态更新</th>
+<th>适用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>球（sphere）</strong></td>
+<td>最差</td>
+<td>最快（中心距 &lt; r₁+r₂，可避免开方）</td>
+<td>最快（中心 + 半径）</td>
+<td>快速粗测、粒子、球形物体、远处 LOD</td>
+</tr>
+<tr>
+<td><strong>AABB（轴对齐包围盒）</strong></td>
+<td>较差</td>
+<td>很快（6 次比较）</td>
+<td>快（顶点 min/max；刚体变换只算 8 角点）</td>
+<td>通用 broad phase、场景树、布料/粒子</td>
+</tr>
+<tr>
+<td><strong>OBB（有向包围盒）</strong></td>
+<td>好</td>
+<td>较慢（SAT 15 轴）</td>
+<td>慢（需随物体旋转）</td>
+<td>细长/旋转物体、需要紧致时</td>
+</tr>
+<tr>
+<td><strong>k-DOP</strong></td>
+<td>可调（k 越大越紧）</td>
+<td>快（k 个区间重叠，纯比较）</td>
+<td>中（顶点投影 O(nk)，但<strong>轴向固定</strong>不需重算轴）</td>
+<td>通用、可控精度、动态场景</td>
+</tr>
+<tr>
+<td><strong>凸包（convex hull）</strong></td>
+<td>最好</td>
+<td>最慢</td>
+<td>最慢</td>
+<td>少量关键物体、离线</td>
+</tr>
+<tr>
+<td><strong>BVH（层次包围体树）</strong></td>
+<td>——</td>
+<td>树遍历 log n</td>
+<td>中</td>
+<td>复杂场景/网格（如三角形 soup）</td>
+</tr>
+</tbody>
+</table>
+<p><strong>选择原则</strong>：</p>
+<ol>
+<li><strong>形状</strong>：球状物体用球；细长/倾斜物体用 OBB 或 k-DOP；接近立方体用 AABB 就够；</li>
+<li><strong>运动方式</strong>：频繁旋转的物体，AABB/球/k-DOP（轴固定）更新更便宜；OBB 要跟着转；</li>
+<li><strong>精度需求</strong>：需要少误报 → 用更紧的（k-DOP 26、凸包）；只要粗筛 → 球/AABB；</li>
+<li><strong>组合使用（层次化）</strong>：先用球/AABB 做 broad phase，再用 OBB/k-DOP/精确三角形测试做 narrow phase；场景级用 BVH/八叉树/均匀网格；</li>
+<li><strong>规模与硬件</strong>：大规模/GPU 并行时偏好结构规整、可向量化的 k-DOP/AABB。</li>
+</ol>
+<blockquote>
+<p><strong>k-DOP 的独特优势</strong>：方向集<strong>固定</strong>，物体无论怎么转，"轴"都不用重算，只需重新投影顶点（或对 8 个极值点做变换），因此在动态场景中既紧致又便宜，是 AABB 与凸包之间的"可调折中"。</p>
+</blockquote>
+<h2 id="123-离散有向多面体-k-dop-的定义与轴的选择">12.3 离散有向多面体 k-DOP 的定义与轴的选择</h2>
+<p><strong>定义</strong>：k-DOP（k-Discrete Oriented Polytope）是由 <strong>k/2 对平行平面</strong>围成的凸多面体，所有平面的<strong>法向取自一个固定的方向集合</strong></p>
+<div class="eq"><mjx-container class="MathJax" jax="CHTML" display="true"><mjx-math display="true" style="margin-left: 0; margin-right: 0;" class=" MJX-TEX"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D437 TEX-I"></mjx-c></mjx-mi><mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c3D"></mjx-c></mjx-mo><mjx-mrow space="4"><mjx-mo class="mjx-sop"><mjx-c class="mjx-c7B TEX-S1"></mjx-c></mjx-mo><mjx-msub><mjx-TeXAtom texclass="ORD"><mjx-mi class="mjx-b"><mjx-c class="mjx-c1D41D TEX-B"></mjx-c></mjx-mi></mjx-TeXAtom><mjx-script style="vertical-align: -0.15em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mn class="mjx-n"><mjx-c class="mjx-c31"></mjx-c></mjx-mn></mjx-TeXAtom></mjx-script></mjx-msub><mjx-mo class="mjx-n"><mjx-c class="mjx-c2C"></mjx-c></mjx-mo><mjx-msub space="2"><mjx-TeXAtom texclass="ORD"><mjx-mi class="mjx-b"><mjx-c class="mjx-c1D41D TEX-B"></mjx-c></mjx-mi></mjx-TeXAtom><mjx-script style="vertical-align: -0.15em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mn class="mjx-n"><mjx-c class="mjx-c32"></mjx-c></mjx-mn></mjx-TeXAtom></mjx-script></mjx-msub><mjx-mo class="mjx-n"><mjx-c class="mjx-c2C"></mjx-c></mjx-mo><mjx-mo class="mjx-n" space="2"><mjx-c class="mjx-c2026"></mjx-c></mjx-mo><mjx-mo class="mjx-n" space="2"><mjx-c class="mjx-c2C"></mjx-c></mjx-mo><mjx-msub space="2"><mjx-TeXAtom texclass="ORD"><mjx-mi class="mjx-b"><mjx-c class="mjx-c1D41D TEX-B"></mjx-c></mjx-mi></mjx-TeXAtom><mjx-script style="vertical-align: -0.177em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D458 TEX-I"></mjx-c></mjx-mi><mjx-TeXAtom texclass="ORD"><mjx-mo class="mjx-n"><mjx-c class="mjx-c2F"></mjx-c></mjx-mo></mjx-TeXAtom><mjx-mn class="mjx-n"><mjx-c class="mjx-c32"></mjx-c></mjx-mn></mjx-TeXAtom></mjx-script></mjx-msub><mjx-mo class="mjx-sop"><mjx-c class="mjx-c7D TEX-S1"></mjx-c></mjx-mo></mjx-mrow></mjx-math></mjx-container></div>
+<p>物体被表示为它在这 k/2 个方向上的<strong>投影区间</strong>：对每个方向 d_j，存两个值</p>
+<div class="eq"><mjx-container class="MathJax" jax="CHTML" display="true"><mjx-math display="true" style="margin-left: 0; margin-right: 0;" class=" MJX-TEX"><mjx-munder><mjx-row><mjx-base><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c69"></mjx-c><mjx-c class="mjx-c6E"></mjx-c></mjx-mo></mjx-base></mjx-row><mjx-row><mjx-under style="padding-top: 0.167em; padding-left: 0.688em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D457 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-under></mjx-row></mjx-munder><mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c3D"></mjx-c></mjx-mo><mjx-munder space="4"><mjx-row><mjx-base><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c69"></mjx-c><mjx-c class="mjx-c6E"></mjx-c></mjx-mo></mjx-base></mjx-row><mjx-row><mjx-under style="padding-top: 0.167em; padding-left: 0.712em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D456 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-under></mjx-row></mjx-munder><mjx-mrow space="2"><mjx-mo class="mjx-n"><mjx-c class="mjx-c28"></mjx-c></mjx-mo><mjx-msub><mjx-TeXAtom texclass="ORD"><mjx-mi class="mjx-b"><mjx-c class="mjx-c1D41D TEX-B"></mjx-c></mjx-mi></mjx-TeXAtom><mjx-script style="vertical-align: -0.15em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D457 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-script></mjx-msub><mjx-mo class="mjx-n" space="3"><mjx-c class="mjx-c22C5"></mjx-c></mjx-mo><mjx-msub space="3"><mjx-TeXAtom texclass="ORD"><mjx-mi class="mjx-b"><mjx-c class="mjx-c1D42F TEX-B"></mjx-c></mjx-mi></mjx-TeXAtom><mjx-script style="vertical-align: -0.15em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D456 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-script></mjx-msub><mjx-mo class="mjx-n"><mjx-c class="mjx-c29"></mjx-c></mjx-mo></mjx-mrow><mjx-mo class="mjx-n"><mjx-c class="mjx-c2C"></mjx-c></mjx-mo><mjx-mstyle><mjx-mspace style="width: 2em;"></mjx-mspace></mjx-mstyle><mjx-munder space="2"><mjx-row><mjx-base><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c61"></mjx-c><mjx-c class="mjx-c78"></mjx-c></mjx-mo></mjx-base></mjx-row><mjx-row><mjx-under style="padding-top: 0.167em; padding-left: 0.785em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D457 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-under></mjx-row></mjx-munder><mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c3D"></mjx-c></mjx-mo><mjx-munder space="4"><mjx-row><mjx-base><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c61"></mjx-c><mjx-c class="mjx-c78"></mjx-c></mjx-mo></mjx-base></mjx-row><mjx-row><mjx-under style="padding-top: 0.167em; padding-left: 0.809em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D456 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-under></mjx-row></mjx-munder><mjx-mrow space="2"><mjx-mo class="mjx-n"><mjx-c class="mjx-c28"></mjx-c></mjx-mo><mjx-msub><mjx-TeXAtom texclass="ORD"><mjx-mi class="mjx-b"><mjx-c class="mjx-c1D41D TEX-B"></mjx-c></mjx-mi></mjx-TeXAtom><mjx-script style="vertical-align: -0.15em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D457 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-script></mjx-msub><mjx-mo class="mjx-n" space="3"><mjx-c class="mjx-c22C5"></mjx-c></mjx-mo><mjx-msub space="3"><mjx-TeXAtom texclass="ORD"><mjx-mi class="mjx-b"><mjx-c class="mjx-c1D42F TEX-B"></mjx-c></mjx-mi></mjx-TeXAtom><mjx-script style="vertical-align: -0.15em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D456 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-script></mjx-msub><mjx-mo class="mjx-n"><mjx-c class="mjx-c29"></mjx-c></mjx-mo></mjx-mrow></mjx-math></mjx-container></div>
+<p>即 <strong>k 个标量</strong>（k/2 个 min + k/2 个 max）。当 k=6 时退化为 AABB（方向为 ±x, ±y, ±z）。</p>
+<p><strong>轴（方向）的选择</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>k</th>
+<th>方向集合</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>6</td>
+<td>(±1,0,0), (0,±1,0), (0,0,±1)</td>
+<td>即 AABB，最松</td>
+</tr>
+<tr>
+<td>14</td>
+<td>6 个面法向 + 8 个顶点方向 (±1,±1,±1)</td>
+<td>比 AABB 紧，测试 14 个区间</td>
+</tr>
+<tr>
+<td>18</td>
+<td>6 + 12 个棱方向 (±1,±1,0), (±1,0,±1), (0,±1,±1)</td>
+<td>常用折中</td>
+</tr>
+<tr>
+<td>26</td>
+<td>6 面 + 12 棱 + 8 顶点 = 26 个方向（13 对）</td>
+<td>最紧的常用 k-DOP，接近凸包</td>
+</tr>
+</tbody>
+</table>
+<p><strong>选择原则</strong>：</p>
+<ul>
+<li><strong>k 越大越紧致、误报越少，但存储与测试成本越高</strong>；实践中 18-DOP / 26-DOP 最常用；</li>
+<li>方向应尽量均匀覆盖所有可能朝向（面、棱、角），这样对任意姿态的物体都贴合得好；</li>
+<li>常用归一化方向（如 (1,1,0)/√2），但<strong>不必归一化</strong>也能用（只要一致）；</li>
+<li>对特定物体可<strong>定制方向</strong>（如沿主成分轴），但会失去"轴固定、不需重算"的优势。</li>
+</ul>
+<p><strong>性质</strong>：k-DOP 是 AABB（k=6）与凸包（k→∞）之间的连续族；求交只需<strong>逐方向的区间重叠测试</strong>；支持层次包围体（k-DOP 树）。</p>
+<h2 id="124-碰撞检测中的分离轴定理sat">12.4 碰撞检测中的分离轴定理（SAT）</h2>
+<p><strong>定理（Separating Axis Theorem）</strong>：两个<strong>凸</strong>多面体不相交，<strong>当且仅当</strong>存在一条轴（分离轴），使两者在该轴上的<strong>投影区间不重叠</strong>。</p>
+<p><strong>候选轴</strong>（对多面体 A、B）：</p>
+<ol>
+<li>A 的每个面的法向（3 个，对盒子）；</li>
+<li>B 的每个面的法向（3 个）；</li>
+<li>A 的每条棱 × B 的每条棱（3×3 = 9 个叉积方向）。</li>
+</ol>
+<p>对 <strong>OBB vs OBB</strong> 共 <strong>3+3+9 = 15 个轴</strong>；对 <strong>AABB</strong> 只需 3 个坐标轴。</p>
+<p><strong>测试方法</strong>：对每个候选轴 n（单位化），计算两个多面体所有顶点在 n 上的投影的最小/最大值，若存在某个 n 使</p>
+<div class="eq"><mjx-container class="MathJax" jax="CHTML" display="true"><mjx-math display="true" style="margin-left: 0; margin-right: 0;" class=" MJX-TEX"><mjx-mrow><mjx-mo class="mjx-s3"><mjx-c class="mjx-c5B TEX-S3"></mjx-c></mjx-mo><mjx-munder><mjx-row><mjx-base><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c69"></mjx-c><mjx-c class="mjx-c6E"></mjx-c></mjx-mo></mjx-base></mjx-row><mjx-row><mjx-under style="padding-top: 0.167em; padding-left: 0.568em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D434 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-under></mjx-row></mjx-munder><mjx-mo class="mjx-n"><mjx-c class="mjx-c2C"></mjx-c></mjx-mo><mjx-munder space="2"><mjx-row><mjx-base><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c61"></mjx-c><mjx-c class="mjx-c78"></mjx-c></mjx-mo></mjx-base></mjx-row><mjx-row><mjx-under style="padding-top: 0.167em; padding-left: 0.665em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D434 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-under></mjx-row></mjx-munder><mjx-mo class="mjx-s3"><mjx-c class="mjx-c5D TEX-S3"></mjx-c></mjx-mo></mjx-mrow><mjx-mo class="mjx-n" space="3"><mjx-c class="mjx-c2229"></mjx-c></mjx-mo><mjx-mrow space="3"><mjx-mo class="mjx-s3"><mjx-c class="mjx-c5B TEX-S3"></mjx-c></mjx-mo><mjx-munder><mjx-row><mjx-base><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c69"></mjx-c><mjx-c class="mjx-c6E"></mjx-c></mjx-mo></mjx-base></mjx-row><mjx-row><mjx-under style="padding-top: 0.167em; padding-left: 0.565em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D435 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-under></mjx-row></mjx-munder><mjx-mo class="mjx-n"><mjx-c class="mjx-c2C"></mjx-c></mjx-mo><mjx-munder space="2"><mjx-row><mjx-base><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c61"></mjx-c><mjx-c class="mjx-c78"></mjx-c></mjx-mo></mjx-base></mjx-row><mjx-row><mjx-under style="padding-top: 0.167em; padding-left: 0.662em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D435 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-under></mjx-row></mjx-munder><mjx-mo class="mjx-s3"><mjx-c class="mjx-c5D TEX-S3"></mjx-c></mjx-mo></mjx-mrow><mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c3D"></mjx-c></mjx-mo><mjx-mi class="mjx-var" space="4"><mjx-c class="mjx-c2205 TEX-A"></mjx-c></mjx-mi></mjx-math></mjx-container></div>
+<p>则<strong>不相交</strong>（可立即退出）；若所有轴都重叠，则<strong>相交</strong>。</p>
+<p><strong>穿透深度 / MTD</strong>：所有轴中"重叠量最小"的那个轴，其重叠量即<strong>最小平移距离（Minimum Translation Distance）</strong>，方向为推出方向——可用于碰撞响应。</p>
+<p><strong>优缺点</strong>：通用、无需显式求交线、可早退出、可给出 MTD；但轴数随棱数平方增长（复杂多面体很贵），且<strong>只适用于凸体</strong>（凹体需分解为凸块）。k-DOP 的求交可以看作 SAT 在"固定方向集"上的特例（只测 k/2 个方向，故意忽略棱叉积，用更多固定方向补偿）。</p>
+<h2 id="125-如何构建多面体模型的-aabb-与-k-dop-包围盒">12.5 如何构建多面体模型的 AABB 与 k-DOP 包围盒</h2>
+<p><strong>AABB 构建</strong>：</p>
+<ol>
+<li>遍历（或变换后遍历）模型所有顶点 v_i = (x_i, y_i, z_i)；</li>
+<li>对三个坐标分别取最小值与最大值：
+<mjx-container class="MathJax" jax="CHTML" display="true"><mjx-math display="true" style="margin-left: 0; margin-right: 0;" class=" MJX-TEX"><mjx-munder><mjx-row><mjx-base><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c69"></mjx-c><mjx-c class="mjx-c6E"></mjx-c></mjx-mo></mjx-base></mjx-row><mjx-row><mjx-under style="padding-top: 0.287em; padding-left: 0.631em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D465 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-under></mjx-row></mjx-munder><mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c3D"></mjx-c></mjx-mo><mjx-munder space="4"><mjx-row><mjx-base><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c69"></mjx-c><mjx-c class="mjx-c6E"></mjx-c></mjx-mo></mjx-base></mjx-row><mjx-row><mjx-under style="padding-top: 0.167em; padding-left: 0.712em;"><mjx-mi class="mjx-i" size="s"><mjx-c class="mjx-c1D456 TEX-I"></mjx-c></mjx-mi></mjx-under></mjx-row></mjx-munder><mjx-msub space="2"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D465 TEX-I"></mjx-c></mjx-mi><mjx-script style="vertical-align: -0.15em;"><mjx-mi class="mjx-i" size="s"><mjx-c class="mjx-c1D456 TEX-I"></mjx-c></mjx-mi></mjx-script></mjx-msub><mjx-mo class="mjx-n"><mjx-c class="mjx-c2C"></mjx-c></mjx-mo><mjx-mtext class="mjx-n" space="2"><mjx-c class="mjx-cA0"></mjx-c></mjx-mtext><mjx-munder space="2"><mjx-row><mjx-base><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c61"></mjx-c><mjx-c class="mjx-c78"></mjx-c></mjx-mo></mjx-base></mjx-row><mjx-row><mjx-under style="padding-top: 0.287em; padding-left: 0.728em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D465 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-under></mjx-row></mjx-munder><mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c3D"></mjx-c></mjx-mo><mjx-munder space="4"><mjx-row><mjx-base><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c61"></mjx-c><mjx-c class="mjx-c78"></mjx-c></mjx-mo></mjx-base></mjx-row><mjx-row><mjx-under style="padding-top: 0.167em; padding-left: 0.809em;"><mjx-mi class="mjx-i" size="s"><mjx-c class="mjx-c1D456 TEX-I"></mjx-c></mjx-mi></mjx-under></mjx-row></mjx-munder><mjx-msub space="2"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D465 TEX-I"></mjx-c></mjx-mi><mjx-script style="vertical-align: -0.15em;"><mjx-mi class="mjx-i" size="s"><mjx-c class="mjx-c1D456 TEX-I"></mjx-c></mjx-mi></mjx-script></mjx-msub><mjx-mo class="mjx-n"><mjx-c class="mjx-c2C"></mjx-c></mjx-mo><mjx-mstyle><mjx-mspace style="width: 1em;"></mjx-mspace></mjx-mstyle><mjx-munder space="2"><mjx-row><mjx-base><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c69"></mjx-c><mjx-c class="mjx-c6E"></mjx-c></mjx-mo></mjx-base></mjx-row><mjx-row><mjx-under style="padding-top: 0.287em; padding-left: 0.66em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D466 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-under></mjx-row></mjx-munder><mjx-mo class="mjx-n"><mjx-c class="mjx-c2C"></mjx-c></mjx-mo><mjx-munder space="2"><mjx-row><mjx-base><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c61"></mjx-c><mjx-c class="mjx-c78"></mjx-c></mjx-mo></mjx-base></mjx-row><mjx-row><mjx-under style="padding-top: 0.287em; padding-left: 0.757em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D466 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-under></mjx-row></mjx-munder><mjx-mo class="mjx-n"><mjx-c class="mjx-c2C"></mjx-c></mjx-mo><mjx-mstyle><mjx-mspace style="width: 1em;"></mjx-mspace></mjx-mstyle><mjx-munder space="2"><mjx-row><mjx-base><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c69"></mjx-c><mjx-c class="mjx-c6E"></mjx-c></mjx-mo></mjx-base></mjx-row><mjx-row><mjx-under style="padding-top: 0.287em; padding-left: 0.669em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D467 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-under></mjx-row></mjx-munder><mjx-mo class="mjx-n"><mjx-c class="mjx-c2C"></mjx-c></mjx-mo><mjx-munder space="2"><mjx-row><mjx-base><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c61"></mjx-c><mjx-c class="mjx-c78"></mjx-c></mjx-mo></mjx-base></mjx-row><mjx-row><mjx-under style="padding-top: 0.287em; padding-left: 0.766em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D467 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-under></mjx-row></mjx-munder></mjx-math></mjx-container></li>
+<li>得到 8 个角点（由 min/max 组合），即 AABB；</li>
+<li><strong>动态更新</strong>：刚体变换时，可把 8 个角点变换后重新取 min/max（比变换所有顶点便宜）；只平移时直接平移 min/max。</li>
+</ol>
+<p><strong>k-DOP 构建</strong>：</p>
+<ol>
+<li>给定方向集 D = {d_1, …, d_{k/2}}（预先归一化）；</li>
+<li>对每个方向 d_j，遍历所有顶点计算点积 d_j·v_i，取最小值与最大值：
+<mjx-container class="MathJax" jax="CHTML" display="true"><mjx-math display="true" style="margin-left: 0; margin-right: 0;" class=" MJX-TEX"><mjx-munder><mjx-row><mjx-base><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c69"></mjx-c><mjx-c class="mjx-c6E"></mjx-c></mjx-mo></mjx-base></mjx-row><mjx-row><mjx-under style="padding-top: 0.167em; padding-left: 0.688em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D457 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-under></mjx-row></mjx-munder><mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c3D"></mjx-c></mjx-mo><mjx-munder space="4"><mjx-row><mjx-base><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c69"></mjx-c><mjx-c class="mjx-c6E"></mjx-c></mjx-mo></mjx-base></mjx-row><mjx-row><mjx-under style="padding-top: 0.167em; padding-left: 0.712em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D456 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-under></mjx-row></mjx-munder><mjx-mrow space="2"><mjx-mo class="mjx-n"><mjx-c class="mjx-c28"></mjx-c></mjx-mo><mjx-msub><mjx-TeXAtom texclass="ORD"><mjx-mi class="mjx-b"><mjx-c class="mjx-c1D41D TEX-B"></mjx-c></mjx-mi></mjx-TeXAtom><mjx-script style="vertical-align: -0.15em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D457 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-script></mjx-msub><mjx-mo class="mjx-n" space="3"><mjx-c class="mjx-c22C5"></mjx-c></mjx-mo><mjx-msub space="3"><mjx-TeXAtom texclass="ORD"><mjx-mi class="mjx-b"><mjx-c class="mjx-c1D42F TEX-B"></mjx-c></mjx-mi></mjx-TeXAtom><mjx-script style="vertical-align: -0.15em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D456 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-script></mjx-msub><mjx-mo class="mjx-n"><mjx-c class="mjx-c29"></mjx-c></mjx-mo></mjx-mrow><mjx-mo class="mjx-n"><mjx-c class="mjx-c2C"></mjx-c></mjx-mo><mjx-mstyle><mjx-mspace style="width: 1em;"></mjx-mspace></mjx-mstyle><mjx-munder space="2"><mjx-row><mjx-base><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c61"></mjx-c><mjx-c class="mjx-c78"></mjx-c></mjx-mo></mjx-base></mjx-row><mjx-row><mjx-under style="padding-top: 0.167em; padding-left: 0.785em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D457 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-under></mjx-row></mjx-munder><mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c3D"></mjx-c></mjx-mo><mjx-munder space="4"><mjx-row><mjx-base><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c61"></mjx-c><mjx-c class="mjx-c78"></mjx-c></mjx-mo></mjx-base></mjx-row><mjx-row><mjx-under style="padding-top: 0.167em; padding-left: 0.809em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D456 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-under></mjx-row></mjx-munder><mjx-mrow space="2"><mjx-mo class="mjx-n"><mjx-c class="mjx-c28"></mjx-c></mjx-mo><mjx-msub><mjx-TeXAtom texclass="ORD"><mjx-mi class="mjx-b"><mjx-c class="mjx-c1D41D TEX-B"></mjx-c></mjx-mi></mjx-TeXAtom><mjx-script style="vertical-align: -0.15em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D457 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-script></mjx-msub><mjx-mo class="mjx-n" space="3"><mjx-c class="mjx-c22C5"></mjx-c></mjx-mo><mjx-msub space="3"><mjx-TeXAtom texclass="ORD"><mjx-mi class="mjx-b"><mjx-c class="mjx-c1D42F TEX-B"></mjx-c></mjx-mi></mjx-TeXAtom><mjx-script style="vertical-align: -0.15em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D456 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-script></mjx-msub><mjx-mo class="mjx-n"><mjx-c class="mjx-c29"></mjx-c></mjx-mo></mjx-mrow></mjx-math></mjx-container></li>
+<li>存储 k 个标量（外加方向集共享）；</li>
+<li><strong>动态更新</strong>：只需对<strong>支持点（极值点）</strong>重新投影，或对全部顶点做变换后重新求 min/max；因为方向固定，<strong>不需要</strong>像 OBB 那样重算轴；</li>
+<li><strong>紧致化</strong>：先求凸包再投影（更紧但更贵），或利用物体局部坐标预计算、只对变换后的 8 个"极值顶点"投影。</li>
+</ol>
+<p><strong>层次结构</strong>：把多个 k-DOP 组织成树（k-DOP 树），自顶向下测试，可把 O(n²) 的物体对测试降到近 O(n log n)。</p>
+<h2 id="126-求交测试的重要规则">12.6 求交测试的重要规则</h2>
+<p>写求交代码/答题时的经验法则（"重要规则"）：</p>
+<ol>
+<li><strong>先粗后细、层次化（broad phase → narrow phase）</strong>：先用包围体/空间划分排除绝大多数物体对，只对可能相交的做精确测试；</li>
+<li><strong>尽早退出（early exit）</strong>：一旦能判定"不相交"立即返回，不要算完所有条件；</li>
+<li><strong>避免昂贵的运算</strong>：优先用比较、乘加，避免除法、开方、三角函数；例如球求交比较距离平方而非距离；</li>
+<li><strong>先做最便宜/最可能失败的测试</strong>：例如 AABB 先测重叠概率最低的轴，k-DOP 先测最容易分离的方向；</li>
+<li><strong>利用空间/时间连贯性（coherence）</strong>：缓存上一帧的结果、使用增量更新、按空间排序；</li>
+<li><strong>预计算与共享</strong>：方向集、平面方程、三角形法向、逆矩阵等只算一次；</li>
+<li><strong>数值鲁棒性</strong>：用 epsilon 处理边界情形、避免除零（平行/退化）、注意浮点误差；必要时用区间算术/精确谓词；</li>
+<li><strong>只做必要的精确测试</strong>：narrow phase 只在 broad phase 命中后调用；远距离物体用 LOD 包围体；</li>
+<li><strong>保持对称性/一致性</strong>：A vs B 与 B vs A 结果一致，避免"谁先测"导致的不同；</li>
+<li><strong>可并行/向量化</strong>：数据布局（SoA）与批处理对性能影响很大。</li>
+</ol>
+<h2 id="127-射线平板层相交法ray-slab-method">12.7 射线／平板层相交法（ray / slab method）</h2>
+<p><strong>思想</strong>：AABB（或 k-DOP）可看成若干"平板层（slab）"的交——每个方向 d_j 对应一对平行平面 d_j·x = min_j 与 d_j·x = max_j。射线与包围盒相交 ⟺ 射线与<strong>所有</strong>平板的交区间<strong>有公共部分</strong>。</p>
+<p><strong>算法</strong>（射线 p(t) = o + t·dir，t ≥ 0）：</p>
+<ol>
+<li>初始化 t_near = 0（或 −∞），t_far = +∞；</li>
+<li>对每个方向 j：
+   - 计算射线与两个平面的参数：
+<mjx-container class="MathJax" jax="CHTML" display="true"><mjx-math display="true" style="margin-left: 0; margin-right: 0;" class=" MJX-TEX"><mjx-msub><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D461 TEX-I"></mjx-c></mjx-mi><mjx-script style="vertical-align: -0.15em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mn class="mjx-n"><mjx-c class="mjx-c31"></mjx-c></mjx-mn></mjx-TeXAtom></mjx-script></mjx-msub><mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c3D"></mjx-c></mjx-mo><mjx-mfrac space="4"><mjx-frac type="d"><mjx-num><mjx-nstrut type="d"></mjx-nstrut><mjx-mrow><mjx-munder limits="false"><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c69"></mjx-c><mjx-c class="mjx-c6E"></mjx-c></mjx-mo><mjx-script style="vertical-align: -0.15em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D457 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-script></mjx-munder><mjx-mo class="mjx-n" space="2"><mjx-c class="mjx-c2212"></mjx-c></mjx-mo><mjx-msub><mjx-TeXAtom texclass="ORD"><mjx-mi class="mjx-b"><mjx-c class="mjx-c1D41D TEX-B"></mjx-c></mjx-mi></mjx-TeXAtom><mjx-script style="vertical-align: -0.15em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D457 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-script></mjx-msub><mjx-mo class="mjx-n" space="3"><mjx-c class="mjx-c22C5"></mjx-c></mjx-mo><mjx-TeXAtom space="3" texclass="ORD"><mjx-mi class="mjx-b"><mjx-c class="mjx-c1D428 TEX-B"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-mrow></mjx-num><mjx-dbox><mjx-dtable><mjx-line type="d"></mjx-line><mjx-row><mjx-den><mjx-dstrut type="d"></mjx-dstrut><mjx-mrow><mjx-msub><mjx-TeXAtom texclass="ORD"><mjx-mi class="mjx-b"><mjx-c class="mjx-c1D41D TEX-B"></mjx-c></mjx-mi></mjx-TeXAtom><mjx-script style="vertical-align: -0.15em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D457 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-script></mjx-msub><mjx-mo class="mjx-n" space="3"><mjx-c class="mjx-c22C5"></mjx-c></mjx-mo><mjx-TeXAtom space="3" texclass="ORD"><mjx-mi class="mjx-b"><mjx-c class="mjx-c1D41D TEX-B"></mjx-c><mjx-c class="mjx-c1D422 TEX-B"></mjx-c><mjx-c class="mjx-c1D42B TEX-B"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-mrow></mjx-den></mjx-row></mjx-dtable></mjx-dbox></mjx-frac></mjx-mfrac><mjx-mo class="mjx-n"><mjx-c class="mjx-c2C"></mjx-c></mjx-mo><mjx-mstyle><mjx-mspace style="width: 2em;"></mjx-mspace></mjx-mstyle><mjx-msub space="2"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D461 TEX-I"></mjx-c></mjx-mi><mjx-script style="vertical-align: -0.15em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mn class="mjx-n"><mjx-c class="mjx-c32"></mjx-c></mjx-mn></mjx-TeXAtom></mjx-script></mjx-msub><mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c3D"></mjx-c></mjx-mo><mjx-mfrac space="4"><mjx-frac type="d"><mjx-num><mjx-nstrut type="d"></mjx-nstrut><mjx-mrow><mjx-munder limits="false"><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c61"></mjx-c><mjx-c class="mjx-c78"></mjx-c></mjx-mo><mjx-script style="vertical-align: -0.15em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D457 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-script></mjx-munder><mjx-mo class="mjx-n" space="2"><mjx-c class="mjx-c2212"></mjx-c></mjx-mo><mjx-msub><mjx-TeXAtom texclass="ORD"><mjx-mi class="mjx-b"><mjx-c class="mjx-c1D41D TEX-B"></mjx-c></mjx-mi></mjx-TeXAtom><mjx-script style="vertical-align: -0.15em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D457 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-script></mjx-msub><mjx-mo class="mjx-n" space="3"><mjx-c class="mjx-c22C5"></mjx-c></mjx-mo><mjx-TeXAtom space="3" texclass="ORD"><mjx-mi class="mjx-b"><mjx-c class="mjx-c1D428 TEX-B"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-mrow></mjx-num><mjx-dbox><mjx-dtable><mjx-line type="d"></mjx-line><mjx-row><mjx-den><mjx-dstrut type="d"></mjx-dstrut><mjx-mrow><mjx-msub><mjx-TeXAtom texclass="ORD"><mjx-mi class="mjx-b"><mjx-c class="mjx-c1D41D TEX-B"></mjx-c></mjx-mi></mjx-TeXAtom><mjx-script style="vertical-align: -0.15em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D457 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-script></mjx-msub><mjx-mo class="mjx-n" space="3"><mjx-c class="mjx-c22C5"></mjx-c></mjx-mo><mjx-TeXAtom space="3" texclass="ORD"><mjx-mi class="mjx-b"><mjx-c class="mjx-c1D41D TEX-B"></mjx-c><mjx-c class="mjx-c1D422 TEX-B"></mjx-c><mjx-c class="mjx-c1D42B TEX-B"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-mrow></mjx-den></mjx-row></mjx-dtable></mjx-dbox></mjx-frac></mjx-mfrac></mjx-math></mjx-container>
+   - 若 t₁ &gt; t₂ 交换（保证 t₁ ≤ t₂）；
+   - 更新区间：t_near = max(t_near, t₁)，t_far = min(t_far, t₂)；
+   - 若 t_near &gt; t_far → <strong>无交</strong>，退出；</li>
+<li>全部平板处理完仍有 t_near ≤ t_far → <strong>相交</strong>，t_near 为入射点参数（t_far 为出射点）。</li>
+</ol>
+<p><strong>关键细节</strong>：</p>
+<ul>
+<li>当 d_j·dir = 0（射线平行于该平板）时：若 o 在该平板区间外 → 无交；否则该平板不限制 t（跳过）；</li>
+<li>除法可优化为乘法（保存 1/(d_j·dir)）；同一方向可复用于多个包围盒；</li>
+<li>对 AABB 只需 3 个轴（x、y、z），对 k-DOP 需 k/2 个方向；</li>
+<li>这是<strong>所有包围体射线测试的通用框架</strong>，也是"射线求交"的最基础方法。</li>
+</ul>
+<h2 id="128-射线三角形相交测试möllertrumbore-算法">12.8 射线／三角形相交测试（Möller–Trumbore 算法）</h2>
+<p><strong>问题</strong>：射线 p(t) = o + t·dir 与三角形 (v₀, v₁, v₂) 是否相交？求 t 与重心坐标 (u, v)。</p>
+<p><strong>推导思路</strong>：把交点写成重心形式 o + t·dir = (1−u−v)v₀ + u·v₁ + v·v₂，整理成线性方程组，用 Cramer 法则求解。</p>
+<p><strong>算法</strong>：</p>
+<ol>
+<li>边向量：e₁ = v₁ − v₀，e₂ = v₂ − v₀；</li>
+<li>pvec = dir × e₂，det = e₁ · pvec；
+   - 若 |det| &lt; ε（或 det ≤ 0，取决于单/双面）→ 射线与三角形<strong>平行/共面</strong>，无交；</li>
+<li>inv_det = 1/det；tvec = o − v₀；</li>
+<li>u = (tvec · pvec) · inv_det；若 u &lt; 0 或 u &gt; 1 → 无交；</li>
+<li>qvec = tvec × e₁；v = (dir · qvec) · inv_det；若 v &lt; 0 或 u + v &gt; 1 → 无交；</li>
+<li>t = (e₂ · qvec) · inv_det；若 t &lt; ε → 交点在射线起点之后才有效（t ≥ 0 为相交）。</li>
+</ol>
+<p><strong>优点</strong>：一次求解同时得到 <strong>t 与重心坐标 (u, v)</strong>（可用于插值属性）；无需求平面方程、无需投影到二维；只有乘加与一次除法；速度与存储高效，是工业标准。</p>
+<p><strong>应用</strong>：光线追踪、鼠标拾取、连续碰撞检测（把粒子/点的运动当作射线）。</p>
+<h2 id="129-aabbaabb-相交测试">12.9 AABB／AABB 相交测试</h2>
+<p><strong>原理</strong>：两个 AABB 相交 ⟺ 在 <strong>x、y、z 三个轴上的投影区间都重叠</strong>（一维区间重叠的"与"）。</p>
+<p><strong>公式</strong>：</p>
+<div class="eq"><mjx-container class="MathJax" jax="CHTML" display="true"><mjx-math display="true" style="margin-left: 0; margin-right: 0;" class=" MJX-TEX"><mjx-mtext class="mjx-n"><mjx-c class="mjx-c6F"></mjx-c><mjx-c class="mjx-c76"></mjx-c><mjx-c class="mjx-c65"></mjx-c><mjx-c class="mjx-c72"></mjx-c><mjx-c class="mjx-c6C"></mjx-c><mjx-c class="mjx-c61"></mjx-c><mjx-c class="mjx-c70"></mjx-c></mjx-mtext><mjx-mstyle><mjx-mspace style="width: 0.278em;"></mjx-mspace></mjx-mstyle><mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c27FA"></mjx-c></mjx-mo><mjx-mstyle><mjx-mspace style="width: 0.278em;"></mjx-mspace></mjx-mstyle><mjx-mrow space="4"><mjx-mo class="mjx-n"><mjx-stretchy-v style="height: 4.009em; vertical-align: -1.754em;" class="mjx-c7B"><mjx-beg><mjx-c></mjx-c></mjx-beg><mjx-ext><mjx-c></mjx-c></mjx-ext><mjx-mid><mjx-c></mjx-c></mjx-mid><mjx-ext><mjx-c></mjx-c></mjx-ext><mjx-end><mjx-c></mjx-c></mjx-end><mjx-mark></mjx-mark></mjx-stretchy-v></mjx-mo><mjx-mtable style="min-width: 14.134em;"><mjx-table><mjx-itable><mjx-mtr><mjx-mtd style="text-align: left; padding-bottom: 0.1em;"><mjx-munderover limits="false"><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c69"></mjx-c><mjx-c class="mjx-c6E"></mjx-c></mjx-mo><mjx-script style="vertical-align: -0.247em; margin-left: 0;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D434 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom><mjx-spacer style="margin-top: 0.331em;"></mjx-spacer><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D465 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-script></mjx-munderover><mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c2264"></mjx-c></mjx-mo><mjx-munderover space="4" limits="false"><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c61"></mjx-c><mjx-c class="mjx-c78"></mjx-c></mjx-mo><mjx-script style="vertical-align: -0.247em; margin-left: 0;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D435 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom><mjx-spacer style="margin-top: 0.297em;"></mjx-spacer><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D465 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-script></mjx-munderover><mjx-mtext class="mjx-n" space="2"><mjx-c class="mjx-cA0"></mjx-c></mjx-mtext><mjx-mo class="mjx-n" space="3"><mjx-c class="mjx-c2227"></mjx-c></mjx-mo><mjx-mtext class="mjx-n" space="3"><mjx-c class="mjx-cA0"></mjx-c></mjx-mtext><mjx-munderover space="2" limits="false"><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c69"></mjx-c><mjx-c class="mjx-c6E"></mjx-c></mjx-mo><mjx-script style="vertical-align: -0.247em; margin-left: 0;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D435 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom><mjx-spacer style="margin-top: 0.331em;"></mjx-spacer><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D465 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-script></mjx-munderover><mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c2264"></mjx-c></mjx-mo><mjx-munderover space="4" limits="false"><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c61"></mjx-c><mjx-c class="mjx-c78"></mjx-c></mjx-mo><mjx-script style="vertical-align: -0.247em; margin-left: 0;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D434 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom><mjx-spacer style="margin-top: 0.297em;"></mjx-spacer><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D465 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-script></mjx-munderover><mjx-tstrut></mjx-tstrut></mjx-mtd></mjx-mtr><mjx-mtr><mjx-mtd style="text-align: left; padding-top: 0.1em; padding-bottom: 0.1em;"><mjx-munderover limits="false"><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c69"></mjx-c><mjx-c class="mjx-c6E"></mjx-c></mjx-mo><mjx-script style="vertical-align: -0.247em; margin-left: 0;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D434 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom><mjx-spacer style="margin-top: 0.331em;"></mjx-spacer><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D466 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-script></mjx-munderover><mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c2264"></mjx-c></mjx-mo><mjx-munderover space="4" limits="false"><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c61"></mjx-c><mjx-c class="mjx-c78"></mjx-c></mjx-mo><mjx-script style="vertical-align: -0.247em; margin-left: 0;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D435 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom><mjx-spacer style="margin-top: 0.297em;"></mjx-spacer><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D466 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-script></mjx-munderover><mjx-mtext class="mjx-n" space="2"><mjx-c class="mjx-cA0"></mjx-c></mjx-mtext><mjx-mo class="mjx-n" space="3"><mjx-c class="mjx-c2227"></mjx-c></mjx-mo><mjx-mtext class="mjx-n" space="3"><mjx-c class="mjx-cA0"></mjx-c></mjx-mtext><mjx-munderover space="2" limits="false"><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c69"></mjx-c><mjx-c class="mjx-c6E"></mjx-c></mjx-mo><mjx-script style="vertical-align: -0.247em; margin-left: 0;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D435 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom><mjx-spacer style="margin-top: 0.331em;"></mjx-spacer><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D466 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-script></mjx-munderover><mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c2264"></mjx-c></mjx-mo><mjx-munderover space="4" limits="false"><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c61"></mjx-c><mjx-c class="mjx-c78"></mjx-c></mjx-mo><mjx-script style="vertical-align: -0.247em; margin-left: 0;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D434 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom><mjx-spacer style="margin-top: 0.297em;"></mjx-spacer><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D466 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-script></mjx-munderover><mjx-tstrut></mjx-tstrut></mjx-mtd></mjx-mtr><mjx-mtr><mjx-mtd style="text-align: left; padding-top: 0.1em;"><mjx-munderover limits="false"><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c69"></mjx-c><mjx-c class="mjx-c6E"></mjx-c></mjx-mo><mjx-script style="vertical-align: -0.247em; margin-left: 0;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D434 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom><mjx-spacer style="margin-top: 0.331em;"></mjx-spacer><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D467 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-script></mjx-munderover><mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c2264"></mjx-c></mjx-mo><mjx-munderover space="4" limits="false"><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c61"></mjx-c><mjx-c class="mjx-c78"></mjx-c></mjx-mo><mjx-script style="vertical-align: -0.247em; margin-left: 0;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D435 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom><mjx-spacer style="margin-top: 0.297em;"></mjx-spacer><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D467 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-script></mjx-munderover><mjx-mtext class="mjx-n" space="2"><mjx-c class="mjx-cA0"></mjx-c></mjx-mtext><mjx-mo class="mjx-n" space="3"><mjx-c class="mjx-c2227"></mjx-c></mjx-mo><mjx-mtext class="mjx-n" space="3"><mjx-c class="mjx-cA0"></mjx-c></mjx-mtext><mjx-munderover space="2" limits="false"><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c69"></mjx-c><mjx-c class="mjx-c6E"></mjx-c></mjx-mo><mjx-script style="vertical-align: -0.247em; margin-left: 0;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D435 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom><mjx-spacer style="margin-top: 0.331em;"></mjx-spacer><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D467 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-script></mjx-munderover><mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c2264"></mjx-c></mjx-mo><mjx-munderover space="4" limits="false"><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c61"></mjx-c><mjx-c class="mjx-c78"></mjx-c></mjx-mo><mjx-script style="vertical-align: -0.247em; margin-left: 0;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D434 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom><mjx-spacer style="margin-top: 0.297em;"></mjx-spacer><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D467 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-script></mjx-munderover><mjx-tstrut></mjx-tstrut></mjx-mtd></mjx-mtr></mjx-itable></mjx-table></mjx-mtable><mjx-mo class="mjx-n" style="vertical-align: 0.25em;"></mjx-mo></mjx-mrow></mjx-math></mjx-container></div>
+<p><strong>实现</strong>：6 次比较即可（或写成 |c_A − c_B| 与半长之和的分量比较）：</p>
+<pre><code>if (A.max.x &lt; B.min.x || B.max.x &lt; A.min.x) return false;
+if (A.max.y &lt; B.min.y || B.max.y &lt; A.min.y) return false;
+if (A.max.z &lt; B.min.z || B.max.z &lt; A.min.z) return false;
+return true;
+</code></pre>
+<p><strong>延伸</strong>：</p>
+<ul>
+<li><strong>穿透深度（MTD）</strong>：三个轴的重叠量 Δx、Δy、Δz 中<strong>最小</strong>的一个，方向为对应轴的推出方向；</li>
+<li>这正是 SAT 在 3 个轴上的特例；</li>
+<li>加 epsilon 处理"刚好接触"的退化情况。</li>
+</ul>
+<h2 id="1210-k-dopk-dop-相交测试原理">12.10 k-DOP／k-DOP 相交测试原理</h2>
+<p><strong>原理</strong>：与 AABB 完全同构，只是把"3 个轴"换成"k/2 个固定方向"。两个 k-DOP 相交 ⟺ <strong>在每一个方向上的投影区间都重叠</strong>：</p>
+<div class="eq"><mjx-container class="MathJax" jax="CHTML" display="true"><mjx-math display="true" style="margin-left: 0; margin-right: 0;" class=" MJX-TEX"><mjx-mi class="mjx-n"><mjx-c class="mjx-c2200"></mjx-c></mjx-mi><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D457 TEX-I"></mjx-c></mjx-mi><mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c2208"></mjx-c></mjx-mo><mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c7B"></mjx-c></mjx-mo><mjx-mn class="mjx-n"><mjx-c class="mjx-c31"></mjx-c></mjx-mn><mjx-mo class="mjx-n"><mjx-c class="mjx-c2C"></mjx-c></mjx-mo><mjx-mo class="mjx-n" space="2"><mjx-c class="mjx-c2026"></mjx-c></mjx-mo><mjx-mo class="mjx-n" space="2"><mjx-c class="mjx-c2C"></mjx-c></mjx-mo><mjx-mi class="mjx-i" space="2"><mjx-c class="mjx-c1D458 TEX-I"></mjx-c></mjx-mi><mjx-TeXAtom texclass="ORD"><mjx-mo class="mjx-n"><mjx-c class="mjx-c2F"></mjx-c></mjx-mo></mjx-TeXAtom><mjx-mn class="mjx-n"><mjx-c class="mjx-c32"></mjx-c></mjx-mn><mjx-mo class="mjx-n"><mjx-c class="mjx-c7D"></mjx-c></mjx-mo><mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c3A"></mjx-c></mjx-mo><mjx-mstyle><mjx-mspace style="width: 1em;"></mjx-mspace></mjx-mstyle><mjx-mrow space="4"><mjx-mo class="mjx-s3"><mjx-c class="mjx-c5B TEX-S3"></mjx-c></mjx-mo><mjx-munderover><mjx-over style="padding-bottom: 0.2em; padding-left: 0.568em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D434 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-over><mjx-box><mjx-munder><mjx-row><mjx-base><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c69"></mjx-c><mjx-c class="mjx-c6E"></mjx-c></mjx-mo></mjx-base></mjx-row><mjx-row><mjx-under style="padding-top: 0.167em; padding-left: 0.688em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D457 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-under></mjx-row></mjx-munder></mjx-box></mjx-munderover><mjx-mo class="mjx-n"><mjx-c class="mjx-c2C"></mjx-c></mjx-mo><mjx-munderover space="2"><mjx-over style="padding-bottom: 0.2em; padding-left: 0.665em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D434 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-over><mjx-box><mjx-munder><mjx-row><mjx-base><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c61"></mjx-c><mjx-c class="mjx-c78"></mjx-c></mjx-mo></mjx-base></mjx-row><mjx-row><mjx-under style="padding-top: 0.167em; padding-left: 0.785em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D457 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-under></mjx-row></mjx-munder></mjx-box></mjx-munderover><mjx-mo class="mjx-s3"><mjx-c class="mjx-c5D TEX-S3"></mjx-c></mjx-mo></mjx-mrow><mjx-mo class="mjx-n" space="3"><mjx-c class="mjx-c2229"></mjx-c></mjx-mo><mjx-mrow space="3"><mjx-mo class="mjx-s3"><mjx-c class="mjx-c5B TEX-S3"></mjx-c></mjx-mo><mjx-munderover><mjx-over style="padding-bottom: 0.2em; padding-left: 0.565em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D435 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-over><mjx-box><mjx-munder><mjx-row><mjx-base><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c69"></mjx-c><mjx-c class="mjx-c6E"></mjx-c></mjx-mo></mjx-base></mjx-row><mjx-row><mjx-under style="padding-top: 0.167em; padding-left: 0.688em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D457 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-under></mjx-row></mjx-munder></mjx-box></mjx-munderover><mjx-mo class="mjx-n"><mjx-c class="mjx-c2C"></mjx-c></mjx-mo><mjx-munderover space="2"><mjx-over style="padding-bottom: 0.2em; padding-left: 0.662em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D435 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-over><mjx-box><mjx-munder><mjx-row><mjx-base><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c61"></mjx-c><mjx-c class="mjx-c78"></mjx-c></mjx-mo></mjx-base></mjx-row><mjx-row><mjx-under style="padding-top: 0.167em; padding-left: 0.785em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D457 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-under></mjx-row></mjx-munder></mjx-box></mjx-munderover><mjx-mo class="mjx-s3"><mjx-c class="mjx-c5D TEX-S3"></mjx-c></mjx-mo></mjx-mrow><mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c2260"></mjx-c></mjx-mo><mjx-mi class="mjx-var" space="4"><mjx-c class="mjx-c2205 TEX-A"></mjx-c></mjx-mi></mjx-math></mjx-container></div>
+<p><strong>实现</strong>：对 j 逐个测试</p>
+<pre><code>if (A.max[j] &lt; B.min[j] || B.max[j] &lt; A.min[j]) return false;   // 该方向分离
+</code></pre>
+<p>全部通过则相交；一旦某个方向分离立即返回（early exit）。</p>
+<p><strong>要点</strong>：</p>
+<ul>
+<li>只需 <strong>k 次比较</strong>（每方向 2 次），与 k 线性，非常快；</li>
+<li>因方向集<strong>固定</strong>，两个 k-DOP 可以直接比较——不需要像 OBB 那样构造 15 个轴；</li>
+<li><strong>分离轴定理的特例</strong>：只用了"面法向"这一类轴，忽略了棱叉积，因此 k-DOP 测试是<strong>保守的</strong>（可能把实际不相交的判为相交），需要用更大的 k（18/26）来减少误报；</li>
+<li>可给出 MTD：所有方向中重叠量最小者；</li>
+<li>对层次 k-DOP 树，按树遍历可加速。</li>
+</ul>
+<h2 id="1211-碰撞响应的三类方法补充常与检测一起考">12.11 碰撞响应的三类方法（补充，常与检测一起考）</h2>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>做法</th>
+<th>特点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>冲量法（impulse-based）</strong></td>
+<td>在接触点沿法向施加冲量使相对法向速度反向（含恢复系数 e 与摩擦），同时更新角速度</td>
+<td>适合刚体、可处理多接触、无穿透；需迭代求解</td>
+</tr>
+<tr>
+<td><strong>罚函数法（penalty）</strong></td>
+<td>用弹簧-阻尼力把穿透的物体推开：F = k·δ − c·v_n（δ 为穿透深度）</td>
+<td>简单，但需小步长、可能不稳定/抖动</td>
+</tr>
+<tr>
+<td><strong>位置修正/投影（projection）</strong></td>
+<td>直接把物体沿法向移出穿透（可加摩擦位移）</td>
+<td>稳定、简单，常用于布料/粒子；会"抹掉"能量</td>
+</tr>
+<tr>
+<td><strong>约束求解（constraint-based）</strong></td>
+<td>把"不穿透"作为约束，用 LCP/序列冲量/位置约束迭代求解</td>
+<td>工业级物理引擎主流，稳定可堆叠</td>
+</tr>
+</tbody>
+</table>
+<p><strong>连续碰撞检测（CCD）</strong>：高速物体一步内可能"穿过"薄壁，需把运动看作线段/扫掠体，求<strong>首次碰撞时间（TOI）</strong>并在此刻分割步长（保守推进 conservative advancement）。</p>
+<blockquote>
+<p><strong>考点</strong>：三个问题、包围体选择、k-DOP 定义与轴、SAT（含 15 轴）、射线/平板层、射线/三角形、AABB/AABB、k-DOP/k-DOP——公式与"为什么快/为什么保守"。</p>
+</blockquote>
+    </div>
+    <p class="back"><a class="ef-btn" href="11_隐式曲面.html">← 第十二部分　隐式曲面与元球自动拟合</a> <a class="ef-btn" href="13_数值积分.html">第十四部分　数值积分与物理动画基础 →</a> <a class="ef-btn" href="../../index.html">返回本课</a></p>
+  </div>
+  <aside class="ef-margin toc-aside" aria-label="本页目录">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>本页目录</span><span>11 节</span></p>
+      <ol>
+      <li><a class="lvl2" href="#121-碰撞处理包括哪三个问题">12.1 碰撞处理包括哪三个问题</a></li>
+      <li><a class="lvl2" href="#122-碰撞检测中如何选择包围体">12.2 碰撞检测中如何选择包围体</a></li>
+      <li><a class="lvl2" href="#123-离散有向多面体-k-dop-的定义与轴的选择">12.3 离散有向多面体 k-DOP 的定义与轴的选择</a></li>
+      <li><a class="lvl2" href="#124-碰撞检测中的分离轴定理sat">12.4 碰撞检测中的分离轴定理（SAT）</a></li>
+      <li><a class="lvl2" href="#125-如何构建多面体模型的-aabb-与-k-dop-包围盒">12.5 如何构建多面体模型的 AABB 与 k-DOP 包围盒</a></li>
+      <li><a class="lvl2" href="#126-求交测试的重要规则">12.6 求交测试的重要规则</a></li>
+      <li><a class="lvl2" href="#127-射线平板层相交法ray-slab-method">12.7 射线／平板层相交法（ray / slab method）</a></li>
+      <li><a class="lvl2" href="#128-射线三角形相交测试möllertrumbore-算法">12.8 射线／三角形相交测试（Möller–Trumbore 算法）</a></li>
+      <li><a class="lvl2" href="#129-aabbaabb-相交测试">12.9 AABB／AABB 相交测试</a></li>
+      <li><a class="lvl2" href="#1210-k-dopk-dop-相交测试原理">12.10 k-DOP／k-DOP 相交测试原理</a></li>
+      <li><a class="lvl2" href="#1211-碰撞响应的三类方法补充常与检测一起考">12.11 碰撞响应的三类方法（补充，常与检测一起考）</a></li>
+      </ol>
+    </div>
+  </aside>
+</article>
+
+<footer class="foot">
+  <span class="ef-field">KYSIIN.ARCHIVE · 2026.11.15 · 由 Markdown 渲染</span>
+  <span>用 endfield-ui 渲染 · Saira（SIL OFL）自托管</span>
+</footer>
+<script type="module">
+  import { wireTheme } from '../../../../assets/fx.js'
+  wireTheme()
+</script>
+<script defer src="../../../../assets/search.js?v=202611150558"></script>
+<script>
+  /* 左栏：每个分组可独立展开/收起 */
+  (function () {
+    document.querySelectorAll('.tree-toggle').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var li = btn.closest('.tree-group');
+        var list = li ? li.querySelector('.tree-items') : null;
+        var open = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', String(!open));
+        if (list) list.hidden = open;
+        if (li) li.classList.toggle('is-open', !open);
+      });
+    });
+  })();
+</script>
+<script>
+  /* 右栏目录跟随滚动：读到哪一节就把那一行标出来 */
+  (function () {
+    var links = [].slice.call(document.querySelectorAll('.toc-aside a[href^="#"]'));
+    if (!links.length) return;
+    var items = links.map(function (a) {
+      var el = document.getElementById(a.getAttribute('href').slice(1));
+      return el ? { a: a, el: el } : null;
+    }).filter(Boolean);
+    if (!items.length) return;
+    var ticking = false;
+    function spy() {
+      ticking = false;
+      var line = window.scrollY + 140;
+      var best = null;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].el.getBoundingClientRect().top + window.scrollY <= line) best = items[i];
+      }
+      links.forEach(function (a) { a.removeAttribute('aria-current'); });
+      if (best) best.a.setAttribute('aria-current', 'true');
+    }
+    window.addEventListener('scroll', function () {
+      if (!ticking) { ticking = true; requestAnimationFrame(spy); }
+    }, { passive: true });
+    spy();
+  })();
+</script>
+</body>
+</html>

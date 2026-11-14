@@ -1,0 +1,638 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>A+B with Binary Search Trees · KYSIIN.ARCHIVE</title>
+<script src="../../../../assets/variant.js"></script>
+<link rel="stylesheet" href="../../../../assets/local-fonts.css" />
+<link rel="stylesheet" href="../../../../assets/endfield.css" />
+<link rel="stylesheet" href="../../../../assets/mathjax/mathjax.css" />
+<style>
+  body { --tri-h: 3px; --topbar-h: 3.1rem; }
+  body > .ef-tri { position: sticky; top: 0; z-index: 61; }
+  .topbar { position:sticky; top:var(--tri-h); z-index:60;
+    display:flex; align-items:center; gap:1.5rem; padding:.85rem var(--ef-pad);
+    border-bottom:1px solid var(--ef-rule); background:var(--ef-panel); }
+  .topbar .brand { margin:0; font-family:var(--ef-font-ui); font-size:.95rem;
+    font-stretch:var(--ef-wider); font-weight:800; letter-spacing:.08em;
+    text-decoration:none; color:var(--ef-ink); }
+  .topbar nav { display:flex; align-items:center; gap:1.25rem; margin-left:auto; }
+  .topbar nav a { text-decoration:none; color:var(--ef-ink-2); }
+  .foot { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between;
+    gap:1rem; padding:1.5rem var(--ef-pad) 2.5rem; border-top:1px solid var(--ef-rule);
+    color:var(--ef-ink-2); font-size:.875rem; }
+  @media (max-width: 959px) { .ef-spread { grid-template-columns:minmax(0,1fr); }
+    .ef-sheet { border-right:0; border-bottom:1px solid var(--ef-rule); } }
+  @media (max-width:760px) { .topbar { flex-wrap:wrap; gap:.75rem; }
+    .topbar nav { order:3; width:100%; margin-left:0; } }
+
+  .title { margin:1.5rem 0 1rem; font-size:clamp(var(--ef-t-title),5vw,var(--ef-t-h1));
+    font-weight:700; line-height:1.3; }
+  .ef-prose { margin-top:1.75rem; }
+  .ef-prose img { max-width:100%; height:auto; border:1px solid var(--ef-rule); background:#fff; }
+  .ef-prose table { width:100%; border-collapse:collapse; font-size:.9rem; }
+  .ef-prose th, .ef-prose td { border-bottom:1px solid var(--ef-rule); padding:.45rem .6rem; text-align:left; }
+  .ef-prose th { font-family:var(--ef-font-ui); font-stretch:var(--ef-wide); font-size:.8rem; }
+  /* 代码块：整块一个背景；块内的 code 不再带行内边框/内边距 */
+  .ef-prose pre { overflow:auto; margin:1rem 0; padding:.9rem 1rem;
+    background:var(--ef-chip); border-left:3px solid var(--ef-rule);
+    font-size:.85rem; line-height:1.6; tab-size:4; }
+  .ef-prose pre code { display:block; padding:0; border:0; background:none;
+    font-family:var(--ef-font-mono); font-size:.85rem; line-height:1.6; white-space:pre; }
+  .ef-prose :not(pre) > code { font-family:var(--ef-font-mono); font-size:.88em;
+    padding:.1em .35em; border:1px solid var(--ef-rule); background:var(--ef-paper); }
+  .ef-prose blockquote { border-left:3px solid var(--ef-ink); margin:1rem 0; padding:.25rem 0 .25rem 1rem;
+    color:var(--ef-ink-2); }
+
+  /* —— 公式：绝不超出正文栏；行间公式可横向滚动 —— */
+  .ef-prose mjx-container { max-width:100%; }
+  .ef-prose mjx-container[display="true"] { display:block; text-align:center; margin:1.1em 0;
+    max-width:100%; overflow-x:auto; overflow-y:hidden; padding:2px 0; }
+  .ef-prose mjx-container[jax="CHTML"] { font-size:1.02em; }
+  .eq { overflow-x:auto; overflow-y:hidden; max-width:100%; padding:2px 0; }
+  .eq mjx-container[display="true"] { margin:.35em 0; }
+
+  .toc ol { margin:0; padding:0; list-style:none; border-left:1px solid var(--ef-rule); }
+  .toc a { display:block; margin-left:-1px; padding:.22rem 0 .22rem .7rem;
+    border-left:3px solid transparent; color:var(--ef-ink-2); font-size:.85rem;
+    overflow-wrap:anywhere; }
+  .toc a:hover { color:var(--ef-ink); border-left-color:var(--ef-trace); }
+  .toc .lvl3 { padding-left:1.3rem; font-size:.8rem; }
+  .back { margin:2rem 0 0; display:flex; flex-wrap:wrap; gap:.75rem; }
+
+  /* —— 三栏铺满：两侧栏贴边，中间正文吃掉所有剩余宽度 —— */
+  .ef-spread { max-width: none; margin: 0; }
+
+  @media (min-width: 1180px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(11rem, 12vw, 14rem) minmax(0, 1fr) clamp(13rem, 14vw, 17rem);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+  }
+  @media (min-width: 960px) and (max-width: 1179px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(10rem, 12vw, 12rem) minmax(0, 1fr);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+    .ef-spread.has-rail > .toc-aside { display: none; }
+  }
+  @media (min-width: 960px) {
+    .ef-spread > .ef-margin {
+      position: sticky;
+      top: calc(var(--tri-h) + var(--topbar-h));
+      align-self: start;
+      max-height: calc(100vh - var(--tri-h) - var(--topbar-h));
+      overflow-y: auto;
+      scrollbar-width: thin;
+      padding: clamp(1.5rem, 3vw, 2.5rem) 1rem;
+    }
+    /* 两侧栏往屏幕边缘靠，别在页边留空 */
+    .ef-spread > .rail-aside { padding-left: .75rem; padding-right: 1.25rem; }
+    .ef-spread > .toc-aside { padding-left: 1.25rem; padding-right: .75rem; }
+    /* 正文左右留呼吸，但不限制宽度 */
+    .ef-spread > .ef-sheet { padding-left: clamp(2rem, 3.5vw, 4rem); padding-right: clamp(2rem, 3.5vw, 4rem); }
+    /* 套件把正文限制在 40rem；中间栏变宽后这里放开，让文字铺满 */
+    .ef-sheet .ef-prose,
+    .ef-sheet .ef-lede,
+    .ef-sheet .title,
+    .ef-sheet .ef-read,
+    .ef-sheet .ef-facts,
+    .ef-sheet .ef-empty,
+    .ef-sheet .ef-notice { max-width: none; }
+  }
+  .ef-margin .toc a { font-size: .74rem; line-height: 1.5; }
+  .toc a[aria-current] { color: var(--ef-ink); border-left-color: var(--ef-trace); font-weight: 600; }
+  .rail-head { display: block; margin: 0 0 .5rem; padding-bottom: .35rem;
+    border-bottom: 1px solid var(--ef-rule); font-size: .68rem; line-height: 1.5; }
+  .rail-head span { display: inline; }
+  .rail-head span + span { display: block; color: var(--ef-ink-2); }
+  .rail-aside .toc a { padding-top: .3rem; padding-bottom: .3rem; }
+  .rail-tree { list-style:none; margin:0; padding:0; }
+  .rail-tree .tree-name { display:block; padding:.35rem .2rem .35rem .6rem;
+    border-left:3px solid transparent; font-size:.76rem; font-weight:600; color:var(--ef-ink); }
+  .rail-tree .tree-label { display:inline; }
+  .rail-tree .tree-name .ef-field { font-size:.68rem; color:var(--ef-ink-2); margin-left:.35rem;
+    white-space:nowrap; }
+  .rail-tree .tree-group.is-open > .tree-name { border-left-color:var(--ef-trace); }
+  .rail-tree .tree-items { list-style:none; margin:.1rem 0 .5rem; padding:0 0 0 .6rem;
+    border-left:1px solid var(--ef-rule); }
+  .rail-tree .tree-items a { padding-left:.6rem; font-size:.72rem; line-height:1.45; }
+  .tree-row { display:flex; align-items:stretch; gap:.15rem; }
+  .tree-row .tree-name { flex:1 1 auto; min-width:0; }
+  .tree-toggle { flex:none; width:1.55rem; min-height:1.9rem; display:grid; place-items:center;
+    padding:0; border:1px solid var(--ef-rule); background:var(--ef-panel); color:var(--ef-ink-2);
+    cursor:pointer; transition:color .12s var(--ef-ease), border-color .12s var(--ef-ease), background .12s var(--ef-ease); }
+  .tree-toggle:hover { color:var(--ef-ink); border-color:var(--ef-ink); background:var(--ef-chip); }
+  .tree-toggle svg { width:.7rem; height:.7rem; transition:transform .15s var(--ef-ease); }
+  .tree-toggle[aria-expanded="true"] svg { transform:rotate(90deg); }
+  .rail-tree .tree-items[hidden] { display:none; }
+  /* 滚动条统一样式在 assets/local-fonts.css 里定义（页面/侧栏/搜索共用） */
+
+  /* 窄屏：正文优先，两侧栏排到后面 */
+  @media (max-width: 959px) {
+    .ef-spread.has-rail > .ef-sheet { order: 1; }
+    .ef-spread.has-rail > .rail-aside { order: 2; border-top: 1px solid var(--ef-rule); }
+    .ef-spread.has-rail > .toc-aside { order: 3; }
+  }
+
+  /* —— 复习笔记：PDF 下载 —— */
+  .pdf-dl { display:flex; flex-wrap:wrap; align-items:center; gap:.75rem; margin:1.1rem 0 0; }
+  .pdf-dl .ef-btn { border-color:var(--ef-ink); }
+
+  /* —— 打印 / 导出 PDF：只留正文 —— */
+  @page { size:A4; margin:16mm 14mm 18mm; }
+  @media print {
+    html, body { background:#fff !important; }
+    .topbar, .foot, .ef-tri, .rail-aside, .toc-aside, .back, .pdf-dl,
+    .ef-crumb, .ef-eyebrow, .ef-facts, .ef-notice { display:none !important; }
+    .ef-spread, .ef-spread.has-rail { display:block !important; max-width:none !important; }
+    .ef-sheet { border:0 !important; padding:0 !important; background:#fff !important; }
+    .ef-sheet .ef-prose, .ef-sheet .ef-lede, .ef-sheet .title { max-width:none !important; }
+    .title { margin:0 0 1rem; }
+    /* 打印用系统字体：体积小、离线打开不依赖自托管字体 */
+    body, .ef-prose, .title, .ef-lede, .ef-facts,
+    h1, h2, h3, h4, h5, h6 { font-family:"Microsoft YaHei UI","Microsoft YaHei","PingFang SC",sans-serif !important; }
+    .ef-prose pre, .ef-prose code { font-family:Consolas,"Cascadia Mono",monospace !important; }
+    .ef-prose { margin-top:1rem; }
+    .ef-prose pre { white-space:pre-wrap; word-break:break-word; }
+    .ef-prose pre code { white-space:pre-wrap; }
+    .ef-prose img, .ef-prose svg, mjx-container { max-width:100% !important; }
+    a { color:inherit !important; text-decoration:none !important; }
+    .ef-prose h2, .ef-prose h3 { break-after:avoid; }
+    .ef-prose pre, .ef-prose table, .eq { break-inside:avoid; }
+  }
+
+</style>
+</head>
+<body class="ef ef-contours">
+<div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+<header class="topbar">
+  <a class="brand" href="../../../../index.html">KYSIIN.ARCHIVE</a>
+  <nav class="ef-field" aria-label="主导航">
+    <a href="../../../../index.html">首页</a>
+    <a href="../../index.html" aria-current="page">高级数据结构与算法分析</a>
+  </nav>
+  <span data-search-slot></span>
+  <button class="ef-btn small" type="button" data-theme-toggle>切换深浅</button>
+</header>
+
+<article class="ef-spread has-rail">
+  <aside class="ef-margin rail-aside" aria-label="本课程分区">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>高级数据结构与算法分析</span><span>2 区</span></p>
+      <ol class="rail-tree">
+        <li class="tree-group">
+          <div class="tree-row">
+            <a class="tree-name" href="../../index.html#sec-%E4%B8%93%E9%A2%98"><span class="tree-label">专题</span><span class="ef-field">1</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="false" aria-label="展开 专题"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items" hidden>
+            <li><a href="../TIPS.html">TIPS</a></li>
+          </ol>
+        </li>
+        <li class="tree-group is-open">
+          <div class="tree-row">
+            <a class="tree-name" href="../../index.html#sec-%E5%AE%9E%E9%AA%8C"><span class="tree-label">实验</span><span class="ef-field">3</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="true" aria-label="收起 实验"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items">
+            <li><a href="A+B with Binary Search Trees.html" aria-current="page">A+B with Binary Search Trees</a></li>
+            <li><a href="../project_3/Recover the Design.html">Recover the Design</a></li>
+            <li><a href="../project_6/Complexity.html">Complexity</a></li>
+          </ol>
+        </li>
+      </ol>
+      <p class="ef-actions" style="margin:.9rem 0 0">
+        <a class="ef-btn small" href="../../index.html">返回课程</a>
+      </p>
+    </div>
+  </aside>
+  <div class="ef-sheet">
+    <p class="ef-eyebrow slash">Course / Article</p>
+    <p class="ef-crumb ef-field"><a href="../../../../index.html">首页</a><a href="../../index.html">高级数据结构与算法分析</a><span>实验</span><span>FDS</span></p>
+    <ul class="ef-facts ef-field">
+      <li>实验</li>
+      <li>2,002 字</li>
+      <li>2026.11.15</li>
+      <li>7 个小节</li>
+    </ul>
+    <h1 class="title ef-read">A+B with Binary Search Trees</h1>
+    <div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+    
+    <p class="ef-notice" data-flag="pdf-fallback">本页引用的 2 张图片没有随文件复制过来，完整版见同目录 PDF：<a href="ADS-FDS-%E4%BA%8C%E5%8F%89%E6%90%9C%E7%B4%A2%E6%A0%91%E6%B1%82A%2BB.pdf">ADS-FDS-二叉搜索树求A+B.pdf</a></p>
+    <div class="ef-prose">
+<h2 id="2024328">2024.3.28</h2>
+<h2 id="introduction">Introduction</h2>
+<p>The Binary Search Tree (BST) Pair Finder program is designed to efficiently identify pairs of elements from two binary search trees whose sum equals a specified target value. This functionality has various applications, including in computational finance, data analysis, and algorithmic problem solving where pair matching based on numerical values is essential.</p>
+<h2 id="algorithm-specification">Algorithm Specification</h2>
+<p>The program implements the following algorithmic steps:</p>
+<ol>
+<li><strong>Node Creation and Tree Construction:</strong></li>
+</ol>
+<ul>
+<li>Nodes are created with a specified key value and pointers to left and right children initialized to NULL.</li>
+<li>The <code>createTree</code> function builds two BSTs from input data, linking nodes based on parent-child relationships.</li>
+</ul>
+<p>```c
+   TreeNode* createTree(int n) {
+       if (n == 0) return NULL;</p>
+<pre><code>   TreeNode *nodes[n];  // Array to store the nodes
+   int keys[n];  // Array to store keys
+   int parentIndices[n];  // Array to store parent indices
+
+   // Read the input and create nodes
+   for (int i = 0; i &lt; n; i++) {
+       scanf("%d %d", &amp;keys[i], &amp;parentIndices[i]);  // Read key and parent index
+       nodes[i] = createNode(keys[i]);  // Create a node for each key
+   }
+
+   TreeNode *root = NULL;  // Initialize the root of the tree
+   // Construct the tree based on the parent-child relationships
+   for (int i = 0; i &lt; n; i++) {
+       if (parentIndices[i] == -1) {  // Identify the root node
+           root = nodes[i];
+       } else {  // Set the appropriate child for each parent node
+           TreeNode *parent = nodes[parentIndices[i]];
+           if (keys[i] &lt; parent-&gt;key) {
+               parent-&gt;left = nodes[i];
+           } else {
+               parent-&gt;right = nodes[i];
+           }
+       }
+   }
+   return root;  // Return the constructed tree
+</code></pre>
+<p>}
+   ```</p>
+<ol start="2">
+<li><strong>Finding Pairs:</strong></li>
+</ol>
+<ul>
+<li>Utilizes two pointers, one for each tree, traversing in opposite directions (inorder for T1 and reverse-inorder for T2).</li>
+<li>Uses a stack for each tree to manage traversal, ensuring no pair is missed.</li>
+</ul>
+<p>```c
+   void findPair(TreeNode *root1, TreeNode *root2, int target) {
+       if (!root1 || !root2) return;  // If either tree is empty, return immediately</p>
+<pre><code>   TreeNode *stack1[1000], *stack2[1000];  // Stacks to store nodes during traversal
+   int top1 = 0, top2 = 0;  // Stack pointers
+   TreeNode *curr1 = root1, *curr2 = root2;  // Current nodes for traversals
+   int found = 0;  // Flag to indicate if a pair has been found
+
+   // Start the process to find pairs
+   while (1) {
+       // Traverse to the leftmost node of the current subtree in T1
+       while (curr1) {
+           stack1[top1++] = curr1;
+           curr1 = curr1-&gt;left;
+       }
+       // Traverse to the rightmost node of the current subtree in T2
+       while (curr2) {
+           stack2[top2++] = curr2;
+           curr2 = curr2-&gt;right;
+       }
+       // If either stack is empty, stop the process
+       if (top1 == 0 || top2 == 0) break;
+
+       curr1 = stack1[top1 - 1];  // Get the next node from stack1
+       curr2 = stack2[top2 - 1];  // Get the next node from stack2
+
+       int sum = curr1-&gt;key + curr2-&gt;key;  // Calculate the sum of the two nodes' keys
+       // Check if the sum equals the target
+       if (sum == target) {
+           if (!found) {
+               printf("true\n");
+               found = 1;
+           }
+           printf("%d = %d + %d\n", target, curr1-&gt;key, curr2-&gt;key);  // Print the pair
+           curr1 = stack1[--top1];  // Move to the next node in T1
+           curr1 = curr1-&gt;right;
+           curr2 = stack2[--top2];  // Move to the next node in T2
+           curr2 = curr2-&gt;left;
+       } else if (sum &lt; target) {  // If the sum is less than the target, move right in T1
+           curr1 = stack1[--top1];
+           curr1 = curr1-&gt;right;
+           curr2 = NULL;
+       } else {  // If the sum is more than the target, move left in T2
+           curr2 = stack2[--top2];
+           curr2 = curr2-&gt;left;
+           curr1 = NULL;
+       }
+   }
+</code></pre>
+<p>```</p>
+<ol start="3">
+<li><strong>Preorder Traversal:</strong></li>
+</ol>
+<ul>
+<li>For output verification, performs a preorder traversal of each tree, displaying the structure and correctness of tree construction.</li>
+</ul>
+<p><code>c
+   void preorderTraversal(TreeNode *root, int n) {
+       if (root != NULL) {  // If the current node is not null, process it
+           printf("%d", root-&gt;key);  // Print the current node's key
+           if (--n &gt; 0) printf(" ");  // Print space if more nodes are to be printed
+           preorderTraversal(root-&gt;left, n);  // Recursively traverse the left subtree
+           preorderTraversal(root-&gt;right, n);  // Recursively traverse the right subtree
+       }
+   }</code></p>
+<p>## Testing Results</p>
+<p>### Test case 1</p>
+<p>input:</p>
+<p><code>8
+   12 2
+   16 5
+   13 4
+   18 5
+   15 -1
+   17 4
+   14 2
+   18 3
+   7
+   20 -1
+   16 0
+   25 0
+   13 1
+   18 1
+   21 2
+   28 2
+   36</code></p>
+<p>expected output:</p>
+<p><code>true
+   36 = 15 + 21
+   36 = 16 + 20
+   36 = 18 + 18
+   15 13 12 14 17 16 18 18
+   20 16 13 18 25 21 28</code></p>
+<p>actual output:</p>
+<p><span class="ef-field">［图片缺失］</span></p>
+<p>### Test case 2:</p>
+<p>input</p>
+<p><code>5
+   10 -1
+   5 0
+   15 0
+   2 1
+   7 1
+   3
+   15 -1
+   10 0
+   20 0
+   40</code></p>
+<p>expected output</p>
+<p><code>false
+   10 5 2 7 15
+   15 10 20</code></p>
+<p>actual output:</p>
+<p><span class="ef-field">［图片缺失］</span></p>
+<p>## Analysis and Comments</p>
+<ul>
+<li><strong>Efficiency:</strong> The algorithm is efficient in terms of time complexity, performing traversal in O(n) time for each tree, resulting in an overall O(n) complexity for balanced BSTs.</li>
+<li><strong>Scalability:</strong> The program handles dynamic input sizes, although the stack size in <code>findPair</code> is statically defined, which could be improved for very large trees.</li>
+<li><strong>Maintainability:</strong> Comments and clear structuring of the program enhance maintainability and readability.</li>
+</ul>
+<h3 id="time-complexity">Time Complexity</h3>
+<ol>
+<li><strong>Tree Construction (<code>createTree</code> function):</strong>
+   - For each of the n nodes, the function assigns parent-child relationships in a loop.
+   - The time complexity is O(n) since each node is visited once.</li>
+<li><strong>Finding Pairs (<code>findPair</code> function):</strong>
+   - This function involves traversing both trees simultaneously, with each tree having potentially �<em>n</em> nodes.
+   - In the worst case, each node in both trees is visited once, leading to a time complexity of O(n+m), where n and m are the numbers of nodes in the two trees, respectively.</li>
+<li><strong>Preorder Traversal (<code>preorderTraversal</code> function):</strong>
+   - The preorder traversal visits each node exactly once, resulting in O(n) time complexity for each tree traversal.</li>
+</ol>
+<p>Combining these operations, the total time complexity of the program is O(n+m), where n and m are the sizes of the two trees, assuming the traversal and pair finding are the dominant operations.</p>
+<h3 id="space-complexity">Space Complexity</h3>
+<ol>
+<li><strong>Tree Storage:</strong>
+   - The space required to store the trees is O(n+m), considering all nodes in both trees.</li>
+<li><strong>Stack for Traversal (<code>findPair</code> function):</strong>
+   - In the worst case, the stack could grow proportionally to the height of the tree. For balanced trees, the height is O(<mjx-container class="MathJax" jax="CHTML"><mjx-math class=" MJX-TEX"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D459 TEX-I"></mjx-c></mjx-mi><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D45C TEX-I"></mjx-c></mjx-mi><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D454 TEX-I"></mjx-c></mjx-mi><mjx-TeXAtom texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D45B TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-math></mjx-container>) or (O(<mjx-container class="MathJax" jax="CHTML"><mjx-math class=" MJX-TEX"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D459 TEX-I"></mjx-c></mjx-mi><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D45C TEX-I"></mjx-c></mjx-mi><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D454 TEX-I"></mjx-c></mjx-mi><mjx-TeXAtom texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D45A TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-math></mjx-container>) respectively, but for skewed trees, it could be O(n) or O(m).
+   - However, since we traverse both trees simultaneously and store nodes in stacks, the combined space complexity for the stacks would be O(n+m) in the worst case of skewed trees.</li>
+<li><strong>Auxiliary Space:</strong>
+   - This includes space for variables and function call stack during recursion (preorder traversal), which would be O(h) for each tree, where ℎ<em>h</em> is the height of the tree.</li>
+</ol>
+<p>Given these points, the overall space complexity is O(n+m) due to the storage of nodes and stack space in the worst case of skewed trees.</p>
+<p>In conclusion, the program has a time complexity of O(n+m) and a space complexity of O(n+m), where n and m are the number of nodes in the two binary search trees, respectively.</p>
+<h2 id="declaration">Declaration</h2>
+<p>I hereby declare that all the work done in this project titled " Exponentiations Performance Measurement" is of my independent effort.</p>
+<h2 id="appendix">Appendix</h2>
+<pre><code class="language-c">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+// Define a structure for tree nodes
+typedef struct TreeNode {
+    int key;
+    struct TreeNode *left, *right;
+} TreeNode;
+
+// Function to create a new tree node with a given key
+TreeNode* createNode(int key) {
+    TreeNode* node = (TreeNode *)malloc(sizeof(TreeNode));  // Allocate memory for a new node
+    node-&gt;key = key;  // Set the key value of the node
+    node-&gt;left = node-&gt;right = NULL;  // Initialize left and right children as NULL
+    return node;
+}
+
+// Function to insert a node with a given key into the BST
+TreeNode* insert(TreeNode *root, int key) {
+    if (!root) {  // If the tree is empty, create the root node with the key
+        root = (TreeNode *)malloc(sizeof(TreeNode));
+        root-&gt;key = key;
+        root-&gt;left = root-&gt;right = NULL;
+    } else if (key &lt; root-&gt;key) {  // If the key is less than the root's key, insert it into the left subtree
+        root-&gt;left = insert(root-&gt;left, key);
+    } else {  // If the key is greater than or equal to the root's key, insert it into the right subtree
+        root-&gt;right = insert(root-&gt;right, key);
+    }
+    return root;  // Return the (possibly new) root of the subtree
+}
+
+// Function to perform a preorder traversal of the tree and print its elements
+void preorderTraversal(TreeNode *root, int n) {
+    if (root != NULL) {  // If the current node is not null, process it
+        printf(&quot;%d&quot;, root-&gt;key);  // Print the current node's key
+        if (--n &gt; 0) printf(&quot; &quot;);  // Print space if more nodes are to be printed
+        preorderTraversal(root-&gt;left, n);  // Recursively traverse the left subtree
+        preorderTraversal(root-&gt;right, n);  // Recursively traverse the right subtree
+    }
+}
+
+// Function to find and print pairs of nodes from two BSTs that sum up to a target value
+void findPair(TreeNode *root1, TreeNode *root2, int target) {
+    if (!root1 || !root2) return;  // If either tree is empty, return immediately
+
+    TreeNode *stack1[1000], *stack2[1000];  // Stacks to store nodes during traversal
+    int top1 = 0, top2 = 0;  // Stack pointers
+    TreeNode *curr1 = root1, *curr2 = root2;  // Current nodes for traversals
+    int found = 0;  // Flag to indicate if a pair has been found
+
+    // Start the process to find pairs
+    while (1) {
+        // Traverse to the leftmost node of the current subtree in T1
+        while (curr1) {
+            stack1[top1++] = curr1;
+            curr1 = curr1-&gt;left;
+        }
+        // Traverse to the rightmost node of the current subtree in T2
+        while (curr2) {
+            stack2[top2++] = curr2;
+            curr2 = curr2-&gt;right;
+        }
+        // If either stack is empty, stop the process
+        if (top1 == 0 || top2 == 0) break;
+
+        curr1 = stack1[top1 - 1];  // Get the next node from stack1
+        curr2 = stack2[top2 - 1];  // Get the next node from stack2
+
+        int sum = curr1-&gt;key + curr2-&gt;key;  // Calculate the sum of the two nodes' keys
+        // Check if the sum equals the target
+        if (sum == target) {
+            if (!found) {
+                printf(&quot;true\n&quot;);
+                found = 1;
+            }
+            printf(&quot;%d = %d + %d\n&quot;, target, curr1-&gt;key, curr2-&gt;key);  // Print the pair
+            curr1 = stack1[--top1];  // Move to the next node in T1
+            curr1 = curr1-&gt;right;
+            curr2 = stack2[--top2];  // Move to the next node in T2
+            curr2 = curr2-&gt;left;
+        } else if (sum &lt; target) {  // If the sum is less than the target, move right in T1
+            curr1 = stack1[--top1];
+            curr1 = curr1-&gt;right;
+            curr2 = NULL;
+        } else {  // If the sum is more than the target, move left in T2
+            curr2 = stack2[--top2];
+            curr2 = curr2-&gt;left;
+            curr1 = NULL;
+        }
+    }
+
+    if (!found) printf(&quot;false\n&quot;);  // If no pair was found, print &quot;false&quot;
+}
+
+// Function to create a BST from the given input format
+TreeNode* createTree(int n) {
+    if (n == 0) return NULL;
+
+    TreeNode *nodes[n];  // Array to store the nodes
+    int keys[n];  // Array to store keys
+    int parentIndices[n];  // Array to store parent indices
+
+    // Read the input and create nodes
+    for (int i = 0; i &lt; n; i++) {
+        scanf(&quot;%d %d&quot;, &amp;keys[i], &amp;parentIndices[i]);  // Read key and parent index
+        nodes[i] = createNode(keys[i]);  // Create a node for each key
+    }
+
+    TreeNode *root = NULL;  // Initialize the root of the tree
+    // Construct the tree based on the parent-child relationships
+    for (int i = 0; i &lt; n; i++) {
+        if (parentIndices[i] == -1) {  // Identify the root node
+            root = nodes[i];
+        } else {  // Set the appropriate child for each parent node
+            TreeNode *parent = nodes[parentIndices[i]];
+            if (keys[i] &lt; parent-&gt;key) {
+                parent-&gt;left = nodes[i];
+            } else {
+                parent-&gt;right = nodes[i];
+            }
+        }
+    }
+    return root;  // Return the constructed tree
+}
+
+int main() {
+    int n1, n2, N;
+    scanf(&quot;%d&quot;, &amp;n1);  // Read the number of nodes in T1
+    TreeNode *T1 = createTree(n1);  // Create T1 tree
+    scanf(&quot;%d&quot;, &amp;n2);  // Read the number of nodes in T2
+    TreeNode *T2 = createTree(n2);  // Create T2 tree
+    scanf(&quot;%d&quot;, &amp;N);  // Read the target sum
+
+    findPair(T1, T2, N);  // Find and print pairs that sum up to N
+
+    preorderTraversal(T1, n1);  // Print the preorder traversal of T1
+    printf(&quot;\n&quot;);
+    preorderTraversal(T2, n2);  // Print the preorder traversal of T2
+    printf(&quot;\n&quot;);
+
+    return 0;
+}
+</code></pre>
+    </div>
+    <p class="back"><a class="ef-btn" href="../TIPS.html">← TIPS</a> <a class="ef-btn" href="../project_3/Recover the Design.html">Recover the Design →</a> <a class="ef-btn" href="../../index.html">返回本课</a></p>
+  </div>
+  <aside class="ef-margin toc-aside" aria-label="本页目录">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>本页目录</span><span>7 节</span></p>
+      <ol>
+      <li><a class="lvl2" href="#2024328">2024.3.28</a></li>
+      <li><a class="lvl2" href="#introduction">Introduction</a></li>
+      <li><a class="lvl2" href="#algorithm-specification">Algorithm Specification</a></li>
+      <li><a class="lvl3" href="#time-complexity">Time Complexity</a></li>
+      <li><a class="lvl3" href="#space-complexity">Space Complexity</a></li>
+      <li><a class="lvl2" href="#declaration">Declaration</a></li>
+      <li><a class="lvl2" href="#appendix">Appendix</a></li>
+      </ol>
+    </div>
+  </aside>
+</article>
+
+<footer class="foot">
+  <span class="ef-field">KYSIIN.ARCHIVE · 2026.11.15 · 由 Markdown 渲染</span>
+  <span>用 endfield-ui 渲染 · Saira（SIL OFL）自托管</span>
+</footer>
+<script type="module">
+  import { wireTheme } from '../../../../assets/fx.js'
+  wireTheme()
+</script>
+<script defer src="../../../../assets/search.js?v=202611150558"></script>
+<script>
+  /* 左栏：每个分组可独立展开/收起 */
+  (function () {
+    document.querySelectorAll('.tree-toggle').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var li = btn.closest('.tree-group');
+        var list = li ? li.querySelector('.tree-items') : null;
+        var open = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', String(!open));
+        if (list) list.hidden = open;
+        if (li) li.classList.toggle('is-open', !open);
+      });
+    });
+  })();
+</script>
+<script>
+  /* 右栏目录跟随滚动：读到哪一节就把那一行标出来 */
+  (function () {
+    var links = [].slice.call(document.querySelectorAll('.toc-aside a[href^="#"]'));
+    if (!links.length) return;
+    var items = links.map(function (a) {
+      var el = document.getElementById(a.getAttribute('href').slice(1));
+      return el ? { a: a, el: el } : null;
+    }).filter(Boolean);
+    if (!items.length) return;
+    var ticking = false;
+    function spy() {
+      ticking = false;
+      var line = window.scrollY + 140;
+      var best = null;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].el.getBoundingClientRect().top + window.scrollY <= line) best = items[i];
+      }
+      links.forEach(function (a) { a.removeAttribute('aria-current'); });
+      if (best) best.a.setAttribute('aria-current', 'true');
+    }
+    window.addEventListener('scroll', function () {
+      if (!ticking) { ticking = true; requestAnimationFrame(spy); }
+    }, { passive: true });
+    spy();
+  })();
+</script>
+</body>
+</html>

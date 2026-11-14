@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>第十五部分　判断题易错点（123 条自查） · KYSIIN.ARCHIVE</title>
+<script src="../../../../assets/variant.js"></script>
+<link rel="stylesheet" href="../../../../assets/local-fonts.css" />
+<link rel="stylesheet" href="../../../../assets/endfield.css" />
+
+<style>
+  body { --tri-h: 3px; --topbar-h: 3.1rem; }
+  body > .ef-tri { position: sticky; top: 0; z-index: 61; }
+  .topbar { position:sticky; top:var(--tri-h); z-index:60;
+    display:flex; align-items:center; gap:1.5rem; padding:.85rem var(--ef-pad);
+    border-bottom:1px solid var(--ef-rule); background:var(--ef-panel); }
+  .topbar .brand { margin:0; font-family:var(--ef-font-ui); font-size:.95rem;
+    font-stretch:var(--ef-wider); font-weight:800; letter-spacing:.08em;
+    text-decoration:none; color:var(--ef-ink); }
+  .topbar nav { display:flex; align-items:center; gap:1.25rem; margin-left:auto; }
+  .topbar nav a { text-decoration:none; color:var(--ef-ink-2); }
+  .foot { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between;
+    gap:1rem; padding:1.5rem var(--ef-pad) 2.5rem; border-top:1px solid var(--ef-rule);
+    color:var(--ef-ink-2); font-size:.875rem; }
+  @media (max-width: 959px) { .ef-spread { grid-template-columns:minmax(0,1fr); }
+    .ef-sheet { border-right:0; border-bottom:1px solid var(--ef-rule); } }
+  @media (max-width:760px) { .topbar { flex-wrap:wrap; gap:.75rem; }
+    .topbar nav { order:3; width:100%; margin-left:0; } }
+
+  .title { margin:1.5rem 0 1rem; font-size:clamp(var(--ef-t-title),5vw,var(--ef-t-h1));
+    font-weight:700; line-height:1.3; }
+  .ef-prose { margin-top:1.75rem; }
+  .ef-prose img { max-width:100%; height:auto; border:1px solid var(--ef-rule); background:#fff; }
+  .ef-prose table { width:100%; border-collapse:collapse; font-size:.9rem; }
+  .ef-prose th, .ef-prose td { border-bottom:1px solid var(--ef-rule); padding:.45rem .6rem; text-align:left; }
+  .ef-prose th { font-family:var(--ef-font-ui); font-stretch:var(--ef-wide); font-size:.8rem; }
+  /* 代码块：整块一个背景；块内的 code 不再带行内边框/内边距 */
+  .ef-prose pre { overflow:auto; margin:1rem 0; padding:.9rem 1rem;
+    background:var(--ef-chip); border-left:3px solid var(--ef-rule);
+    font-size:.85rem; line-height:1.6; tab-size:4; }
+  .ef-prose pre code { display:block; padding:0; border:0; background:none;
+    font-family:var(--ef-font-mono); font-size:.85rem; line-height:1.6; white-space:pre; }
+  .ef-prose :not(pre) > code { font-family:var(--ef-font-mono); font-size:.88em;
+    padding:.1em .35em; border:1px solid var(--ef-rule); background:var(--ef-paper); }
+  .ef-prose blockquote { border-left:3px solid var(--ef-ink); margin:1rem 0; padding:.25rem 0 .25rem 1rem;
+    color:var(--ef-ink-2); }
+
+  /* —— 公式：绝不超出正文栏；行间公式可横向滚动 —— */
+  .ef-prose mjx-container { max-width:100%; }
+  .ef-prose mjx-container[display="true"] { display:block; text-align:center; margin:1.1em 0;
+    max-width:100%; overflow-x:auto; overflow-y:hidden; padding:2px 0; }
+  .ef-prose mjx-container[jax="CHTML"] { font-size:1.02em; }
+  .eq { overflow-x:auto; overflow-y:hidden; max-width:100%; padding:2px 0; }
+  .eq mjx-container[display="true"] { margin:.35em 0; }
+
+  .toc ol { margin:0; padding:0; list-style:none; border-left:1px solid var(--ef-rule); }
+  .toc a { display:block; margin-left:-1px; padding:.22rem 0 .22rem .7rem;
+    border-left:3px solid transparent; color:var(--ef-ink-2); font-size:.85rem;
+    overflow-wrap:anywhere; }
+  .toc a:hover { color:var(--ef-ink); border-left-color:var(--ef-trace); }
+  .toc .lvl3 { padding-left:1.3rem; font-size:.8rem; }
+  .back { margin:2rem 0 0; display:flex; flex-wrap:wrap; gap:.75rem; }
+
+  /* —— 三栏铺满：两侧栏贴边，中间正文吃掉所有剩余宽度 —— */
+  .ef-spread { max-width: none; margin: 0; }
+
+  @media (min-width: 1180px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(11rem, 12vw, 14rem) minmax(0, 1fr) clamp(13rem, 14vw, 17rem);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+  }
+  @media (min-width: 960px) and (max-width: 1179px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(10rem, 12vw, 12rem) minmax(0, 1fr);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+    .ef-spread.has-rail > .toc-aside { display: none; }
+  }
+  @media (min-width: 960px) {
+    .ef-spread > .ef-margin {
+      position: sticky;
+      top: calc(var(--tri-h) + var(--topbar-h));
+      align-self: start;
+      max-height: calc(100vh - var(--tri-h) - var(--topbar-h));
+      overflow-y: auto;
+      scrollbar-width: thin;
+      padding: clamp(1.5rem, 3vw, 2.5rem) 1rem;
+    }
+    /* 两侧栏往屏幕边缘靠，别在页边留空 */
+    .ef-spread > .rail-aside { padding-left: .75rem; padding-right: 1.25rem; }
+    .ef-spread > .toc-aside { padding-left: 1.25rem; padding-right: .75rem; }
+    /* 正文左右留呼吸，但不限制宽度 */
+    .ef-spread > .ef-sheet { padding-left: clamp(2rem, 3.5vw, 4rem); padding-right: clamp(2rem, 3.5vw, 4rem); }
+    /* 套件把正文限制在 40rem；中间栏变宽后这里放开，让文字铺满 */
+    .ef-sheet .ef-prose,
+    .ef-sheet .ef-lede,
+    .ef-sheet .title,
+    .ef-sheet .ef-read,
+    .ef-sheet .ef-facts,
+    .ef-sheet .ef-empty,
+    .ef-sheet .ef-notice { max-width: none; }
+  }
+  .ef-margin .toc a { font-size: .74rem; line-height: 1.5; }
+  .toc a[aria-current] { color: var(--ef-ink); border-left-color: var(--ef-trace); font-weight: 600; }
+  .rail-head { display: block; margin: 0 0 .5rem; padding-bottom: .35rem;
+    border-bottom: 1px solid var(--ef-rule); font-size: .68rem; line-height: 1.5; }
+  .rail-head span { display: inline; }
+  .rail-head span + span { display: block; color: var(--ef-ink-2); }
+  .rail-aside .toc a { padding-top: .3rem; padding-bottom: .3rem; }
+  .rail-tree { list-style:none; margin:0; padding:0; }
+  .rail-tree .tree-name { display:block; padding:.35rem .2rem .35rem .6rem;
+    border-left:3px solid transparent; font-size:.76rem; font-weight:600; color:var(--ef-ink); }
+  .rail-tree .tree-label { display:inline; }
+  .rail-tree .tree-name .ef-field { font-size:.68rem; color:var(--ef-ink-2); margin-left:.35rem;
+    white-space:nowrap; }
+  .rail-tree .tree-group.is-open > .tree-name { border-left-color:var(--ef-trace); }
+  .rail-tree .tree-items { list-style:none; margin:.1rem 0 .5rem; padding:0 0 0 .6rem;
+    border-left:1px solid var(--ef-rule); }
+  .rail-tree .tree-items a { padding-left:.6rem; font-size:.72rem; line-height:1.45; }
+  .tree-row { display:flex; align-items:stretch; gap:.15rem; }
+  .tree-row .tree-name { flex:1 1 auto; min-width:0; }
+  .tree-toggle { flex:none; width:1.55rem; min-height:1.9rem; display:grid; place-items:center;
+    padding:0; border:1px solid var(--ef-rule); background:var(--ef-panel); color:var(--ef-ink-2);
+    cursor:pointer; transition:color .12s var(--ef-ease), border-color .12s var(--ef-ease), background .12s var(--ef-ease); }
+  .tree-toggle:hover { color:var(--ef-ink); border-color:var(--ef-ink); background:var(--ef-chip); }
+  .tree-toggle svg { width:.7rem; height:.7rem; transition:transform .15s var(--ef-ease); }
+  .tree-toggle[aria-expanded="true"] svg { transform:rotate(90deg); }
+  .rail-tree .tree-items[hidden] { display:none; }
+  /* 滚动条统一样式在 assets/local-fonts.css 里定义（页面/侧栏/搜索共用） */
+
+  /* 窄屏：正文优先，两侧栏排到后面 */
+  @media (max-width: 959px) {
+    .ef-spread.has-rail > .ef-sheet { order: 1; }
+    .ef-spread.has-rail > .rail-aside { order: 2; border-top: 1px solid var(--ef-rule); }
+    .ef-spread.has-rail > .toc-aside { order: 3; }
+  }
+
+  /* —— 复习笔记：PDF 下载 —— */
+  .pdf-dl { display:flex; flex-wrap:wrap; align-items:center; gap:.75rem; margin:1.1rem 0 0; }
+  .pdf-dl .ef-btn { border-color:var(--ef-ink); }
+
+  /* —— 打印 / 导出 PDF：只留正文 —— */
+  @page { size:A4; margin:16mm 14mm 18mm; }
+  @media print {
+    html, body { background:#fff !important; }
+    .topbar, .foot, .ef-tri, .rail-aside, .toc-aside, .back, .pdf-dl,
+    .ef-crumb, .ef-eyebrow, .ef-facts, .ef-notice { display:none !important; }
+    .ef-spread, .ef-spread.has-rail { display:block !important; max-width:none !important; }
+    .ef-sheet { border:0 !important; padding:0 !important; background:#fff !important; }
+    .ef-sheet .ef-prose, .ef-sheet .ef-lede, .ef-sheet .title { max-width:none !important; }
+    .title { margin:0 0 1rem; }
+    /* 打印用系统字体：体积小、离线打开不依赖自托管字体 */
+    body, .ef-prose, .title, .ef-lede, .ef-facts,
+    h1, h2, h3, h4, h5, h6 { font-family:"Microsoft YaHei UI","Microsoft YaHei","PingFang SC",sans-serif !important; }
+    .ef-prose pre, .ef-prose code { font-family:Consolas,"Cascadia Mono",monospace !important; }
+    .ef-prose { margin-top:1rem; }
+    .ef-prose pre { white-space:pre-wrap; word-break:break-word; }
+    .ef-prose pre code { white-space:pre-wrap; }
+    .ef-prose img, .ef-prose svg, mjx-container { max-width:100% !important; }
+    a { color:inherit !important; text-decoration:none !important; }
+    .ef-prose h2, .ef-prose h3 { break-after:avoid; }
+    .ef-prose pre, .ef-prose table, .eq { break-inside:avoid; }
+  }
+
+</style>
+</head>
+<body class="ef ef-contours">
+<div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+<header class="topbar">
+  <a class="brand" href="../../../../index.html">KYSIIN.ARCHIVE</a>
+  <nav class="ef-field" aria-label="主导航">
+    <a href="../../../../index.html">首页</a>
+    <a href="../../index.html" aria-current="page">计算机动画</a>
+  </nav>
+  <span data-search-slot></span>
+  <button class="ef-btn small" type="button" data-theme-toggle>切换深浅</button>
+</header>
+
+<article class="ef-spread has-rail">
+  <aside class="ef-margin rail-aside" aria-label="本课程分区">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>计算机动画</span><span>3 区</span></p>
+      <ol class="rail-tree">
+        <li class="tree-group">
+          <div class="tree-row">
+            <a class="tree-name" href="../../index.html#sec-%E7%AB%A0%E8%8A%82"><span class="tree-label">章节</span><span class="ef-field">13</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="false" aria-label="展开 章节"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items" hidden>
+            <li><a href="01_基础.html">第一部分　考试概况与复习方法</a></li>
+            <li><a href="02_原则.html">第三部分　动画的12条基本原则</a></li>
+            <li><a href="03_朝向.html">第四部分　物体朝向的表示与四元数</a></li>
+            <li><a href="04_二维渐变.html">第五部分　二维形状渐变与图像 Morphing</a></li>
+            <li><a href="05_三维渐变.html">第六部分　三维形状渐变（3D Morphing）</a></li>
+            <li><a href="06_粒子群组.html">第七部分　粒子系统、元球与群组动画</a></li>
+            <li><a href="07_关节动画.html">第八部分　关节动画：正向运动学与逆向运动学</a></li>
+            <li><a href="08_运动捕获.html">第九部分　运动捕获、角色绑定与表情动画</a></li>
+            <li><a href="09_变形.html">第十部分　变形（Deformation）</a></li>
+            <li><a href="10_布料.html">第十一部分　布料动画</a></li>
+            <li><a href="11_隐式曲面.html">第十二部分　隐式曲面与元球自动拟合</a></li>
+            <li><a href="12_碰撞.html">第十三部分　碰撞检测与碰撞响应</a></li>
+            <li><a href="13_数值积分.html">第十四部分　数值积分与物理动画基础</a></li>
+          </ol>
+        </li>
+        <li class="tree-group is-open">
+          <div class="tree-row">
+            <a class="tree-name" href="../../index.html#sec-%E4%B8%93%E9%A2%98"><span class="tree-label">专题</span><span class="ef-field">3</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="true" aria-label="收起 专题"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items">
+            <li><a href="14_判断题.html" aria-current="page">第十五部分　判断题易错点（123 条自查）</a></li>
+            <li><a href="15_问答.html">第十六部分　问答题预测与答题模板</a></li>
+            <li><a href="16_附录.html">第十七部分　附录</a></li>
+          </ol>
+        </li>
+        <li class="tree-group">
+          <div class="tree-row">
+            <a class="tree-name" href="../../index.html#sec-%E5%AE%9E%E9%AA%8C"><span class="tree-label">实验</span><span class="ef-field">2</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="false" aria-label="展开 实验"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items" hidden>
+            <li><a href="../../../clothlab-src/files/README.html">ClothLab — 基于质点-弹簧模型的布料动画与碰撞响应</a></li>
+            <li><a href="../../../clothlab-src/files/选题与规划.html">计算机动画课程设计 · 选题与实施规划</a></li>
+          </ol>
+        </li>
+      </ol>
+      <p class="ef-actions" style="margin:.9rem 0 0">
+        <a class="ef-btn small" href="../../index.html">返回课程</a>
+      </p>
+    </div>
+  </aside>
+  <div class="ef-sheet">
+    <p class="ef-eyebrow slash">Course / Article</p>
+    <p class="ef-crumb ef-field"><a href="../../../../index.html">首页</a><a href="../../index.html">计算机动画</a><span>专题</span><span>content</span></p>
+    <ul class="ef-facts ef-field">
+      <li>专题</li>
+      <li>3,670 字</li>
+      <li>2026.11.15</li>
+      <li>9 个小节</li>
+    </ul>
+    <h1 class="title ef-read">第十五部分　判断题易错点（123 条自查）</h1>
+    <div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+    <p class="ef-actions pdf-dl"><a class="ef-btn" href="%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%8A%A8%E7%94%BB-%E7%AC%AC%E5%8D%81%E4%BA%94%E9%83%A8%E5%88%86%20%E5%88%A4%E6%96%AD%E9%A2%98%E6%98%93%E9%94%99%E7%82%B9%EF%BC%88123%20%E6%9D%A1%E8%87%AA%E6%9F%A5%EF%BC%89.pdf" download>下载 PDF</a><span class="ef-field">离线 / 打印版</span></p>
+    
+    <div class="ef-prose">
+<blockquote>
+<p>判断题 30 分是"性价比最高"的部分：15 题、每题 2 分。下面按章节给出<strong>高频陷阱</strong>，每题都给出判断与一句话解析。考前把做错的题目标出来再看一遍。</p>
+</blockquote>
+<h2 id="141-动画基础与视觉原理">14.1 动画基础与视觉原理</h2>
+<p><strong>1.</strong> 动画之所以"动"，完全是因为人眼的视觉暂留。 —— <strong>【错】</strong> 视觉暂留只解释"画面为什么不闪"，运动感主要来自<strong>似动（Phi）现象</strong>。
+<strong>2.</strong> 视觉暂留的时间约为 0.1 秒。 —— <strong>【对】</strong>
+<strong>3.</strong> 只要帧率超过 16 fps，电影就不会闪烁，不需要其他措施。 —— <strong>【错】</strong> 24 fps 仍需快门把每帧投 2~3 次，把闪烁频率提到 48~72 Hz。
+<strong>4.</strong> 帧率越高，运动看起来越流畅，因此游戏应无条件追求最高帧率。 —— <strong>【错】</strong> 帧率与成本/硬件相关，且高帧率需配合运动模糊；电影的 24 fps 反而带来"电影感"。
+<strong>5.</strong> 中间帧必须由人手工绘制。 —— <strong>【错】</strong> 计算机动画由插值算法自动生成中间帧。
+<strong>6.</strong> 人的五感是视觉、听觉、触觉、味觉、嗅觉，动画主要利用视觉与听觉。 —— <strong>【对】</strong>
+<strong>7.</strong> 计算机动画只能用于娱乐，不能用于仿真与训练。 —— <strong>【错】</strong> 还用于仿真、医学、教育、建筑、军事等。
+<strong>8.</strong> 2D 动画与 3D 动画的本质区别是"是否有深度信息/三维几何"。 —— <strong>【对】</strong>
+<strong>9.</strong> 恐怖谷效应说明"越像人越好"。 —— <strong>【错】</strong> 在"像人但不够像"的区间好感度骤降，形成谷底。
+<strong>10.</strong> 避免恐怖谷的方法之一是采用风格化（卡通化）造型，主动离开写实区间。 —— <strong>【对】</strong>
+<strong>11.</strong> Blender 是开源软件，因此不能用于商业项目。 —— <strong>【错】</strong> GPL 允许商业使用。
+<strong>12.</strong> 物体的运动参数只包括位置和速度。 —— <strong>【错】</strong> 还包括加速度、朝向、缩放、形变等。</p>
+<h2 id="142-12-条基本原则">14.2 12 条基本原则</h2>
+<p><strong>13.</strong> 12 条动画原则最初是为三维计算机动画总结的。 —— <strong>【错】</strong> 源自迪士尼二维手绘动画（《The Illusion of Life》）。
+<strong>14.</strong> 挤压拉伸应尽量保持体积守恒。 —— <strong>【对】</strong>
+<strong>15.</strong> 预期（anticipation）动作越长越好。 —— <strong>【错】</strong> 过长会拖沓，需与节奏配合。
+<strong>16.</strong> 跟随动作是指主体停止后附属部分（头发、衣摆）因惯性继续运动。 —— <strong>【对】</strong>
+<strong>17.</strong> 重叠动作意味着动作要"错峰"，各部件不同时运动。 —— <strong>【对】</strong>
+<strong>18.</strong> 慢入慢出适用于所有运动，包括机械匀速运动。 —— <strong>【错】</strong> 机械/匀速运动应保持线性，全用缓动会"漂浮"、失去重量。
+<strong>19.</strong> 弧线原则说明自然运动多沿曲线而非直线。 —— <strong>【对】</strong>
+<strong>20.</strong> 次要动作可以抢过主要动作，以增加细节。 —— <strong>【错】</strong> 次要动作必须从属于主表演。
+<strong>21.</strong> 时间（timing）决定动作的重量感与情绪。 —— <strong>【对】</strong>
+<strong>22.</strong> 夸张就是随意变形，越夸张越好。 —— <strong>【错】</strong> 夸张要抓住本质、保持可信，程度取决于风格。
+<strong>23.</strong> 三维动画中"扎实的描绘"原则已不适用。 —— <strong>【错】</strong> 转化为扎实的造型、结构、体积与重心。
+<strong>24.</strong> 吸引力（appeal）只指角色"可爱/好看"。 —— <strong>【错】</strong> 指魅力、个性与可读性，反派也可以有吸引力。
+<strong>25.</strong> 连贯动作法（straight ahead）从头到尾逐帧绘制，容易保持流畅但难以控制节奏。 —— <strong>【对】</strong>
+<strong>26.</strong> 关键动作法（pose to pose）先定关键姿态再补中间帧，便于控制与分工，是三维动画的主流。 —— <strong>【对】</strong>
+<strong>27.</strong> 三维动画完全不需要连贯动作法的思路。 —— <strong>【错】</strong> 特效、布料、毛发等常按连贯动作/物理模拟的方式生成。</p>
+<h2 id="143-朝向表示与四元数">14.3 朝向表示与四元数</h2>
+<p><strong>28.</strong> 旋转矩阵用 9 个参数表示 3 个自由度，存在冗余。 —— <strong>【对】</strong>
+<strong>29.</strong> 两个旋转矩阵可以直接按元素做线性插值，得到中间旋转。 —— <strong>【错】</strong> 插值后一般不再正交，会产生缩放/剪切。
+<strong>30.</strong> 定角 X-Y-Z 与欧拉角 Z-Y-X 表示同一个旋转矩阵。 —— <strong>【对】</strong>
+<strong>31.</strong> 欧拉角表示是唯一的，同一姿态只有一组角度。 —— <strong>【错】</strong> 有多解（等价角度、绕圈加减 360° 等）。
+<strong>32.</strong> 万向节死锁是欧拉角/定角这类三参数表示的<strong>内在缺陷</strong>，任何三参数参数化都无法完全避免。 —— <strong>【对】</strong>
+<strong>33.</strong> 万向节死锁只在物理云台/机械结构上发生，软件中不会出现。 —— <strong>【错】</strong> 软件中的欧拉角插值同样会死锁（表现为跳变/抖动）。
+<strong>34.</strong> 四元数有 4 个参数，因此有 4 个自由度。 —— <strong>【错】</strong> 4 个参数 + 单位约束 = 3 个自由度。
+<strong>35.</strong> 四元数 q 与 −q 表示同一个旋转。 —— <strong>【对】</strong>（双重覆盖）
+<strong>36.</strong> Slerp 插值前若 q₀·q₁ &lt; 0，应取 −q₁ 以走最短路径。 —— <strong>【对】</strong> 否则会绕远路转一大圈。
+<strong>37.</strong> Slerp 在单位球面大圆上插值，角速度恒定。 —— <strong>【对】</strong>
+<strong>38.</strong> 四元数乘法可交换。 —— <strong>【错】</strong> 旋转复合不可交换，q₁q₂ ≠ q₂q₁。
+<strong>39.</strong> 用四元数可完全避免万向节死锁带来的插值问题。 —— <strong>【对】</strong>
+<strong>40.</strong> 轴线角表示中，θ=0 时旋转轴是唯一的。 —— <strong>【错】</strong> θ=0 时轴无定义（可任取）。
+<strong>41.</strong> 四元数插值时 nlerp 与 slerp 结果完全等价。 —— <strong>【错】</strong> nlerp 速度不均匀，只是近似。</p>
+<h2 id="144-二维形状渐变与图像-morphing">14.4 二维形状渐变与图像 Morphing</h2>
+<p><strong>42.</strong> 2D shape blending 的两个子问题是"对应"与"插值路径"。 —— <strong>【对】</strong>
+<strong>43.</strong> 内在形状插值直接对顶点坐标做线性插值。 —— <strong>【错】</strong> 插值的是边长与角度（内在量），再重建几何。
+<strong>44.</strong> 顶点线性插值在两个形状相对旋转时会导致中间形状收缩/塌陷。 —— <strong>【对】</strong>
+<strong>45.</strong> 内在插值中不需要处理多边形闭合约束。 —— <strong>【错】</strong> 插值后的角度/边长一般不闭合，需调整。
+<strong>46.</strong> Edge Tweaking 通过调整边来改善中间形状，且不影响两端形状。 —— <strong>【对】</strong>
+<strong>47.</strong> 图像 morphing = 几何形变（warping）+ 颜色混合（cross-dissolve）。 —— <strong>【对】</strong>
+<strong>48.</strong> 只做 cross-dissolve、不做 warping 也能得到好的 morphing 效果。 —— <strong>【错】</strong> 会出现重影/鬼影。
+<strong>49.</strong> 基于网格的 morphing 中，每个三角形可用一个仿射变换对应。 —— <strong>【对】</strong>
+<strong>50.</strong> Beier–Neely 方法用三角形网格定义对应。 —— <strong>【错】</strong> 用有向<strong>线段对</strong>，权重按距离衰减。
+<strong>51.</strong> 基于网格的 morphing 要求两幅图的三角化一致。 —— <strong>【对】</strong>
+<strong>52.</strong> StyleGAN 肖像 morphing 需要先做显式的特征点对应。 —— <strong>【错】</strong> 在隐空间插值，由生成器隐式完成对应。
+<strong>53.</strong> StyleGAN 中 coarse style 控制姿态、脸型、性别等大结构。 —— <strong>【对】</strong>
+<strong>54.</strong> StyleGAN 中 fine style 控制肤色、纹理等细节。 —— <strong>【对】</strong>
+<strong>55.</strong> StyleGAN 隐空间线性插值中，各层必须用同一个 t。 —— <strong>【错】</strong> 可分层用不同 t（style mixing）实现分层过渡。</p>
+<h2 id="145-三维-morphing粒子元球与群组">14.5 三维 Morphing、粒子、元球与群组</h2>
+<p><strong>56.</strong> 三维 morphing 中，只要两个模型顶点数相同就能直接插值。 —— <strong>【错】</strong> 还需要拓扑/语义对应与姿态对齐。
+<strong>57.</strong> 基于星形物体的 morphing 适用于任意多面体。 —— <strong>【错】</strong> 要求存在"核"能看见整个表面（星形/近似凸）。
+<strong>58.</strong> 基于体表示（SDF/体素）的 morphing 能自然处理拓扑变化。 —— <strong>【对】</strong>
+<strong>59.</strong> 体表示 morphing 的精度不受分辨率影响。 —— <strong>【错】</strong> 受精度的体素分辨率限制。
+<strong>60.</strong> 变分隐式曲面 morphing 用 RBF 表示，求解复杂度为 O(N³)。 —— <strong>【对】</strong>
+<strong>61.</strong> 粒子系统适合表现有明确光滑表面的物体。 —— <strong>【错】</strong> 适合模糊、不规则、随机的现象。
+<strong>62.</strong> 元球融合的原理是多个势场叠加后取等值面。 —— <strong>【对】</strong>
+<strong>63.</strong> 高速运动的粒子用"当前帧位置是否在物体内"来检测碰撞即可。 —— <strong>【错】</strong> 会穿透，需连续碰撞检测（CCD）或子步。
+<strong>64.</strong> 粒子碰撞响应常用"法向反弹 + 摩擦 + 位置修正"。 —— <strong>【对】</strong>
+<strong>65.</strong> 群组动画需要为每个个体设置关键帧。 —— <strong>【错】</strong> 用个体规则 + 局部交互产生涌现行为。
+<strong>66.</strong> Flocking System 的三种层次行为是 Action Selection、Steering、Locomotion。 —— <strong>【对】</strong>
+<strong>67.</strong> Boids 的三条原则是分离、对齐、聚集。 —— <strong>【对】</strong>
+<strong>68.</strong> 社会力模型中的"社会力"是真实的物理接触力。 —— <strong>【错】</strong> 是对心理排斥/避让倾向的力学化建模（含接触力项但主体是"社会力"）。
+<strong>69.</strong> RVO 中每个个体承担全部避让责任。 —— <strong>【错】</strong> 各承担一半（因此对称、无振荡）。
+<strong>70.</strong> Continuum Crowds 的计算量与人数基本无关，而与网格分辨率有关。 —— <strong>【对】</strong>
+<strong>71.</strong> 羊群效应的本质是局部交互 + 正反馈导致的从众行为。 —— <strong>【对】</strong>
+<strong>72.</strong> 流场跟随中，智能体把所在位置的场向量作为期望速度。 —— <strong>【对】</strong></p>
+<h2 id="146-关节动画-fk-ik">14.6 关节动画 FK / IK</h2>
+<p><strong>73.</strong> FK 给定关节角一定得到唯一的末端位姿。 —— <strong>【对】</strong>
+<strong>74.</strong> IK 一定有解。 —— <strong>【错】</strong> 可能无解（超出可达范围）、多解、无穷多解（冗余）。
+<strong>75.</strong> 逆雅可比方法中，伪逆在奇异位形附近数值稳定。 —— <strong>【错】</strong> 需加阻尼（DLS）或用伪逆的替代方案。
+<strong>76.</strong> CCD 从根关节向末端逐个调整关节。 —— <strong>【错】</strong> 从<strong>末端向根部</strong>。
+<strong>77.</strong> FABRIK 用角度迭代并保持骨长。 —— <strong>【错】</strong> 用<strong>位置</strong>前后向迭代来保持骨长。
+<strong>78.</strong> 基于优化的 IK 可以同时满足末端、限位、避障等多个目标，但计算较慢。 —— <strong>【对】</strong>
+<strong>79.</strong> 基于样例的 IK 可以生成数据库中没有的动作。 —— <strong>【错】</strong> 受数据覆盖限制。
+<strong>80.</strong> 基于深度学习的姿态恢复不需要大量训练数据。 —— <strong>【错】</strong> 强依赖数据，且存在泛化、时序抖动、物理不合理等问题。
+<strong>81.</strong> 关节空间表示无奇异，笛卡尔空间表示直观但可能奇异。 —— <strong>【对】</strong>
+<strong>82.</strong> 数值求解 IK 的常用方法包括逆雅可比、CCD、优化、样例、FABRIK。 —— <strong>【对】</strong></p>
+<h2 id="147-运动捕获蒙皮与表情">14.7 运动捕获、蒙皮与表情</h2>
+<p><strong>83.</strong> 运动捕获得到的动作可以直接套用到任意比例的角色上，无需重定向。 —— <strong>【错】</strong> 需重定向，否则脚滑/穿地/比例失调。
+<strong>84.</strong> 运动捕获的优点是真实细腻、效率高，缺点是设备贵、需清理、受演员能力限制。 —— <strong>【对】</strong>
+<strong>85.</strong> 顶点混合中所有骨骼权重之和应为 1。 —— <strong>【对】</strong>
+<strong>86.</strong> 线性混合蒙皮在大幅扭转时会出现"糖纸（candy-wrapper）"与体积塌陷。 —— <strong>【对】</strong>
+<strong>87.</strong> 双四元数蒙皮（DQS）可以缓解线性混合的体积损失。 —— <strong>【对】</strong>
+<strong>88.</strong> 运动图的节点是运动片段，边表示可无缝拼接的转移。 —— <strong>【对】</strong>
+<strong>89.</strong> 运动匹配需要先显式构建运动图。 —— <strong>【错】</strong> 直接对数据库做逐帧最近邻搜索。
+<strong>90.</strong> Blend Shapes 是若干表情形状的线性组合，多表情叠加可能失真。 —— <strong>【对】</strong>
+<strong>91.</strong> FACS 用动作单元（AU）描述面部肌肉运动。 —— <strong>【对】</strong>
+<strong>92.</strong> FACE IK 是由权重求表情形状（正向），Blend Shapes 是由形状求权重。 —— <strong>【错】</strong> 反了：Blend Shapes 是正向（权重→形状），FACE IK 是反向（形状/标记点→权重）。</p>
+<h2 id="148-变形布料隐式曲面">14.8 变形、布料、隐式曲面</h2>
+<p><strong>93.</strong> Deformation 与 Morphing 是同一个概念。 —— <strong>【错】</strong> 变形作用于单个物体，morphing 是两个物体之间的过渡。
+<strong>94.</strong> 与物体表示无关的变形只依赖点的空间位置，与物体用什么表示无关。 —— <strong>【对】</strong>
+<strong>95.</strong> Tapering 是沿轴缩放截面，Twisting 是绕轴旋转且角度随高度变化。 —— <strong>【对】</strong>
+<strong>96.</strong> Bending 把直杆弯成圆弧，其变换是处处保长的。 —— <strong>【错】</strong> 内侧受压、外侧受拉，非均匀（近似保长）。
+<strong>97.</strong> FFD 用三变量 Bernstein 多项式定义空间映射。 —— <strong>【对】</strong>
+<strong>98.</strong> FFD 的控制点必须构成平行六面体，EFFD 允许任意形状的晶格。 —— <strong>【对】</strong>
+<strong>99.</strong> Cage 坐标满足 φ_i ≥ 0 且 Σφ_i = 1。 —— <strong>【对】</strong>（重心坐标性质）
+<strong>100.</strong> Green 坐标比均值坐标多出"面法向"项的贡献，因此保形性更好。 —— <strong>【对】</strong>
+<strong>101.</strong> Laplacian 坐标编码的是全局位置，因此变形时可以直接保持。 —— <strong>【错】</strong> 编码的是<strong>局部</strong>形状/细节（与全局位置无关）。
+<strong>102.</strong> 布料的主要力学性能包括拉伸、压缩、剪切、弯曲四种力。 —— <strong>【对】</strong>
+<strong>103.</strong> 纱线几乎不能承受压缩，因此布料的褶皱本质上来自压缩失稳。 —— <strong>【对】</strong>
+<strong>104.</strong> Provot 模型通过"应变限制（strain limiting）"避免布料被过度拉伸。 —— <strong>【对】</strong>
+<strong>105.</strong> 隐式欧拉法是无条件稳定的，但会引入数值耗散（过阻尼）。 —— <strong>【对】</strong>
+<strong>106.</strong> 布料的自适应步长只根据帧率调整。 —— <strong>【错】</strong> 依据误差估计、CFL/应变条件、碰撞事件等。</p>
+<h2 id="149-隐式曲面与碰撞检测">14.9 隐式曲面与碰撞检测</h2>
+<p><strong>107.</strong> 隐式曲面表示非常容易精确控制出尖锐边缘。 —— <strong>【错】</strong> 尖角/硬边很难表示。
+<strong>108.</strong> 隐式曲面做布尔/融合运算很方便，拓扑变化自动处理。 —— <strong>【对】</strong>
+<strong>109.</strong> Wyvill 六次多项式在 r=R 处的函数值与一阶导数值都为 0。 —— <strong>【对】</strong>
+<strong>110.</strong> Wyvill 势函数具有有限支撑，只在半径 R 内非零。 —— <strong>【对】</strong>
+<strong>111.</strong> Muraki 元球自动拟合的三种能量是位置能量、法向能量、收缩能量。 —— <strong>【对】</strong>
+<strong>112.</strong> 收缩能量的作用是防止元球无限膨胀、使模型紧凑。 —— <strong>【对】</strong>
+<strong>113.</strong> 碰撞处理包括碰撞检测与碰撞响应两个问题。 —— <strong>【错】</strong> 三个：检测、确认（确定）、响应。
+<strong>114.</strong> k-DOP 的 k 越大，包围盒越紧致，但测试与存储成本越高。 —— <strong>【对】</strong>
+<strong>115.</strong> 6-DOP 就是 AABB。 —— <strong>【对】</strong>
+<strong>116.</strong> k-DOP 的方向集固定，因此物体旋转后不需要重新计算轴。 —— <strong>【对】</strong>
+<strong>117.</strong> OBB 与 OBB 的分离轴测试需要 15 个轴。 —— <strong>【对】</strong>（3+3+9）
+<strong>118.</strong> 分离轴定理只适用于凸体。 —— <strong>【对】</strong>
+<strong>119.</strong> 射线/平板层相交法只能用于 AABB，不能用于 k-DOP。 —— <strong>【错】</strong> 对任意"由平板围成"的凸体都适用。
+<strong>120.</strong> Möller–Trumbore 算法一次求交可同时得到 t 和重心坐标 (u,v)。 —— <strong>【对】</strong>
+<strong>121.</strong> k-DOP/k-DOP 的相交测试是完全精确的，不会误报。 —— <strong>【错】</strong> 只用固定方向，是保守的（可能误报为相交）。
+<strong>122.</strong> AABB/AABB 相交只需 3 个轴上的区间重叠判断。 —— <strong>【对】</strong>
+<strong>123.</strong> 刚性物体高速运动时，仅用离散位置检测即可避免穿透。 —— <strong>【错】</strong> 需连续碰撞检测。</p>
+<blockquote>
+<p><strong>统计</strong>：以上 123 条中，错误命题约占三分之一——判断题里凡是出现"完全、一定、只、必须、无需、可以随意"等绝对化表述的，通常是错的；凡是把"两个/三个"的数量说少的（如"碰撞两个问题""五感三种"），也多为错。</p>
+</blockquote>
+    </div>
+    <p class="back"><a class="ef-btn" href="13_数值积分.html">← 第十四部分　数值积分与物理动画基础</a> <a class="ef-btn" href="15_问答.html">第十六部分　问答题预测与答题模板 →</a> <a class="ef-btn" href="../../index.html">返回本课</a></p>
+  </div>
+  <aside class="ef-margin toc-aside" aria-label="本页目录">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>本页目录</span><span>9 节</span></p>
+      <ol>
+      <li><a class="lvl2" href="#141-动画基础与视觉原理">14.1 动画基础与视觉原理</a></li>
+      <li><a class="lvl2" href="#142-12-条基本原则">14.2 12 条基本原则</a></li>
+      <li><a class="lvl2" href="#143-朝向表示与四元数">14.3 朝向表示与四元数</a></li>
+      <li><a class="lvl2" href="#144-二维形状渐变与图像-morphing">14.4 二维形状渐变与图像 Morphing</a></li>
+      <li><a class="lvl2" href="#145-三维-morphing粒子元球与群组">14.5 三维 Morphing、粒子、元球与群组</a></li>
+      <li><a class="lvl2" href="#146-关节动画-fk-ik">14.6 关节动画 FK / IK</a></li>
+      <li><a class="lvl2" href="#147-运动捕获蒙皮与表情">14.7 运动捕获、蒙皮与表情</a></li>
+      <li><a class="lvl2" href="#148-变形布料隐式曲面">14.8 变形、布料、隐式曲面</a></li>
+      <li><a class="lvl2" href="#149-隐式曲面与碰撞检测">14.9 隐式曲面与碰撞检测</a></li>
+      </ol>
+    </div>
+  </aside>
+</article>
+
+<footer class="foot">
+  <span class="ef-field">KYSIIN.ARCHIVE · 2026.11.15 · 由 Markdown 渲染</span>
+  <span>用 endfield-ui 渲染 · Saira（SIL OFL）自托管</span>
+</footer>
+<script type="module">
+  import { wireTheme } from '../../../../assets/fx.js'
+  wireTheme()
+</script>
+<script defer src="../../../../assets/search.js?v=202611150558"></script>
+<script>
+  /* 左栏：每个分组可独立展开/收起 */
+  (function () {
+    document.querySelectorAll('.tree-toggle').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var li = btn.closest('.tree-group');
+        var list = li ? li.querySelector('.tree-items') : null;
+        var open = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', String(!open));
+        if (list) list.hidden = open;
+        if (li) li.classList.toggle('is-open', !open);
+      });
+    });
+  })();
+</script>
+<script>
+  /* 右栏目录跟随滚动：读到哪一节就把那一行标出来 */
+  (function () {
+    var links = [].slice.call(document.querySelectorAll('.toc-aside a[href^="#"]'));
+    if (!links.length) return;
+    var items = links.map(function (a) {
+      var el = document.getElementById(a.getAttribute('href').slice(1));
+      return el ? { a: a, el: el } : null;
+    }).filter(Boolean);
+    if (!items.length) return;
+    var ticking = false;
+    function spy() {
+      ticking = false;
+      var line = window.scrollY + 140;
+      var best = null;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].el.getBoundingClientRect().top + window.scrollY <= line) best = items[i];
+      }
+      links.forEach(function (a) { a.removeAttribute('aria-current'); });
+      if (best) best.a.setAttribute('aria-current', 'true');
+    }
+    window.addEventListener('scroll', function () {
+      if (!ticking) { ticking = true; requestAnimationFrame(spy); }
+    }, { passive: true });
+    spy();
+  })();
+</script>
+</body>
+</html>

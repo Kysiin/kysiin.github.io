@@ -1,0 +1,17 @@
+@font-face{font-family:'Saira';src:url('./fonts/Saira.ttf') format('truetype');font-weight:100 900;font-stretch:50% 125%;font-style:normal;font-display:swap}
+
+/* 滚动条：页面、左右侧栏、搜索面板、代码块共用一套（细、方角、透明轨道） */
+:root { --scroll-color: rgba(0,0,0,.28); --scroll-thumb: rgba(0,0,0,.22); --scroll-thumb-hover: rgba(0,0,0,.38); }
+:root[data-theme='dark'] { --scroll-color: rgba(255,255,255,.32); --scroll-thumb: rgba(255,255,255,.26); --scroll-thumb-hover: rgba(255,255,255,.45); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) { --scroll-color: rgba(255,255,255,.32); --scroll-thumb: rgba(255,255,255,.26); --scroll-thumb-hover: rgba(255,255,255,.45); }
+}
+html, .ef-margin, .efs ul, .ef-prose pre, .eq { scrollbar-width: thin; scrollbar-color: var(--scroll-color) transparent; }
+html::-webkit-scrollbar, .ef-margin::-webkit-scrollbar, .efs ul::-webkit-scrollbar,
+.ef-prose pre::-webkit-scrollbar, .eq::-webkit-scrollbar { width: 7px; height: 7px; }
+html::-webkit-scrollbar-track, .ef-margin::-webkit-scrollbar-track, .efs ul::-webkit-scrollbar-track,
+.ef-prose pre::-webkit-scrollbar-track, .eq::-webkit-scrollbar-track { background: transparent; }
+html::-webkit-scrollbar-thumb, .ef-margin::-webkit-scrollbar-thumb, .efs ul::-webkit-scrollbar-thumb,
+.ef-prose pre::-webkit-scrollbar-thumb, .eq::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 0; }
+.ef-margin:hover::-webkit-scrollbar-thumb, .efs ul:hover::-webkit-scrollbar-thumb,
+.ef-prose pre:hover::-webkit-scrollbar-thumb, .eq:hover::-webkit-scrollbar-thumb { background: var(--scroll-thumb-hover); }

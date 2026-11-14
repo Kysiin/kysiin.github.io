@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MiniSQL 实验报告 · KYSIIN.ARCHIVE</title>
+<script src="../../../../../../assets/variant.js"></script>
+<link rel="stylesheet" href="../../../../../../assets/local-fonts.css" />
+<link rel="stylesheet" href="../../../../../../assets/endfield.css" />
+
+<style>
+  body { --tri-h: 3px; --topbar-h: 3.1rem; }
+  body > .ef-tri { position: sticky; top: 0; z-index: 61; }
+  .topbar { position:sticky; top:var(--tri-h); z-index:60;
+    display:flex; align-items:center; gap:1.5rem; padding:.85rem var(--ef-pad);
+    border-bottom:1px solid var(--ef-rule); background:var(--ef-panel); }
+  .topbar .brand { margin:0; font-family:var(--ef-font-ui); font-size:.95rem;
+    font-stretch:var(--ef-wider); font-weight:800; letter-spacing:.08em;
+    text-decoration:none; color:var(--ef-ink); }
+  .topbar nav { display:flex; align-items:center; gap:1.25rem; margin-left:auto; }
+  .topbar nav a { text-decoration:none; color:var(--ef-ink-2); }
+  .foot { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between;
+    gap:1rem; padding:1.5rem var(--ef-pad) 2.5rem; border-top:1px solid var(--ef-rule);
+    color:var(--ef-ink-2); font-size:.875rem; }
+  @media (max-width: 959px) { .ef-spread { grid-template-columns:minmax(0,1fr); }
+    .ef-sheet { border-right:0; border-bottom:1px solid var(--ef-rule); } }
+  @media (max-width:760px) { .topbar { flex-wrap:wrap; gap:.75rem; }
+    .topbar nav { order:3; width:100%; margin-left:0; } }
+
+  .title { margin:1.5rem 0 1rem; font-size:clamp(var(--ef-t-title),5vw,var(--ef-t-h1));
+    font-weight:700; line-height:1.3; }
+  .ef-prose { margin-top:1.75rem; }
+  .ef-prose img { max-width:100%; height:auto; border:1px solid var(--ef-rule); background:#fff; }
+  .ef-prose table { width:100%; border-collapse:collapse; font-size:.9rem; }
+  .ef-prose th, .ef-prose td { border-bottom:1px solid var(--ef-rule); padding:.45rem .6rem; text-align:left; }
+  .ef-prose th { font-family:var(--ef-font-ui); font-stretch:var(--ef-wide); font-size:.8rem; }
+  /* 代码块：整块一个背景；块内的 code 不再带行内边框/内边距 */
+  .ef-prose pre { overflow:auto; margin:1rem 0; padding:.9rem 1rem;
+    background:var(--ef-chip); border-left:3px solid var(--ef-rule);
+    font-size:.85rem; line-height:1.6; tab-size:4; }
+  .ef-prose pre code { display:block; padding:0; border:0; background:none;
+    font-family:var(--ef-font-mono); font-size:.85rem; line-height:1.6; white-space:pre; }
+  .ef-prose :not(pre) > code { font-family:var(--ef-font-mono); font-size:.88em;
+    padding:.1em .35em; border:1px solid var(--ef-rule); background:var(--ef-paper); }
+  .ef-prose blockquote { border-left:3px solid var(--ef-ink); margin:1rem 0; padding:.25rem 0 .25rem 1rem;
+    color:var(--ef-ink-2); }
+
+  /* —— 公式：绝不超出正文栏；行间公式可横向滚动 —— */
+  .ef-prose mjx-container { max-width:100%; }
+  .ef-prose mjx-container[display="true"] { display:block; text-align:center; margin:1.1em 0;
+    max-width:100%; overflow-x:auto; overflow-y:hidden; padding:2px 0; }
+  .ef-prose mjx-container[jax="CHTML"] { font-size:1.02em; }
+  .eq { overflow-x:auto; overflow-y:hidden; max-width:100%; padding:2px 0; }
+  .eq mjx-container[display="true"] { margin:.35em 0; }
+
+  .toc ol { margin:0; padding:0; list-style:none; border-left:1px solid var(--ef-rule); }
+  .toc a { display:block; margin-left:-1px; padding:.22rem 0 .22rem .7rem;
+    border-left:3px solid transparent; color:var(--ef-ink-2); font-size:.85rem;
+    overflow-wrap:anywhere; }
+  .toc a:hover { color:var(--ef-ink); border-left-color:var(--ef-trace); }
+  .toc .lvl3 { padding-left:1.3rem; font-size:.8rem; }
+  .back { margin:2rem 0 0; display:flex; flex-wrap:wrap; gap:.75rem; }
+
+  /* —— 三栏铺满：两侧栏贴边，中间正文吃掉所有剩余宽度 —— */
+  .ef-spread { max-width: none; margin: 0; }
+
+  @media (min-width: 1180px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(11rem, 12vw, 14rem) minmax(0, 1fr) clamp(13rem, 14vw, 17rem);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+  }
+  @media (min-width: 960px) and (max-width: 1179px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(10rem, 12vw, 12rem) minmax(0, 1fr);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+    .ef-spread.has-rail > .toc-aside { display: none; }
+  }
+  @media (min-width: 960px) {
+    .ef-spread > .ef-margin {
+      position: sticky;
+      top: calc(var(--tri-h) + var(--topbar-h));
+      align-self: start;
+      max-height: calc(100vh - var(--tri-h) - var(--topbar-h));
+      overflow-y: auto;
+      scrollbar-width: thin;
+      padding: clamp(1.5rem, 3vw, 2.5rem) 1rem;
+    }
+    /* 两侧栏往屏幕边缘靠，别在页边留空 */
+    .ef-spread > .rail-aside { padding-left: .75rem; padding-right: 1.25rem; }
+    .ef-spread > .toc-aside { padding-left: 1.25rem; padding-right: .75rem; }
+    /* 正文左右留呼吸，但不限制宽度 */
+    .ef-spread > .ef-sheet { padding-left: clamp(2rem, 3.5vw, 4rem); padding-right: clamp(2rem, 3.5vw, 4rem); }
+    /* 套件把正文限制在 40rem；中间栏变宽后这里放开，让文字铺满 */
+    .ef-sheet .ef-prose,
+    .ef-sheet .ef-lede,
+    .ef-sheet .title,
+    .ef-sheet .ef-read,
+    .ef-sheet .ef-facts,
+    .ef-sheet .ef-empty,
+    .ef-sheet .ef-notice { max-width: none; }
+  }
+  .ef-margin .toc a { font-size: .74rem; line-height: 1.5; }
+  .toc a[aria-current] { color: var(--ef-ink); border-left-color: var(--ef-trace); font-weight: 600; }
+  .rail-head { display: block; margin: 0 0 .5rem; padding-bottom: .35rem;
+    border-bottom: 1px solid var(--ef-rule); font-size: .68rem; line-height: 1.5; }
+  .rail-head span { display: inline; }
+  .rail-head span + span { display: block; color: var(--ef-ink-2); }
+  .rail-aside .toc a { padding-top: .3rem; padding-bottom: .3rem; }
+  .rail-tree { list-style:none; margin:0; padding:0; }
+  .rail-tree .tree-name { display:block; padding:.35rem .2rem .35rem .6rem;
+    border-left:3px solid transparent; font-size:.76rem; font-weight:600; color:var(--ef-ink); }
+  .rail-tree .tree-label { display:inline; }
+  .rail-tree .tree-name .ef-field { font-size:.68rem; color:var(--ef-ink-2); margin-left:.35rem;
+    white-space:nowrap; }
+  .rail-tree .tree-group.is-open > .tree-name { border-left-color:var(--ef-trace); }
+  .rail-tree .tree-items { list-style:none; margin:.1rem 0 .5rem; padding:0 0 0 .6rem;
+    border-left:1px solid var(--ef-rule); }
+  .rail-tree .tree-items a { padding-left:.6rem; font-size:.72rem; line-height:1.45; }
+  .tree-row { display:flex; align-items:stretch; gap:.15rem; }
+  .tree-row .tree-name { flex:1 1 auto; min-width:0; }
+  .tree-toggle { flex:none; width:1.55rem; min-height:1.9rem; display:grid; place-items:center;
+    padding:0; border:1px solid var(--ef-rule); background:var(--ef-panel); color:var(--ef-ink-2);
+    cursor:pointer; transition:color .12s var(--ef-ease), border-color .12s var(--ef-ease), background .12s var(--ef-ease); }
+  .tree-toggle:hover { color:var(--ef-ink); border-color:var(--ef-ink); background:var(--ef-chip); }
+  .tree-toggle svg { width:.7rem; height:.7rem; transition:transform .15s var(--ef-ease); }
+  .tree-toggle[aria-expanded="true"] svg { transform:rotate(90deg); }
+  .rail-tree .tree-items[hidden] { display:none; }
+  /* 滚动条统一样式在 assets/local-fonts.css 里定义（页面/侧栏/搜索共用） */
+
+  /* 窄屏：正文优先，两侧栏排到后面 */
+  @media (max-width: 959px) {
+    .ef-spread.has-rail > .ef-sheet { order: 1; }
+    .ef-spread.has-rail > .rail-aside { order: 2; border-top: 1px solid var(--ef-rule); }
+    .ef-spread.has-rail > .toc-aside { order: 3; }
+  }
+
+  /* —— 复习笔记：PDF 下载 —— */
+  .pdf-dl { display:flex; flex-wrap:wrap; align-items:center; gap:.75rem; margin:1.1rem 0 0; }
+  .pdf-dl .ef-btn { border-color:var(--ef-ink); }
+
+  /* —— 打印 / 导出 PDF：只留正文 —— */
+  @page { size:A4; margin:16mm 14mm 18mm; }
+  @media print {
+    html, body { background:#fff !important; }
+    .topbar, .foot, .ef-tri, .rail-aside, .toc-aside, .back, .pdf-dl,
+    .ef-crumb, .ef-eyebrow, .ef-facts, .ef-notice { display:none !important; }
+    .ef-spread, .ef-spread.has-rail { display:block !important; max-width:none !important; }
+    .ef-sheet { border:0 !important; padding:0 !important; background:#fff !important; }
+    .ef-sheet .ef-prose, .ef-sheet .ef-lede, .ef-sheet .title { max-width:none !important; }
+    .title { margin:0 0 1rem; }
+    /* 打印用系统字体：体积小、离线打开不依赖自托管字体 */
+    body, .ef-prose, .title, .ef-lede, .ef-facts,
+    h1, h2, h3, h4, h5, h6 { font-family:"Microsoft YaHei UI","Microsoft YaHei","PingFang SC",sans-serif !important; }
+    .ef-prose pre, .ef-prose code { font-family:Consolas,"Cascadia Mono",monospace !important; }
+    .ef-prose { margin-top:1rem; }
+    .ef-prose pre { white-space:pre-wrap; word-break:break-word; }
+    .ef-prose pre code { white-space:pre-wrap; }
+    .ef-prose img, .ef-prose svg, mjx-container { max-width:100% !important; }
+    a { color:inherit !important; text-decoration:none !important; }
+    .ef-prose h2, .ef-prose h3 { break-after:avoid; }
+    .ef-prose pre, .ef-prose table, .eq { break-inside:avoid; }
+  }
+
+</style>
+</head>
+<body class="ef ef-contours">
+<div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+<header class="topbar">
+  <a class="brand" href="../../../../../../index.html">KYSIIN.ARCHIVE</a>
+  <nav class="ef-field" aria-label="主导航">
+    <a href="../../../../../../index.html">首页</a>
+    <a href="../../../../index.html" aria-current="page">数据库系统</a>
+  </nav>
+  <span data-search-slot></span>
+  <button class="ef-btn small" type="button" data-theme-toggle>切换深浅</button>
+</header>
+
+<article class="ef-spread has-rail">
+  <aside class="ef-margin rail-aside" aria-label="本课程分区">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>数据库系统</span><span>2 区</span></p>
+      <ol class="rail-tree">
+        <li class="tree-group">
+          <div class="tree-row">
+            <a class="tree-name" href="../../../../index.html#sec-%E4%B8%93%E9%A2%98"><span class="tree-label">专题</span><span class="ef-field">5</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="false" aria-label="展开 专题"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items" hidden>
+            <li><a href="../../../final/数据库系统-ER图画法规则总结.html">数据库系统 E-R 图画法规则总结</a></li>
+            <li><a href="../../../final/数据库系统-SQL语句用法总结.html">数据库系统 SQL 语句用法总结</a></li>
+            <li><a href="../../../final/数据库系统-判断选择题概念总结.html">数据库系统判断/选择题概念总结</a></li>
+            <li><a href="../../../final/数据库系统-查询优化规则总结.html">数据库系统查询优化规则总结</a></li>
+            <li><a href="../../../final/数据库系统-计算公式总结.html">数据库系统计算公式总结</a></li>
+          </ol>
+        </li>
+        <li class="tree-group is-open">
+          <div class="tree-row">
+            <a class="tree-name" href="../../../../index.html#sec-%E5%AE%9E%E9%AA%8C"><span class="tree-label">实验</span><span class="ef-field">9</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="true" aria-label="收起 实验"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items">
+            <li><a href="../../../HW/hw6_answers.html">HW6</a></li>
+            <li><a href="../../../LAB1/LAB1.html">LAB1</a></li>
+            <li><a href="../../../LAB2/LAB2.html">LAB2</a></li>
+            <li><a href="../../../LAB3/LAB3.html">LAB3</a></li>
+            <li><a href="../../../LAB4/LAB4.html">LAB4</a></li>
+            <li><a href="../../../LAB5/实验报告.html">图书管理系统实验报告</a></li>
+            <li><a href="AI辅助开发方法.html">MiniSQL —— AI 辅助开发方法说明</a></li>
+            <li><a href="实验报告.html" aria-current="page">MiniSQL 实验报告</a></li>
+            <li><a href="../README.html">MiniSQL —— 精简型单用户 SQL 引擎（C++）</a></li>
+          </ol>
+        </li>
+      </ol>
+      <p class="ef-actions" style="margin:.9rem 0 0">
+        <a class="ef-btn small" href="../../../../index.html">返回课程</a>
+      </p>
+    </div>
+  </aside>
+  <div class="ef-sheet">
+    <p class="ef-eyebrow slash">Course / Article</p>
+    <p class="ef-crumb ef-field"><a href="../../../../../../index.html">首页</a><a href="../../../../index.html">数据库系统</a><span>实验</span><span>大作业/proj/docs</span></p>
+    <ul class="ef-facts ef-field">
+      <li>实验</li>
+      <li>2,937 字</li>
+      <li>2026.11.15</li>
+      <li>17 个小节</li>
+    </ul>
+    <h1 class="title ef-read">MiniSQL 实验报告</h1>
+    <div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+    
+    
+    <div class="ef-prose">
+<blockquote>
+<p>一个从零实现的精简型单用户关系型数据库引擎（C++17，对标 CMU 15-445 / BusTub）。
+本报告记录系统设计、各模块实现、关键问题与解决、以及测试验证。</p>
+</blockquote>
+<hr />
+<h2 id="一实验目的与概述">一、实验目的与概述</h2>
+<p>实现一个支持 SQL 子集的单用户关系数据库引擎，覆盖 DBMS 的核心层次：</p>
+<ul>
+<li><strong>存储层</strong>：磁盘按页读写、缓冲池与页置换、定长记录的堆表存储。</li>
+<li><strong>索引层</strong>：B+ 树索引（单属性单值），支持等值与区间查询。</li>
+<li><strong>元数据层</strong>：表/列/索引的数据字典及其持久化；多数据库管理。</li>
+<li><strong>语言层</strong>：SQL 词法/语法解析、执行引擎将语句派发到各管理器。</li>
+<li><strong>Bonus</strong>：Clock 置换、磁盘空闲页回收、两阶段封锁并发控制、WAL 崩溃恢复。</li>
+</ul>
+<p>最终系统能在交互式 REPL 或批处理脚本下运行完整 SQL，并通过一份约 10 万条语句的验收脚本端到端验证。</p>
+<p><strong>关键参数</strong>：页大小 <code>PAGE_SIZE = 4096</code> 字节；单表最多 <code>MAX_COLUMNS = 32</code> 列；
+缓冲池 <code>BUFFER_POOL_SIZE = 1024</code> 帧（约 4MB/库）；数据类型 <code>INTEGER</code>(4B) / <code>FLOAT</code>(4B) / <code>CHAR(n)</code>(n B)。</p>
+<hr />
+<h2 id="二系统总体设计">二、系统总体设计</h2>
+<p>采用严格分层架构，自底向上：</p>
+<pre><code>DiskManager → BufferPoolManager(+Replacer) → TableHeap / BPlusTree
+            → CatalogManager / IndexManager → DatabaseEngine
+            → ExecuteEngine → Interpreter → main(REPL/批处理)
+</code></pre>
+<p><strong>核心约定（分层铁律）</strong>：除 <code>BufferPoolManager</code> 外，任何上层模块都不直接访问 <code>DiskManager</code>，
+一律通过 <code>FetchPage / NewPage / UnpinPage / DeletePage</code> 操作页。这保证了缓存、脏页刷盘、
+页置换的统一管理，是存储层解耦的关键。</p>
+<p>每个被读取的页都遵循「Fetch → 读写 → Unpin（修改过则标脏）」的配对纪律，避免 pin 泄漏。</p>
+<hr />
+<h2 id="三各模块设计与实现">三、各模块设计与实现</h2>
+<h3 id="31-diskmanager磁盘管理">3.1 DiskManager（磁盘管理）</h3>
+<p>以页为单位顺序读写数据库文件。<code>AllocatePage</code> 递增分配页号；重启时由文件大小恢复
+下一个可分配页号；从未写过的页读出补零。<code>WritePage</code> 立即 <code>flush</code> 保证持久性。</p>
+<p><strong>Bonus 空闲页回收</strong>：维护 <code>free_list_</code> 栈，<code>DeallocatePage</code> 入栈、<code>AllocatePage</code> 优先复用；
+空闲页清单持久化到 <code>&lt;dbfile&gt;.free</code> 旁车文件（避免在数据文件中预留元页），重开后继承。</p>
+<h3 id="32-bufferpoolmanager-replacer缓冲池">3.2 BufferPoolManager + Replacer（缓冲池）</h3>
+<p>维护 <code>page_table_</code>(page_id→frame)、pin 计数、脏页刷盘，并委托 <code>Replacer</code> 做页置换。
+<code>FindVictimFrame</code> 统一腾帧逻辑：先取空闲帧，否则向 Replacer 要牺牲帧，脏则先刷盘并清旧映射。</p>
+<ul>
+<li><strong>LRUReplacer</strong>：<code>list + unordered_map&lt;frame, iterator&gt;</code> 实现 O(1) 的 Unpin/Pin/Victim。</li>
+<li><strong>ClockReplacer（Bonus）</strong>：每帧一个 reference 状态（EMPTY / IN_USE_REF / IN_USE_NOREF），
+  环形指针扫描，遇 REF 清零给「二次机会」，遇 NOREF 淘汰，近似 LRU 而开销更低。</li>
+</ul>
+<p>注意 <code>~BufferPoolManager</code> <strong>不自动刷脏页</strong>，故新增 <code>FlushAllPages()</code> 供关库前显式调用。</p>
+<h3 id="33-记录与堆表record-tableheap">3.3 记录与堆表（Record / TableHeap）</h3>
+<ul>
+<li><strong>Value / Row</strong>：<code>Value</code> 支持三类型的三路比较与定长序列化（CHAR 按列宽补零/截断）。
+  <code>Row</code> 按 Schema 逐列连续排布序列化。序列化签名带 <code>len</code> 参数，CHAR 列宽由 Row 依 Schema 传入。</li>
+<li><strong>TableHeap</strong>：表数据 = 数据页链表。页布局为 <code>[next_page_id | slot_count]</code> 页头 +
+  「1 字节状态(0 空/1 占用) + 定长记录」槽序列。删除按槽标记，空间可被后续插入复用。
+  支持惰性建首页（首次插入才分配数据页）。</li>
+</ul>
+<p><strong>优化</strong>：缓存尾页 <code>last_page_id_</code>，插入直接追加到尾页（O(1) 摊还）。</p>
+<h3 id="34-b-树索引bplustree-indexmanager">3.4 B+ 树索引（BPlusTree / IndexManager）</h3>
+<p>单属性单值 B+ 树，key 为定长 <code>Value</code>、value 为记录 <code>RID</code>，节点持久化在缓冲池页上。</p>
+<ul>
+<li><strong>节点页布局</strong>：公共头 <code>node_type | size</code>；叶子额外有 <code>next</code> 指针并存 <code>[key|rid]</code> 数组、
+  串成链表支持区间扫描；内部节点存 key 数组 + child page_id 数组。</li>
+<li><strong>算法</strong>：递归实现。<code>Insert</code> 叶层去重，溢出分裂（叶复制首键上推、内部中键上推），
+  根分裂则新建内部根升高；<code>Remove</code> 下溢时优先向兄弟借位、否则合并，并处理根塌缩；
+  <code>GetValue</code> 二分点查，<code>RangeScan</code> 沿叶链表收集 <code>[low, high]</code>。</li>
+<li><strong>几何</strong>：fanout 由页大小自动计算，测试可传小扇出（如 4）以少量数据触发多级结构。</li>
+<li><strong>IndexManager</strong>：管理索引生命周期，<code>GetIndex(table,col)</code> 供执行引擎选择走索引或全表扫描。</li>
+</ul>
+<h3 id="35-元数据与多库catalogmanager-databaseengine">3.5 元数据与多库（CatalogManager / DatabaseEngine）</h3>
+<ul>
+<li><strong>CatalogManager</strong>：<code>CreateTable/DropTable/GetTable</code>；主键与 <code>unique</code> 列自动建 B+ 树索引。
+  元数据（表名、schema、<code>first_page_id</code>、各索引名/列/根页号）序列化到固定的 <strong>0 号目录页</strong>，
+  <code>LoadCatalog</code> 启动时解析重建。全新库通过 <code>NewPage</code> 自举 0 号页（用 <code>DiskManager::GetNumPages()</code>
+  判断是否全新库），保证目录页稳定为 0 号、表数据页从 1 号起。</li>
+<li><strong>DatabaseEngine（多库）</strong>：每个数据库一个独立 <code>.db</code> 文件 + 一套 Disk/BPM/Index/Catalog 存储栈；
+  库名清单持久化到 <code>databases.meta</code>。<code>create/drop/use database</code>、<code>show databases</code>；关闭前 <code>FlushAll</code> 刷盘。</li>
+</ul>
+<h3 id="36-sql-解释器interpreter">3.6 SQL 解释器（Interpreter）</h3>
+<p>手写词法 + 递归下降，无需完整语法分析器。词法识别 <code>--</code> 行注释、双引号串、复合操作符
+（<code>&lt;= &gt;= &lt;&gt;</code>）、整数/浮点字面量；关键字大小写不敏感。按首关键字分派解析为 <code>Statement</code>（极简 AST）。
+覆盖数据库命令、DDL、DML（含 <code>update</code>）、<code>where</code> 的 AND 条件链。</p>
+<h3 id="37-执行引擎与接线executeengine-main">3.7 执行引擎与接线（ExecuteEngine / main）</h3>
+<p><code>ExecuteEngine</code> 持有 <code>DatabaseEngine</code>，对「当前库」派发所有语句：</p>
+<ul>
+<li><strong>insert</strong>：值按列类型强制（如整数写入 float 列）；对索引列做唯一性检查；写堆表后同步所有索引。</li>
+<li><strong>delete / update</strong>：全表扫描 + <code>where</code> 过滤（<code>RowMatches</code> 用 <code>Value::CompareTo</code>）；
+  维护索引；<code>update</code> 以「删旧 + 插新」实现（含改主键的情形）。</li>
+<li><strong>select</strong>：扫描过滤后投影列并打印；结果经 <code>LastRows/LastColumns/LastAffected</code> 暴露以便测试。</li>
+<li><strong>DDL / 库级命令</strong>：转交 Catalog / IndexManager / DatabaseEngine。</li>
+</ul>
+<p><code>main.cpp</code> 构造引擎并运行 REPL/批处理循环，按 <code>;</code> 切分语句（忽略字符串内 <code>;</code> 与 <code>--</code> 注释），
+<code>isatty</code> 判断是否打印交互提示，支持从文件/管道批量执行。</p>
+<h3 id="38-bonus并发与恢复">3.8 Bonus：并发与恢复</h3>
+<ul>
+<li><strong>LockManager（2PL + wound-wait）</strong>：共享/排他锁，S-S 相容、X 互斥；2PL 下 <code>Unlock</code> 后进入
+  SHRINKING 不得再申请锁。死锁预防用 <strong>wound-wait</strong>（按 <code>txn_id</code> 定优先级，小=老=高优先）：
+  申请者更老则「创伤」（中止并强制释放）更年轻的持有者，更年轻则等待更老者——等待图只有
+  「年轻→老」边、无环。实现用 <code>mutex + condition_variable</code>，多线程测试。</li>
+<li><strong>WAL 崩溃恢复</strong>：<code>LogRecord</code> 自描述序列化（不依赖外部 schema）；<code>LogManager</code> 追加长度前缀的
+  日志到独立日志文件并 <code>Flush</code>；<code>RecoveryManager</code> 解析日志，先 <strong>Redo 全部</strong>（重复历史）再对无
+  COMMIT 的失败事务 <strong>逆序 Undo</strong>（插入→撤销、删除→恢复前像），重建出 <code>RID→Row</code> 状态。</li>
+</ul>
+<blockquote>
+<p>说明：LockManager 与 WAL 恢复是自包含的算法演示模块，未接入单用户引擎的实际读写路径
+（单用户无并发、未在写路径上挂日志）。</p>
+</blockquote>
+<hr />
+<h2 id="四关键问题与解决">四、关键问题与解决</h2>
+<table>
+<thead>
+<tr>
+<th>问题</th>
+<th>现象</th>
+<th>根因</th>
+<th>解决</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>B+ 树小扇出测试段错误</td>
+<td>插入若干键后崩溃</td>
+<td>内部节点键区只预留 <code>internal_max</code> 槽，「先插入后分裂」时临时溢出的第 <code>max+1</code> 个键正好覆盖孩子数组基址；叶子默认容量算满后溢出项越过页尾</td>
+<td>键/项容量各预留 +1，<code>IntChildBase</code> 偏移按 <code>internal_max+1</code> 个键计算</td>
+</tr>
+<tr>
+<td>验收脚本 2 分钟超时</td>
+<td>10 万插入跑不完</td>
+<td><code>TableHeap::InsertTuple</code> 每次从链表头扫描空槽 → O(n²)</td>
+<td>缓存尾页 <code>last_page_id_</code> 直接追加（O(1) 摊还）；并把缓冲池 16→1024 减少换出刷盘</td>
+</tr>
+<tr>
+<td>UNIQUE 约束未生效</td>
+<td>脚本期望的唯一冲突未被拒</td>
+<td>Catalog 只为主键自动建索引，未覆盖 <code>unique</code> 列</td>
+<td>改为 <code>IsPrimary() || IsUnique()</code> 都建索引（唯一性借索引强制）</td>
+</tr>
+<tr>
+<td><code>update</code> 报未知语句</td>
+<td>脚本中的 update 失败</td>
+<td>解析/执行均未实现</td>
+<td>新增 <code>StmtType::UPDATE</code> + 解析 + 「删旧插新」执行</td>
+</tr>
+<tr>
+<td>全新库保留 0 号目录页</td>
+<td>递增分配器难以稳定占住 0 号页</td>
+<td>FetchPage 不推进分配器，会与后续 NewPage 冲突</td>
+<td>给 Catalog 注入 DiskManager，用 <code>GetNumPages()==0</code> 判新库并 <code>NewPage</code> 自举 0 号页</td>
+</tr>
+<tr>
+<td>重开库后数据丢失</td>
+<td>持久化测试失败</td>
+<td><code>~BufferPoolManager</code> 不刷脏页</td>
+<td>新增 <code>FlushAllPages()</code>，关库前显式调用</td>
+</tr>
+<tr>
+<td>reclaim 测试 GetNumPages 失败</td>
+<td>重开后文件大小不符</td>
+<td><code>AllocatePage</code> 只递增计数，文件大小由 <code>WritePage</code> 决定</td>
+<td>测试每次分配后写一页，模拟真实刷盘路径</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="五测试与验证">五、测试与验证</h2>
+<h3 id="51-单元测试">5.1 单元测试</h3>
+<p>每个模块配一个不依赖第三方框架的 <code>assert</code> 测试，经 CMake <code>ctest</code> 统一运行，共 <strong>13 个，全部通过</strong>：</p>
+<pre><code>b_plus_tree_test         buffer_pool_manager_test   catalog_test
+clock_replacer_test      disk_manager_test          disk_reclaim_test
+execute_engine_test      index_manager_test         interpreter_test
+lock_manager_test        lru_replacer_test          recovery_test
+table_heap_test
+</code></pre>
+<p>测试设计要点举例：
+- <strong>B+ 树</strong>：小扇出(4,4) 乱序插入触发多级分裂/借位/合并/根塌缩；2000 键关库重开验证持久化；CHAR 字典序区间。
+- <strong>Catalog</strong>：三会话「关库/重开」验证 schema 与表数据持久、空表重建、Drop 级联删索引、主键索引持久。
+- <strong>ExecuteEngine（端到端）</strong>：建库/表/插入(int→float 强制)/唯一冲突/where/投影/delete/update/索引/关库重开。
+- <strong>LockManager</strong>：S-S 相容、2PL 拒新锁、wound-wait 创伤年轻者、年轻者多线程等待老者后获锁。
+- <strong>Recovery</strong>：模拟崩溃（一个已提交事务 + 一个未提交事务），验证 redo 保留已提交、undo 回滚未提交。</p>
+<h3 id="52-验收脚本端到端">5.2 验收脚本端到端</h3>
+<p>用一份约 10 万行的综合脚本验证（3 个数据库、建表含 <code>primary key</code>、100004 条 <code>insert</code>、
+<code>create/drop index</code>、<code>update</code>、各类 <code>select/delete</code>、<code>show</code> 等）：</p>
+<ul>
+<li>端到端跑通，约 <strong>3.4 秒</strong>（优化前因堆表 O(n²) 超 2 分钟）。</li>
+<li><code>select * from account</code> 在 10 万行后返回正确的 100000 行；<code>update</code> 改主键后新键可查、旧键消失。</li>
+<li>唯一的两处报错正是脚本注释 <code>-- expect primary-key and unique-key conflicts</code> 明确要触发的
+  主键冲突与唯一键冲突，符合预期。</li>
+<li><code>drop table</code> 后 <code>&lt;db&gt;.db.free</code> 列出数千个被回收的页号，证明空间回收生效。</li>
+</ul>
+<hr />
+<h2 id="六ai-辅助开发说明">六、AI 辅助开发说明</h2>
+<p>本项目为「AI 辅助开发」实践：每个模块先由人给出明确的实现 prompt（约定语义、接口、页布局、
+测试要求），由 AI 生成实现与单元测试，再经人审查、运行测试、定位并纠正问题后提交。
+各模块的实现 prompt 原文存档于 <code>docs/prompts/</code>（未收录）（00 模板，01–09 各模块）。
+开发节奏为「一模块一测试一提交」，提交信息为英文，便于回溯每步的范围与验证结果。</p>
+<hr />
+<h2 id="七总结与展望">七、总结与展望</h2>
+<p><strong>已完成</strong>：核心需求（存储/索引/元数据/SQL/多库）与全部 Bonus（Clock 置换、空闲页回收、
+2PL 锁、WAL 恢复），13 个单元测试全绿，验收脚本端到端通过。</p>
+<p><strong>已知限制与可改进方向</strong>：
+- 查询执行目前以全表扫描 + 过滤为主，未把 <code>where</code> 的等值/区间条件下推到 B+ 树走索引扫描（索引已具备能力，可作查询优化）。
+- B+ 树键为唯一键，因此「在非唯一列上建索引」会拒绝重复键；可扩展为非唯一索引（叶子存 RID 列表）。
+- LockManager / WAL 为独立演示，未接入执行引擎的实际读写路径；可进一步把 WAL 挂到 TableHeap 写路径、
+  并在事务边界做 redo/undo，实现真正的崩溃一致性。
+- <code>DeallocatePage</code> 已回收页，但目录/索引页的回收仅在 DROP 时触发；可做更细粒度的空间管理（位图/分级空闲表）。</p>
+<p>总体而言，MiniSQL 完整覆盖了一个精简 DBMS 自底向上的关键技术，并以可运行、可测试、可端到端验证的形式落地。</p>
+    </div>
+    <p class="back"><a class="ef-btn" href="AI辅助开发方法.html">← MiniSQL —— AI 辅助开发方法说明</a> <a class="ef-btn" href="../README.html">MiniSQL —— 精简型单用户 SQL 引擎 →</a> <a class="ef-btn" href="../../../../index.html">返回本课</a></p>
+  </div>
+  <aside class="ef-margin toc-aside" aria-label="本页目录">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>本页目录</span><span>17 节</span></p>
+      <ol>
+      <li><a class="lvl2" href="#一实验目的与概述">一、实验目的与概述</a></li>
+      <li><a class="lvl2" href="#二系统总体设计">二、系统总体设计</a></li>
+      <li><a class="lvl2" href="#三各模块设计与实现">三、各模块设计与实现</a></li>
+      <li><a class="lvl3" href="#31-diskmanager磁盘管理">3.1 DiskManager（磁盘管理）</a></li>
+      <li><a class="lvl3" href="#32-bufferpoolmanager-replacer缓冲池">3.2 BufferPoolManager + Replacer（缓冲池）</a></li>
+      <li><a class="lvl3" href="#33-记录与堆表record-tableheap">3.3 记录与堆表（Record / TableHeap）</a></li>
+      <li><a class="lvl3" href="#34-b-树索引bplustree-indexmanager">3.4 B+ 树索引（BPlusTree / IndexManager）</a></li>
+      <li><a class="lvl3" href="#35-元数据与多库catalogmanager-databaseengine">3.5 元数据与多库（CatalogManager / DatabaseEngine）</a></li>
+      <li><a class="lvl3" href="#36-sql-解释器interpreter">3.6 SQL 解释器（Interpreter）</a></li>
+      <li><a class="lvl3" href="#37-执行引擎与接线executeengine-main">3.7 执行引擎与接线（ExecuteEngine / main）</a></li>
+      <li><a class="lvl3" href="#38-bonus并发与恢复">3.8 Bonus：并发与恢复</a></li>
+      <li><a class="lvl2" href="#四关键问题与解决">四、关键问题与解决</a></li>
+      <li><a class="lvl2" href="#五测试与验证">五、测试与验证</a></li>
+      <li><a class="lvl3" href="#51-单元测试">5.1 单元测试</a></li>
+      <li><a class="lvl3" href="#52-验收脚本端到端">5.2 验收脚本端到端</a></li>
+      <li><a class="lvl2" href="#六ai-辅助开发说明">六、AI 辅助开发说明</a></li>
+      <li><a class="lvl2" href="#七总结与展望">七、总结与展望</a></li>
+      </ol>
+    </div>
+  </aside>
+</article>
+
+<footer class="foot">
+  <span class="ef-field">KYSIIN.ARCHIVE · 2026.11.15 · 由 Markdown 渲染</span>
+  <span>用 endfield-ui 渲染 · Saira（SIL OFL）自托管</span>
+</footer>
+<script type="module">
+  import { wireTheme } from '../../../../../../assets/fx.js'
+  wireTheme()
+</script>
+<script defer src="../../../../../../assets/search.js?v=202611150558"></script>
+<script>
+  /* 左栏：每个分组可独立展开/收起 */
+  (function () {
+    document.querySelectorAll('.tree-toggle').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var li = btn.closest('.tree-group');
+        var list = li ? li.querySelector('.tree-items') : null;
+        var open = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', String(!open));
+        if (list) list.hidden = open;
+        if (li) li.classList.toggle('is-open', !open);
+      });
+    });
+  })();
+</script>
+<script>
+  /* 右栏目录跟随滚动：读到哪一节就把那一行标出来 */
+  (function () {
+    var links = [].slice.call(document.querySelectorAll('.toc-aside a[href^="#"]'));
+    if (!links.length) return;
+    var items = links.map(function (a) {
+      var el = document.getElementById(a.getAttribute('href').slice(1));
+      return el ? { a: a, el: el } : null;
+    }).filter(Boolean);
+    if (!items.length) return;
+    var ticking = false;
+    function spy() {
+      ticking = false;
+      var line = window.scrollY + 140;
+      var best = null;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].el.getBoundingClientRect().top + window.scrollY <= line) best = items[i];
+      }
+      links.forEach(function (a) { a.removeAttribute('aria-current'); });
+      if (best) best.a.setAttribute('aria-current', 'true');
+    }
+    window.addEventListener('scroll', function () {
+      if (!ticking) { ticking = true; requestAnimationFrame(spy); }
+    }, { passive: true });
+    spy();
+  })();
+</script>
+</body>
+</html>

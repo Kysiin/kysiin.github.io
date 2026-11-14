@@ -1,0 +1,584 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Personal Diary 实验实现说明 · KYSIIN.ARCHIVE</title>
+<script src="../../../../../assets/variant.js"></script>
+<link rel="stylesheet" href="../../../../../assets/local-fonts.css" />
+<link rel="stylesheet" href="../../../../../assets/endfield.css" />
+
+<style>
+  body { --tri-h: 3px; --topbar-h: 3.1rem; }
+  body > .ef-tri { position: sticky; top: 0; z-index: 61; }
+  .topbar { position:sticky; top:var(--tri-h); z-index:60;
+    display:flex; align-items:center; gap:1.5rem; padding:.85rem var(--ef-pad);
+    border-bottom:1px solid var(--ef-rule); background:var(--ef-panel); }
+  .topbar .brand { margin:0; font-family:var(--ef-font-ui); font-size:.95rem;
+    font-stretch:var(--ef-wider); font-weight:800; letter-spacing:.08em;
+    text-decoration:none; color:var(--ef-ink); }
+  .topbar nav { display:flex; align-items:center; gap:1.25rem; margin-left:auto; }
+  .topbar nav a { text-decoration:none; color:var(--ef-ink-2); }
+  .foot { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between;
+    gap:1rem; padding:1.5rem var(--ef-pad) 2.5rem; border-top:1px solid var(--ef-rule);
+    color:var(--ef-ink-2); font-size:.875rem; }
+  @media (max-width: 959px) { .ef-spread { grid-template-columns:minmax(0,1fr); }
+    .ef-sheet { border-right:0; border-bottom:1px solid var(--ef-rule); } }
+  @media (max-width:760px) { .topbar { flex-wrap:wrap; gap:.75rem; }
+    .topbar nav { order:3; width:100%; margin-left:0; } }
+
+  .title { margin:1.5rem 0 1rem; font-size:clamp(var(--ef-t-title),5vw,var(--ef-t-h1));
+    font-weight:700; line-height:1.3; }
+  .ef-prose { margin-top:1.75rem; }
+  .ef-prose img { max-width:100%; height:auto; border:1px solid var(--ef-rule); background:#fff; }
+  .ef-prose table { width:100%; border-collapse:collapse; font-size:.9rem; }
+  .ef-prose th, .ef-prose td { border-bottom:1px solid var(--ef-rule); padding:.45rem .6rem; text-align:left; }
+  .ef-prose th { font-family:var(--ef-font-ui); font-stretch:var(--ef-wide); font-size:.8rem; }
+  /* 代码块：整块一个背景；块内的 code 不再带行内边框/内边距 */
+  .ef-prose pre { overflow:auto; margin:1rem 0; padding:.9rem 1rem;
+    background:var(--ef-chip); border-left:3px solid var(--ef-rule);
+    font-size:.85rem; line-height:1.6; tab-size:4; }
+  .ef-prose pre code { display:block; padding:0; border:0; background:none;
+    font-family:var(--ef-font-mono); font-size:.85rem; line-height:1.6; white-space:pre; }
+  .ef-prose :not(pre) > code { font-family:var(--ef-font-mono); font-size:.88em;
+    padding:.1em .35em; border:1px solid var(--ef-rule); background:var(--ef-paper); }
+  .ef-prose blockquote { border-left:3px solid var(--ef-ink); margin:1rem 0; padding:.25rem 0 .25rem 1rem;
+    color:var(--ef-ink-2); }
+
+  /* —— 公式：绝不超出正文栏；行间公式可横向滚动 —— */
+  .ef-prose mjx-container { max-width:100%; }
+  .ef-prose mjx-container[display="true"] { display:block; text-align:center; margin:1.1em 0;
+    max-width:100%; overflow-x:auto; overflow-y:hidden; padding:2px 0; }
+  .ef-prose mjx-container[jax="CHTML"] { font-size:1.02em; }
+  .eq { overflow-x:auto; overflow-y:hidden; max-width:100%; padding:2px 0; }
+  .eq mjx-container[display="true"] { margin:.35em 0; }
+
+  .toc ol { margin:0; padding:0; list-style:none; border-left:1px solid var(--ef-rule); }
+  .toc a { display:block; margin-left:-1px; padding:.22rem 0 .22rem .7rem;
+    border-left:3px solid transparent; color:var(--ef-ink-2); font-size:.85rem;
+    overflow-wrap:anywhere; }
+  .toc a:hover { color:var(--ef-ink); border-left-color:var(--ef-trace); }
+  .toc .lvl3 { padding-left:1.3rem; font-size:.8rem; }
+  .back { margin:2rem 0 0; display:flex; flex-wrap:wrap; gap:.75rem; }
+
+  /* —— 三栏铺满：两侧栏贴边，中间正文吃掉所有剩余宽度 —— */
+  .ef-spread { max-width: none; margin: 0; }
+
+  @media (min-width: 1180px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(11rem, 12vw, 14rem) minmax(0, 1fr) clamp(13rem, 14vw, 17rem);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+  }
+  @media (min-width: 960px) and (max-width: 1179px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(10rem, 12vw, 12rem) minmax(0, 1fr);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+    .ef-spread.has-rail > .toc-aside { display: none; }
+  }
+  @media (min-width: 960px) {
+    .ef-spread > .ef-margin {
+      position: sticky;
+      top: calc(var(--tri-h) + var(--topbar-h));
+      align-self: start;
+      max-height: calc(100vh - var(--tri-h) - var(--topbar-h));
+      overflow-y: auto;
+      scrollbar-width: thin;
+      padding: clamp(1.5rem, 3vw, 2.5rem) 1rem;
+    }
+    /* 两侧栏往屏幕边缘靠，别在页边留空 */
+    .ef-spread > .rail-aside { padding-left: .75rem; padding-right: 1.25rem; }
+    .ef-spread > .toc-aside { padding-left: 1.25rem; padding-right: .75rem; }
+    /* 正文左右留呼吸，但不限制宽度 */
+    .ef-spread > .ef-sheet { padding-left: clamp(2rem, 3.5vw, 4rem); padding-right: clamp(2rem, 3.5vw, 4rem); }
+    /* 套件把正文限制在 40rem；中间栏变宽后这里放开，让文字铺满 */
+    .ef-sheet .ef-prose,
+    .ef-sheet .ef-lede,
+    .ef-sheet .title,
+    .ef-sheet .ef-read,
+    .ef-sheet .ef-facts,
+    .ef-sheet .ef-empty,
+    .ef-sheet .ef-notice { max-width: none; }
+  }
+  .ef-margin .toc a { font-size: .74rem; line-height: 1.5; }
+  .toc a[aria-current] { color: var(--ef-ink); border-left-color: var(--ef-trace); font-weight: 600; }
+  .rail-head { display: block; margin: 0 0 .5rem; padding-bottom: .35rem;
+    border-bottom: 1px solid var(--ef-rule); font-size: .68rem; line-height: 1.5; }
+  .rail-head span { display: inline; }
+  .rail-head span + span { display: block; color: var(--ef-ink-2); }
+  .rail-aside .toc a { padding-top: .3rem; padding-bottom: .3rem; }
+  .rail-tree { list-style:none; margin:0; padding:0; }
+  .rail-tree .tree-name { display:block; padding:.35rem .2rem .35rem .6rem;
+    border-left:3px solid transparent; font-size:.76rem; font-weight:600; color:var(--ef-ink); }
+  .rail-tree .tree-label { display:inline; }
+  .rail-tree .tree-name .ef-field { font-size:.68rem; color:var(--ef-ink-2); margin-left:.35rem;
+    white-space:nowrap; }
+  .rail-tree .tree-group.is-open > .tree-name { border-left-color:var(--ef-trace); }
+  .rail-tree .tree-items { list-style:none; margin:.1rem 0 .5rem; padding:0 0 0 .6rem;
+    border-left:1px solid var(--ef-rule); }
+  .rail-tree .tree-items a { padding-left:.6rem; font-size:.72rem; line-height:1.45; }
+  .tree-row { display:flex; align-items:stretch; gap:.15rem; }
+  .tree-row .tree-name { flex:1 1 auto; min-width:0; }
+  .tree-toggle { flex:none; width:1.55rem; min-height:1.9rem; display:grid; place-items:center;
+    padding:0; border:1px solid var(--ef-rule); background:var(--ef-panel); color:var(--ef-ink-2);
+    cursor:pointer; transition:color .12s var(--ef-ease), border-color .12s var(--ef-ease), background .12s var(--ef-ease); }
+  .tree-toggle:hover { color:var(--ef-ink); border-color:var(--ef-ink); background:var(--ef-chip); }
+  .tree-toggle svg { width:.7rem; height:.7rem; transition:transform .15s var(--ef-ease); }
+  .tree-toggle[aria-expanded="true"] svg { transform:rotate(90deg); }
+  .rail-tree .tree-items[hidden] { display:none; }
+  /* 滚动条统一样式在 assets/local-fonts.css 里定义（页面/侧栏/搜索共用） */
+
+  /* 窄屏：正文优先，两侧栏排到后面 */
+  @media (max-width: 959px) {
+    .ef-spread.has-rail > .ef-sheet { order: 1; }
+    .ef-spread.has-rail > .rail-aside { order: 2; border-top: 1px solid var(--ef-rule); }
+    .ef-spread.has-rail > .toc-aside { order: 3; }
+  }
+
+  /* —— 复习笔记：PDF 下载 —— */
+  .pdf-dl { display:flex; flex-wrap:wrap; align-items:center; gap:.75rem; margin:1.1rem 0 0; }
+  .pdf-dl .ef-btn { border-color:var(--ef-ink); }
+
+  /* —— 打印 / 导出 PDF：只留正文 —— */
+  @page { size:A4; margin:16mm 14mm 18mm; }
+  @media print {
+    html, body { background:#fff !important; }
+    .topbar, .foot, .ef-tri, .rail-aside, .toc-aside, .back, .pdf-dl,
+    .ef-crumb, .ef-eyebrow, .ef-facts, .ef-notice { display:none !important; }
+    .ef-spread, .ef-spread.has-rail { display:block !important; max-width:none !important; }
+    .ef-sheet { border:0 !important; padding:0 !important; background:#fff !important; }
+    .ef-sheet .ef-prose, .ef-sheet .ef-lede, .ef-sheet .title { max-width:none !important; }
+    .title { margin:0 0 1rem; }
+    /* 打印用系统字体：体积小、离线打开不依赖自托管字体 */
+    body, .ef-prose, .title, .ef-lede, .ef-facts,
+    h1, h2, h3, h4, h5, h6 { font-family:"Microsoft YaHei UI","Microsoft YaHei","PingFang SC",sans-serif !important; }
+    .ef-prose pre, .ef-prose code { font-family:Consolas,"Cascadia Mono",monospace !important; }
+    .ef-prose { margin-top:1rem; }
+    .ef-prose pre { white-space:pre-wrap; word-break:break-word; }
+    .ef-prose pre code { white-space:pre-wrap; }
+    .ef-prose img, .ef-prose svg, mjx-container { max-width:100% !important; }
+    a { color:inherit !important; text-decoration:none !important; }
+    .ef-prose h2, .ef-prose h3 { break-after:avoid; }
+    .ef-prose pre, .ef-prose table, .eq { break-inside:avoid; }
+  }
+
+</style>
+</head>
+<body class="ef ef-contours">
+<div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+<header class="topbar">
+  <a class="brand" href="../../../../../index.html">KYSIIN.ARCHIVE</a>
+  <nav class="ef-field" aria-label="主导航">
+    <a href="../../../../../index.html">首页</a>
+    <a href="../../../index.html" aria-current="page">面向对象程序设计（OOP）</a>
+  </nav>
+  <span data-search-slot></span>
+  <button class="ef-btn small" type="button" data-theme-toggle>切换深浅</button>
+</header>
+
+<article class="ef-spread has-rail">
+  <aside class="ef-margin rail-aside" aria-label="本课程分区">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>面向对象程序设计（OOP）</span><span>2 区</span></p>
+      <ol class="rail-tree">
+        <li class="tree-group is-open">
+          <div class="tree-row">
+            <a class="tree-name" href="../../../index.html#sec-%E7%AB%A0%E8%8A%82"><span class="tree-label">章节</span><span class="ef-field">1</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="true" aria-label="收起 章节"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items">
+            <li><a href="IMPLEMENTATION.html" aria-current="page">Personal Diary 实验实现说明</a></li>
+          </ol>
+        </li>
+        <li class="tree-group">
+          <div class="tree-row">
+            <a class="tree-name" href="../../../index.html#sec-%E5%AE%9E%E9%AA%8C"><span class="tree-label">实验</span><span class="ef-field">2</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="false" aria-label="展开 实验"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items" hidden>
+            <li><a href="../../LAB/Castle/实验报告.html">Game of Castle</a></li>
+            <li><a href="../../LAB/LAB2/Clock/9-1 Clock Display.html">9-1 Clock Display</a></li>
+          </ol>
+        </li>
+      </ol>
+      <p class="ef-actions" style="margin:.9rem 0 0">
+        <a class="ef-btn small" href="../../../index.html">返回课程</a>
+      </p>
+    </div>
+  </aside>
+  <div class="ef-sheet">
+    <p class="ef-eyebrow slash">Course / Article</p>
+    <p class="ef-crumb ef-field"><a href="../../../../../index.html">首页</a><a href="../../../index.html">面向对象程序设计（OOP）</a><span>章节</span><span>补充/Perosonal_Diary</span></p>
+    <ul class="ef-facts ef-field">
+      <li>章节</li>
+      <li>1,932 字</li>
+      <li>2026.11.15</li>
+      <li>15 个小节</li>
+    </ul>
+    <h1 class="title ef-read">Personal Diary 实验实现说明</h1>
+    <div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+    
+    
+    <div class="ef-prose">
+<p>本实验用 C++ 实现了一个命令行（CLI）的「个人日记」软件。日记以纯文本文件存储，每一天一条记录。本文档解释整个实验的实现方式：整体设计、各文件职责、编译流程，以及自动化测试是如何验证程序正确性的。</p>
+<hr />
+<h2 id="1-需求概览">1. 需求概览</h2>
+<p>软件把日记保存在纯文本文件中，每行一条记录，格式为：</p>
+<pre><code>yyyy-mm-dd:内容
+</code></pre>
+<ul>
+<li>日期为 <code>yyyy-mm-dd</code> 格式，后跟一个冒号 <code>:</code>，再跟当天内容。</li>
+<li>同一日期不允许有重复行。</li>
+</ul>
+<p>软件由四个独立的可执行程序组成：</p>
+<table>
+<thead>
+<tr>
+<th>程序</th>
+<th>功能</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>pdadd &lt;date&gt;</code></td>
+<td>从命令行参数取日期，从标准输入读内容，添加一条记录；同日期已存在则<strong>覆盖</strong></td>
+</tr>
+<tr>
+<td><code>pdlist</code></td>
+<td>按日期顺序列出所有记录到标准输出</td>
+</tr>
+<tr>
+<td><code>pdshow &lt;date&gt;</code></td>
+<td>输出指定日期的记录；不存在则输出 <code>date:No entry found for the given date</code></td>
+</tr>
+<tr>
+<td><code>pdremove &lt;date&gt;</code></td>
+<td>删除指定日期的记录；成功返回 0，失败打印 <code>Entry not found at date</code> 并返回非 0</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="2-整体架构一个核心类-四个入口">2. 整体架构：一个核心类 + 四个入口</h2>
+<p>实现采用<strong>「公共逻辑封装成类，四个程序复用」</strong>的面向对象设计：</p>
+<pre><code>                 ┌─────────────────────────┐
+                 │   PersonalDiary 类        │
+                 │  (personal_diary.h /      │
+                 │   personal_dairy.cpp)     │
+                 │  - 负责文件读写与增删查    │
+                 └───────────┬─────────────┘
+        ┌──────────┬─────────┼─────────┬──────────┐
+        │          │         │         │          │
+    pdadd.cpp  pdlist.cpp  pdshow.cpp  pdremove.cpp
+     (四个 main 入口，各自调用同一个类)
+</code></pre>
+<p>四个 <code>.cpp</code> 都只写一个 <code>main()</code>，把真正的业务逻辑交给 <code>PersonalDiary</code> 类。这样避免了文件读写代码在四处重复。</p>
+<hr />
+<h2 id="3-核心类-personaldiary">3. 核心类 <code>PersonalDiary</code></h2>
+<h3 id="31-头文件-srcpersonal_diaryh">3.1 头文件 <code>src/personal_diary.h</code></h3>
+<p>类的对外接口定义如下：</p>
+<pre><code class="language-cpp">class PersonalDiary {
+private:
+    std::string filename;                          // 数据文件名
+    std::map&lt;std::string, std::string&gt; entries;    // 日期 -&gt; 内容
+    void load();   // 从文件载入到内存
+    void save();   // 从内存写回文件
+public:
+    PersonalDiary(const std::string&amp; file = &quot;personal_dairy.txt&quot;);
+    ~PersonalDiary();
+    bool addEntry(const std::string&amp; date, const std::string&amp; content);
+    std::vector&lt;std::pair&lt;std::string, std::string&gt;&gt; listEntries();
+    bool showEntry(const std::string&amp; date, std::string&amp; content);
+    bool removeEntry(const std::string&amp; date);
+    bool entryExists(const std::string&amp; date);
+};
+</code></pre>
+<p><strong>关键设计点 —— 用 <code>std::map</code> 作为内存数据结构：</strong></p>
+<ul>
+<li><code>std::map</code> 的键（日期字符串）天然<strong>自动排序且去重</strong>。</li>
+<li>「按日期顺序列出」直接利用了 map 的有序性，无需手动排序。</li>
+<li>「同日期覆盖」直接利用了 map 的键唯一性（<code>entries[date] = content</code> 自动覆盖）。</li>
+</ul>
+<h3 id="32-实现-srcpersonal_dairycpp">3.2 实现 <code>src/personal_dairy.cpp</code></h3>
+<p>整个类的生命周期围绕「<strong>构造时载入、析构时保存</strong>」的 RAII 模式设计：</p>
+<ul>
+<li><strong>构造函数</strong> → 调用 <code>load()</code>：打开数据文件，逐行用 <code>find(':')</code> 找到第一个冒号，冒号前是日期、冒号后是内容，存入 <code>map</code>。</li>
+<li><strong>析构函数</strong> → 调用 <code>save()</code>：把 <code>map</code> 中所有条目按 <code>日期:内容</code> 格式逐行写回文件。</li>
+</ul>
+<p>因此每个程序的使用模式都是一致的：</p>
+<ol>
+<li>创建 <code>PersonalDiary</code> 对象 → 自动从文件读入内存；</li>
+<li>在内存（map）上做增/删/查；</li>
+<li>对象离开作用域析构 → 自动把内存写回文件。</li>
+</ol>
+<p>各方法实现：</p>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>实现方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>addEntry</code></td>
+<td><code>entries[date] = content;</code>（已存在则覆盖）</td>
+</tr>
+<tr>
+<td><code>listEntries</code></td>
+<td>遍历 map，按序拷贝成 vector 返回</td>
+</tr>
+<tr>
+<td><code>showEntry</code></td>
+<td><code>entries.find(date)</code>，找到则通过引用参数返回内容，返回 <code>true</code></td>
+</tr>
+<tr>
+<td><code>removeEntry</code></td>
+<td><code>find</code> 后 <code>erase</code>，删除成功返回 <code>true</code>，否则 <code>false</code></td>
+</tr>
+<tr>
+<td><code>entryExists</code></td>
+<td>判断 <code>find</code> 结果是否存在</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>注意：<code>save()</code> 在析构时<strong>总是</strong>把 map 整体写回文件。这意味着 <code>pdlist</code>、<code>pdshow</code> 等只读程序运行后，也会把文件重新规范化写一遍（按日期排序、统一格式）。</p>
+</blockquote>
+<hr />
+<h2 id="4-四个程序入口">4. 四个程序入口</h2>
+<h3 id="41-pdaddcpp">4.1 <code>pdadd.cpp</code></h3>
+<ul>
+<li>从 <code>argv[1]</code> 取日期。</li>
+<li>循环 <code>getline(cin, ...)</code> 读取标准输入的所有行作为内容，多行之间用 <code>\n</code> 拼接（支持多行日记）。</li>
+<li><code>diary.addEntry(date, content)</code> 加入；对象析构时写回文件。</li>
+</ul>
+<h3 id="42-pdlistcpp">4.2 <code>pdlist.cpp</code></h3>
+<ul>
+<li>创建对象，调用 <code>listEntries()</code>，逐条 <code>cout &lt;&lt; 日期 &lt;&lt; ":" &lt;&lt; 内容</code> 输出。</li>
+<li>因为 map 有序，输出天然按日期排序。</li>
+</ul>
+<h3 id="43-pdshowcpp">4.3 <code>pdshow.cpp</code></h3>
+<ul>
+<li>从 <code>argv[1]</code> 取日期，调用 <code>showEntry()</code>。</li>
+<li>找到 → 输出 <code>日期:内容</code>，返回 0。</li>
+<li>找不到 → 输出 <code>日期:No entry found for the given date</code>，返回 1。</li>
+</ul>
+<h3 id="44-pdremovecpp">4.4 <code>pdremove.cpp</code></h3>
+<ul>
+<li>从 <code>argv[1]</code> 取日期，调用 <code>removeEntry()</code>。</li>
+<li>成功 → 返回 0。</li>
+<li>失败 → 输出 <code>Entry not found at 日期</code>，返回 <strong>255</strong>（即 <code>-1</code> 在 shell 中的退出码表现）。</li>
+</ul>
+<hr />
+<h2 id="5-编译流程makefile">5. 编译流程（Makefile）</h2>
+<p>采用两层 Makefile：</p>
+<p><strong>顶层 <code>Makefile</code></strong>：只是进入 <code>src</code> 目录调用里面的 Makefile。</p>
+<pre><code class="language-make">all:
+    cd $(SRC) &amp;&amp; make
+clean:
+    cd $(SRC) &amp;&amp; make clean
+</code></pre>
+<p><strong><code>src/Makefile</code></strong>：真正的构建逻辑。</p>
+<ul>
+<li>编译器 <code>g++</code>，标准 <code>-std=c++11</code>。</li>
+<li>先把每个 <code>.cpp</code> 编成 <code>.o</code>（隐式规则 <code>.cpp.o</code>）。</li>
+<li>公共目标文件 <code>personal_dairy.o</code> 与各程序自己的 <code>.o</code> 链接，生成四个可执行文件，输出到<strong>上一级目录</strong>（<code>OD = ..</code>）。</li>
+</ul>
+<pre><code class="language-make">$(OD)/pdadd: pdadd.o personal_dairy.o
+    $(CC) $(CFLAG) -o $(OD)/pdadd pdadd.o personal_dairy.o
+# pdlist / pdshow / pdremove 同理
+</code></pre>
+<p>每个可执行文件 = 「自己的 main 入口 .o」+「公共类 personal_dairy.o」链接而成。</p>
+<hr />
+<h2 id="6-自动化测试mainsh">6. 自动化测试（main.sh）</h2>
+<p><code>main.sh</code> 是评分/验证脚本，流程如下：</p>
+<ol>
+<li><code>make clean</code> + <code>make -B</code>：干净重新编译全部程序。</li>
+<li>写入初始数据文件 <code>personal_dairy.txt</code>：
+   <code>2021-01-01:Happy New Year
+   2021-01-02:Happy New Year 2</code></li>
+<li>依次执行各程序，把输出全部重定向汇总到 <code>out</code>：
+   <code>sh
+   ./pdadd 2024-02-29 &lt;in &gt;out      # in 文件内容是 "started"
+   ./pdlist &gt;&gt;out
+   ./pdshow 2021-01-01 &gt;&gt;out
+   ./pdshow 2022-02-01 &gt;&gt;out        # 测试「找不到」分支
+   ./pdremove 2021-01-02 &gt;&gt;out
+   echo $? &gt;&gt;out                    # 记录退出码：0（成功）
+   ./pdremove 2022-01-02 &gt;&gt;out      # 测试删除不存在条目
+   echo $? &gt;&gt;out                    # 记录退出码：255（失败）
+   ./pdlist &gt;&gt;out</code></li>
+<li><code>diff out std_out</code>：把实际输出 <code>out</code> 与期望输出 <code>std_out</code> 比较。</li>
+<li>根据 <code>diff</code> 结果，向脚本参数 <code>$1</code> 指定的文件写入分数：完全一致写 <code>100</code>，否则写 <code>0</code>。</li>
+</ol>
+<h3 id="期望输出-std_out">期望输出 <code>std_out</code></h3>
+<pre><code>2021-01-01:Happy New Year
+2021-01-02:Happy New Year 2
+2024-02-29:started
+2021-01-01:Happy New Year
+2022-02-01:No entry found for the given date
+0
+Entry not found at 2022-01-02
+255
+2021-01-01:Happy New Year
+2024-02-29:started
+</code></pre>
+<p>这一段输出覆盖了全部四个程序，并验证了：添加、按序列出、查询存在/不存在、删除成功/失败、退出码、覆盖与持久化等所有核心行为。当前 <code>out</code> 与 <code>std_out</code> 完全一致，说明实现通过测试。</p>
+<hr />
+<h2 id="7-文件清单">7. 文件清单</h2>
+<table>
+<thead>
+<tr>
+<th>文件</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>readme.md</code></td>
+<td>需求说明（题目）</td>
+</tr>
+<tr>
+<td><code>Makefile</code></td>
+<td>顶层构建入口</td>
+</tr>
+<tr>
+<td><code>main.sh</code></td>
+<td>自动化测试 / 评分脚本</td>
+</tr>
+<tr>
+<td><code>in</code></td>
+<td>测试用标准输入内容（<code>started</code>）</td>
+</tr>
+<tr>
+<td><code>out</code> / <code>std_out</code></td>
+<td>测试实际输出 / 期望输出</td>
+</tr>
+<tr>
+<td><code>personal_dairy.txt</code></td>
+<td>日记数据文件（程序读写的目标）</td>
+</tr>
+<tr>
+<td><code>src/personal_diary.h</code></td>
+<td><code>PersonalDiary</code> 类声明</td>
+</tr>
+<tr>
+<td><code>src/personal_dairy.cpp</code></td>
+<td><code>PersonalDiary</code> 类实现（文件读写 + 增删查）</td>
+</tr>
+<tr>
+<td><code>src/pdadd.cpp</code></td>
+<td>添加程序入口</td>
+</tr>
+<tr>
+<td><code>src/pdlist.cpp</code></td>
+<td>列出程序入口</td>
+</tr>
+<tr>
+<td><code>src/pdshow.cpp</code></td>
+<td>查询程序入口</td>
+</tr>
+<tr>
+<td><code>src/pdremove.cpp</code></td>
+<td>删除程序入口</td>
+</tr>
+<tr>
+<td><code>src/Makefile</code></td>
+<td>实际编译规则</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="8-设计小结">8. 设计小结</h2>
+<ul>
+<li><strong>复用</strong>：所有文件读写与数据操作集中在 <code>PersonalDiary</code> 一个类，四个程序仅负责命令行解析与输入输出。</li>
+<li><strong>数据结构选型</strong>：<code>std::map&lt;string,string&gt;</code> 一举解决了「按日期排序」和「同日期去重/覆盖」两个需求。</li>
+<li><strong>RAII</strong>：构造载入、析构保存，使每个短命的 CLI 程序都能正确地读入和持久化数据。</li>
+<li><strong>可测试性</strong>：通过 <code>main.sh</code> + <code>diff</code> 做端到端黑盒测试，用退出码和标准输出共同判定正确性。</li>
+</ul>
+<blockquote>
+<p>备注：代码中文件名混用了 <code>dairy</code>（拼写错误）与 <code>diary</code> 两种写法（如 <code>personal_dairy.cpp</code> vs <code>personal_diary.h</code>、<code>personal_dairy.txt</code> vs <code>personal_diary.txt</code>），实际生效的数据文件是 <code>personal_dairy.txt</code>。功能不受影响，但命名上可统一为正确拼写 <code>diary</code>。</p>
+</blockquote>
+    </div>
+    <p class="back"><a class="ef-btn" href="../../LAB/Castle/实验报告.html">Game of Castle →</a> <a class="ef-btn" href="../../../index.html">返回本课</a></p>
+  </div>
+  <aside class="ef-margin toc-aside" aria-label="本页目录">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>本页目录</span><span>15 节</span></p>
+      <ol>
+      <li><a class="lvl2" href="#1-需求概览">1. 需求概览</a></li>
+      <li><a class="lvl2" href="#2-整体架构一个核心类-四个入口">2. 整体架构：一个核心类 + 四个入口</a></li>
+      <li><a class="lvl2" href="#3-核心类-personaldiary">3. 核心类 PersonalDiary</a></li>
+      <li><a class="lvl3" href="#31-头文件-srcpersonal_diaryh">3.1 头文件 src/personal_diary.h</a></li>
+      <li><a class="lvl3" href="#32-实现-srcpersonal_dairycpp">3.2 实现 src/personal_dairy.cpp</a></li>
+      <li><a class="lvl2" href="#4-四个程序入口">4. 四个程序入口</a></li>
+      <li><a class="lvl3" href="#41-pdaddcpp">4.1 pdadd.cpp</a></li>
+      <li><a class="lvl3" href="#42-pdlistcpp">4.2 pdlist.cpp</a></li>
+      <li><a class="lvl3" href="#43-pdshowcpp">4.3 pdshow.cpp</a></li>
+      <li><a class="lvl3" href="#44-pdremovecpp">4.4 pdremove.cpp</a></li>
+      <li><a class="lvl2" href="#5-编译流程makefile">5. 编译流程（Makefile）</a></li>
+      <li><a class="lvl2" href="#6-自动化测试mainsh">6. 自动化测试（main.sh）</a></li>
+      <li><a class="lvl3" href="#期望输出-std_out">期望输出 std_out</a></li>
+      <li><a class="lvl2" href="#7-文件清单">7. 文件清单</a></li>
+      <li><a class="lvl2" href="#8-设计小结">8. 设计小结</a></li>
+      </ol>
+    </div>
+  </aside>
+</article>
+
+<footer class="foot">
+  <span class="ef-field">KYSIIN.ARCHIVE · 2026.11.15 · 由 Markdown 渲染</span>
+  <span>用 endfield-ui 渲染 · Saira（SIL OFL）自托管</span>
+</footer>
+<script type="module">
+  import { wireTheme } from '../../../../../assets/fx.js'
+  wireTheme()
+</script>
+<script defer src="../../../../../assets/search.js?v=202611150558"></script>
+<script>
+  /* 左栏：每个分组可独立展开/收起 */
+  (function () {
+    document.querySelectorAll('.tree-toggle').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var li = btn.closest('.tree-group');
+        var list = li ? li.querySelector('.tree-items') : null;
+        var open = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', String(!open));
+        if (list) list.hidden = open;
+        if (li) li.classList.toggle('is-open', !open);
+      });
+    });
+  })();
+</script>
+<script>
+  /* 右栏目录跟随滚动：读到哪一节就把那一行标出来 */
+  (function () {
+    var links = [].slice.call(document.querySelectorAll('.toc-aside a[href^="#"]'));
+    if (!links.length) return;
+    var items = links.map(function (a) {
+      var el = document.getElementById(a.getAttribute('href').slice(1));
+      return el ? { a: a, el: el } : null;
+    }).filter(Boolean);
+    if (!items.length) return;
+    var ticking = false;
+    function spy() {
+      ticking = false;
+      var line = window.scrollY + 140;
+      var best = null;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].el.getBoundingClientRect().top + window.scrollY <= line) best = items[i];
+      }
+      links.forEach(function (a) { a.removeAttribute('aria-current'); });
+      if (best) best.a.setAttribute('aria-current', 'true');
+    }
+    window.addEventListener('scroll', function () {
+      if (!ticking) { ticking = true; requestAnimationFrame(spy); }
+    }, { passive: true });
+    spy();
+  })();
+</script>
+</body>
+</html>

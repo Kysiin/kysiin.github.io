@@ -1,0 +1,1115 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>数据库系统 SQL 语句用法总结 · KYSIIN.ARCHIVE</title>
+<script src="../../../../assets/variant.js"></script>
+<link rel="stylesheet" href="../../../../assets/local-fonts.css" />
+<link rel="stylesheet" href="../../../../assets/endfield.css" />
+
+<style>
+  body { --tri-h: 3px; --topbar-h: 3.1rem; }
+  body > .ef-tri { position: sticky; top: 0; z-index: 61; }
+  .topbar { position:sticky; top:var(--tri-h); z-index:60;
+    display:flex; align-items:center; gap:1.5rem; padding:.85rem var(--ef-pad);
+    border-bottom:1px solid var(--ef-rule); background:var(--ef-panel); }
+  .topbar .brand { margin:0; font-family:var(--ef-font-ui); font-size:.95rem;
+    font-stretch:var(--ef-wider); font-weight:800; letter-spacing:.08em;
+    text-decoration:none; color:var(--ef-ink); }
+  .topbar nav { display:flex; align-items:center; gap:1.25rem; margin-left:auto; }
+  .topbar nav a { text-decoration:none; color:var(--ef-ink-2); }
+  .foot { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between;
+    gap:1rem; padding:1.5rem var(--ef-pad) 2.5rem; border-top:1px solid var(--ef-rule);
+    color:var(--ef-ink-2); font-size:.875rem; }
+  @media (max-width: 959px) { .ef-spread { grid-template-columns:minmax(0,1fr); }
+    .ef-sheet { border-right:0; border-bottom:1px solid var(--ef-rule); } }
+  @media (max-width:760px) { .topbar { flex-wrap:wrap; gap:.75rem; }
+    .topbar nav { order:3; width:100%; margin-left:0; } }
+
+  .title { margin:1.5rem 0 1rem; font-size:clamp(var(--ef-t-title),5vw,var(--ef-t-h1));
+    font-weight:700; line-height:1.3; }
+  .ef-prose { margin-top:1.75rem; }
+  .ef-prose img { max-width:100%; height:auto; border:1px solid var(--ef-rule); background:#fff; }
+  .ef-prose table { width:100%; border-collapse:collapse; font-size:.9rem; }
+  .ef-prose th, .ef-prose td { border-bottom:1px solid var(--ef-rule); padding:.45rem .6rem; text-align:left; }
+  .ef-prose th { font-family:var(--ef-font-ui); font-stretch:var(--ef-wide); font-size:.8rem; }
+  /* 代码块：整块一个背景；块内的 code 不再带行内边框/内边距 */
+  .ef-prose pre { overflow:auto; margin:1rem 0; padding:.9rem 1rem;
+    background:var(--ef-chip); border-left:3px solid var(--ef-rule);
+    font-size:.85rem; line-height:1.6; tab-size:4; }
+  .ef-prose pre code { display:block; padding:0; border:0; background:none;
+    font-family:var(--ef-font-mono); font-size:.85rem; line-height:1.6; white-space:pre; }
+  .ef-prose :not(pre) > code { font-family:var(--ef-font-mono); font-size:.88em;
+    padding:.1em .35em; border:1px solid var(--ef-rule); background:var(--ef-paper); }
+  .ef-prose blockquote { border-left:3px solid var(--ef-ink); margin:1rem 0; padding:.25rem 0 .25rem 1rem;
+    color:var(--ef-ink-2); }
+
+  /* —— 公式：绝不超出正文栏；行间公式可横向滚动 —— */
+  .ef-prose mjx-container { max-width:100%; }
+  .ef-prose mjx-container[display="true"] { display:block; text-align:center; margin:1.1em 0;
+    max-width:100%; overflow-x:auto; overflow-y:hidden; padding:2px 0; }
+  .ef-prose mjx-container[jax="CHTML"] { font-size:1.02em; }
+  .eq { overflow-x:auto; overflow-y:hidden; max-width:100%; padding:2px 0; }
+  .eq mjx-container[display="true"] { margin:.35em 0; }
+
+  .toc ol { margin:0; padding:0; list-style:none; border-left:1px solid var(--ef-rule); }
+  .toc a { display:block; margin-left:-1px; padding:.22rem 0 .22rem .7rem;
+    border-left:3px solid transparent; color:var(--ef-ink-2); font-size:.85rem;
+    overflow-wrap:anywhere; }
+  .toc a:hover { color:var(--ef-ink); border-left-color:var(--ef-trace); }
+  .toc .lvl3 { padding-left:1.3rem; font-size:.8rem; }
+  .back { margin:2rem 0 0; display:flex; flex-wrap:wrap; gap:.75rem; }
+
+  /* —— 三栏铺满：两侧栏贴边，中间正文吃掉所有剩余宽度 —— */
+  .ef-spread { max-width: none; margin: 0; }
+
+  @media (min-width: 1180px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(11rem, 12vw, 14rem) minmax(0, 1fr) clamp(13rem, 14vw, 17rem);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+  }
+  @media (min-width: 960px) and (max-width: 1179px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(10rem, 12vw, 12rem) minmax(0, 1fr);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+    .ef-spread.has-rail > .toc-aside { display: none; }
+  }
+  @media (min-width: 960px) {
+    .ef-spread > .ef-margin {
+      position: sticky;
+      top: calc(var(--tri-h) + var(--topbar-h));
+      align-self: start;
+      max-height: calc(100vh - var(--tri-h) - var(--topbar-h));
+      overflow-y: auto;
+      scrollbar-width: thin;
+      padding: clamp(1.5rem, 3vw, 2.5rem) 1rem;
+    }
+    /* 两侧栏往屏幕边缘靠，别在页边留空 */
+    .ef-spread > .rail-aside { padding-left: .75rem; padding-right: 1.25rem; }
+    .ef-spread > .toc-aside { padding-left: 1.25rem; padding-right: .75rem; }
+    /* 正文左右留呼吸，但不限制宽度 */
+    .ef-spread > .ef-sheet { padding-left: clamp(2rem, 3.5vw, 4rem); padding-right: clamp(2rem, 3.5vw, 4rem); }
+    /* 套件把正文限制在 40rem；中间栏变宽后这里放开，让文字铺满 */
+    .ef-sheet .ef-prose,
+    .ef-sheet .ef-lede,
+    .ef-sheet .title,
+    .ef-sheet .ef-read,
+    .ef-sheet .ef-facts,
+    .ef-sheet .ef-empty,
+    .ef-sheet .ef-notice { max-width: none; }
+  }
+  .ef-margin .toc a { font-size: .74rem; line-height: 1.5; }
+  .toc a[aria-current] { color: var(--ef-ink); border-left-color: var(--ef-trace); font-weight: 600; }
+  .rail-head { display: block; margin: 0 0 .5rem; padding-bottom: .35rem;
+    border-bottom: 1px solid var(--ef-rule); font-size: .68rem; line-height: 1.5; }
+  .rail-head span { display: inline; }
+  .rail-head span + span { display: block; color: var(--ef-ink-2); }
+  .rail-aside .toc a { padding-top: .3rem; padding-bottom: .3rem; }
+  .rail-tree { list-style:none; margin:0; padding:0; }
+  .rail-tree .tree-name { display:block; padding:.35rem .2rem .35rem .6rem;
+    border-left:3px solid transparent; font-size:.76rem; font-weight:600; color:var(--ef-ink); }
+  .rail-tree .tree-label { display:inline; }
+  .rail-tree .tree-name .ef-field { font-size:.68rem; color:var(--ef-ink-2); margin-left:.35rem;
+    white-space:nowrap; }
+  .rail-tree .tree-group.is-open > .tree-name { border-left-color:var(--ef-trace); }
+  .rail-tree .tree-items { list-style:none; margin:.1rem 0 .5rem; padding:0 0 0 .6rem;
+    border-left:1px solid var(--ef-rule); }
+  .rail-tree .tree-items a { padding-left:.6rem; font-size:.72rem; line-height:1.45; }
+  .tree-row { display:flex; align-items:stretch; gap:.15rem; }
+  .tree-row .tree-name { flex:1 1 auto; min-width:0; }
+  .tree-toggle { flex:none; width:1.55rem; min-height:1.9rem; display:grid; place-items:center;
+    padding:0; border:1px solid var(--ef-rule); background:var(--ef-panel); color:var(--ef-ink-2);
+    cursor:pointer; transition:color .12s var(--ef-ease), border-color .12s var(--ef-ease), background .12s var(--ef-ease); }
+  .tree-toggle:hover { color:var(--ef-ink); border-color:var(--ef-ink); background:var(--ef-chip); }
+  .tree-toggle svg { width:.7rem; height:.7rem; transition:transform .15s var(--ef-ease); }
+  .tree-toggle[aria-expanded="true"] svg { transform:rotate(90deg); }
+  .rail-tree .tree-items[hidden] { display:none; }
+  /* 滚动条统一样式在 assets/local-fonts.css 里定义（页面/侧栏/搜索共用） */
+
+  /* 窄屏：正文优先，两侧栏排到后面 */
+  @media (max-width: 959px) {
+    .ef-spread.has-rail > .ef-sheet { order: 1; }
+    .ef-spread.has-rail > .rail-aside { order: 2; border-top: 1px solid var(--ef-rule); }
+    .ef-spread.has-rail > .toc-aside { order: 3; }
+  }
+
+  /* —— 复习笔记：PDF 下载 —— */
+  .pdf-dl { display:flex; flex-wrap:wrap; align-items:center; gap:.75rem; margin:1.1rem 0 0; }
+  .pdf-dl .ef-btn { border-color:var(--ef-ink); }
+
+  /* —— 打印 / 导出 PDF：只留正文 —— */
+  @page { size:A4; margin:16mm 14mm 18mm; }
+  @media print {
+    html, body { background:#fff !important; }
+    .topbar, .foot, .ef-tri, .rail-aside, .toc-aside, .back, .pdf-dl,
+    .ef-crumb, .ef-eyebrow, .ef-facts, .ef-notice { display:none !important; }
+    .ef-spread, .ef-spread.has-rail { display:block !important; max-width:none !important; }
+    .ef-sheet { border:0 !important; padding:0 !important; background:#fff !important; }
+    .ef-sheet .ef-prose, .ef-sheet .ef-lede, .ef-sheet .title { max-width:none !important; }
+    .title { margin:0 0 1rem; }
+    /* 打印用系统字体：体积小、离线打开不依赖自托管字体 */
+    body, .ef-prose, .title, .ef-lede, .ef-facts,
+    h1, h2, h3, h4, h5, h6 { font-family:"Microsoft YaHei UI","Microsoft YaHei","PingFang SC",sans-serif !important; }
+    .ef-prose pre, .ef-prose code { font-family:Consolas,"Cascadia Mono",monospace !important; }
+    .ef-prose { margin-top:1rem; }
+    .ef-prose pre { white-space:pre-wrap; word-break:break-word; }
+    .ef-prose pre code { white-space:pre-wrap; }
+    .ef-prose img, .ef-prose svg, mjx-container { max-width:100% !important; }
+    a { color:inherit !important; text-decoration:none !important; }
+    .ef-prose h2, .ef-prose h3 { break-after:avoid; }
+    .ef-prose pre, .ef-prose table, .eq { break-inside:avoid; }
+  }
+
+</style>
+</head>
+<body class="ef ef-contours">
+<div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+<header class="topbar">
+  <a class="brand" href="../../../../index.html">KYSIIN.ARCHIVE</a>
+  <nav class="ef-field" aria-label="主导航">
+    <a href="../../../../index.html">首页</a>
+    <a href="../../index.html" aria-current="page">数据库系统</a>
+  </nav>
+  <span data-search-slot></span>
+  <button class="ef-btn small" type="button" data-theme-toggle>切换深浅</button>
+</header>
+
+<article class="ef-spread has-rail">
+  <aside class="ef-margin rail-aside" aria-label="本课程分区">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>数据库系统</span><span>2 区</span></p>
+      <ol class="rail-tree">
+        <li class="tree-group is-open">
+          <div class="tree-row">
+            <a class="tree-name" href="../../index.html#sec-%E4%B8%93%E9%A2%98"><span class="tree-label">专题</span><span class="ef-field">5</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="true" aria-label="收起 专题"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items">
+            <li><a href="数据库系统-ER图画法规则总结.html">数据库系统 E-R 图画法规则总结</a></li>
+            <li><a href="数据库系统-SQL语句用法总结.html" aria-current="page">数据库系统 SQL 语句用法总结</a></li>
+            <li><a href="数据库系统-判断选择题概念总结.html">数据库系统判断/选择题概念总结</a></li>
+            <li><a href="数据库系统-查询优化规则总结.html">数据库系统查询优化规则总结</a></li>
+            <li><a href="数据库系统-计算公式总结.html">数据库系统计算公式总结</a></li>
+          </ol>
+        </li>
+        <li class="tree-group">
+          <div class="tree-row">
+            <a class="tree-name" href="../../index.html#sec-%E5%AE%9E%E9%AA%8C"><span class="tree-label">实验</span><span class="ef-field">9</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="false" aria-label="展开 实验"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items" hidden>
+            <li><a href="../HW/hw6_answers.html">HW6</a></li>
+            <li><a href="../LAB1/LAB1.html">LAB1</a></li>
+            <li><a href="../LAB2/LAB2.html">LAB2</a></li>
+            <li><a href="../LAB3/LAB3.html">LAB3</a></li>
+            <li><a href="../LAB4/LAB4.html">LAB4</a></li>
+            <li><a href="../LAB5/实验报告.html">图书管理系统实验报告</a></li>
+            <li><a href="../大作业/proj/docs/AI辅助开发方法.html">MiniSQL —— AI 辅助开发方法说明</a></li>
+            <li><a href="../大作业/proj/docs/实验报告.html">MiniSQL 实验报告</a></li>
+            <li><a href="../大作业/proj/README.html">MiniSQL —— 精简型单用户 SQL 引擎（C++）</a></li>
+          </ol>
+        </li>
+      </ol>
+      <p class="ef-actions" style="margin:.9rem 0 0">
+        <a class="ef-btn small" href="../../index.html">返回课程</a>
+      </p>
+    </div>
+  </aside>
+  <div class="ef-sheet">
+    <p class="ef-eyebrow slash">Course / Article</p>
+    <p class="ef-crumb ef-field"><a href="../../../../index.html">首页</a><a href="../../index.html">数据库系统</a><span>专题</span><span>final</span></p>
+    <ul class="ef-facts ef-field">
+      <li>专题</li>
+      <li>3,329 字</li>
+      <li>2026.11.15</li>
+      <li>71 个小节</li>
+    </ul>
+    <h1 class="title ef-read">数据库系统 SQL 语句用法总结</h1>
+    <div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+    <p class="ef-actions pdf-dl"><a class="ef-btn" href="%E6%95%B0%E6%8D%AE%E5%BA%93%E7%B3%BB%E7%BB%9F%20SQL%20%E8%AF%AD%E5%8F%A5%E7%94%A8%E6%B3%95%E6%80%BB%E7%BB%93.pdf" download>下载 PDF</a><span class="ef-field">离线 / 打印版</span></p>
+    
+    <div class="ef-prose">
+<p>说明：本文件基于 <code>3.md</code>、<code>4.md</code>、<code>5.md</code> 的内容，总结常见 SQL 语句的作用、基本语法、典型用法和注意点。重点面向考试复习，因此不追求覆盖所有方言细节，而强调“这条语句是干什么的、怎么写、容易错在哪”。</p>
+<h2 id="1-sql-基本规则">1. SQL 基本规则</h2>
+<ul>
+<li>SQL 关键字通常大小写不敏感，但复习和书写时建议统一大写。</li>
+<li>一条 SQL 语句通常以分号 <code>;</code> 结尾。</li>
+<li>SQL 注释常见写法：</li>
+<li><code>/* comment */</code></li>
+<li><code>-- comment</code></li>
+<li>不等号通常写作 <code>!=</code> 或 <code>&lt;&gt;</code>。</li>
+</ul>
+<h2 id="2-表级定义语句ddl">2. 表级定义语句（DDL）</h2>
+<h3 id="21-create-table">2.1 <code>CREATE TABLE</code></h3>
+<p>作用：创建新表，定义属性、类型和约束。</p>
+<p>基本语法：</p>
+<pre><code class="language-sql">CREATE TABLE table_name (
+    col1 type1,
+    col2 type2,
+    ...,
+    constraint1,
+    constraint2
+);
+</code></pre>
+<p>常见用法：</p>
+<ul>
+<li>定义列名和数据类型</li>
+<li>定义主键 <code>PRIMARY KEY</code></li>
+<li>定义外键 <code>FOREIGN KEY ... REFERENCES ...</code></li>
+<li>定义非空约束 <code>NOT NULL</code></li>
+<li>定义唯一约束 <code>UNIQUE</code></li>
+<li>定义检查约束 <code>CHECK(...)</code></li>
+<li>定义默认值 <code>DEFAULT</code></li>
+</ul>
+<p>例子：</p>
+<pre><code class="language-sql">CREATE TABLE student (
+    ID VARCHAR(10),
+    name VARCHAR(20) NOT NULL,
+    dept_name VARCHAR(20),
+    tot_cred NUMERIC(3, 0) DEFAULT 0,
+    PRIMARY KEY (ID)
+);
+</code></pre>
+<p>注意：</p>
+<ul>
+<li>声明主键后，该属性（组）自动具备唯一和非空性质。</li>
+<li>主键可以是复合主键，不一定只有一个属性。</li>
+</ul>
+<h3 id="22-drop-table">2.2 <code>DROP TABLE</code></h3>
+<p>作用：删除整张表，包括表结构和表中数据。</p>
+<p>语法：</p>
+<pre><code class="language-sql">DROP TABLE table_name;
+</code></pre>
+<p>注意：</p>
+<ul>
+<li><code>DROP TABLE</code> 是删“表本身”。</li>
+<li>与 <code>DELETE FROM table_name;</code> 不同，后者只是清空数据，不删表结构。</li>
+</ul>
+<h3 id="23-alter-table">2.3 <code>ALTER TABLE</code></h3>
+<p>作用：修改已有表结构。</p>
+<p>常见语法：</p>
+<pre><code class="language-sql">ALTER TABLE table_name ADD column_name data_type;
+ALTER TABLE table_name DROP column_name;
+ALTER TABLE table_name ADD CONSTRAINT ...;
+ALTER TABLE table_name DROP CONSTRAINT constraint_name;
+</code></pre>
+<p>常见用途：</p>
+<ul>
+<li>增加列</li>
+<li>删除列</li>
+<li>增加约束</li>
+<li>删除约束</li>
+</ul>
+<p>注意：</p>
+<ul>
+<li>有些数据库不支持 <code>DROP column_name</code>。</li>
+<li>如果已有数据不满足新增约束，<code>ALTER TABLE ... ADD CONSTRAINT</code> 会失败。</li>
+</ul>
+<h3 id="24-create-table-like">2.4 <code>CREATE TABLE LIKE</code></h3>
+<p>作用：按已有表的模式创建一张结构相同的新表。</p>
+<p>语法：</p>
+<pre><code class="language-sql">CREATE TABLE new_table LIKE old_table;
+</code></pre>
+<p>用途：</p>
+<ul>
+<li>快速创建结构一致的临时表/备份表。</li>
+</ul>
+<h3 id="25-create-table-as">2.5 <code>CREATE TABLE AS</code></h3>
+<p>作用：根据查询结果创建新表。</p>
+<p>语法：</p>
+<pre><code class="language-sql">CREATE TABLE new_table AS (
+    SELECT ...
+) WITH DATA;
+</code></pre>
+<p>用途：</p>
+<ul>
+<li>保存查询结果</li>
+<li>创建中间表</li>
+</ul>
+<p>注意：</p>
+<ul>
+<li><code>WITH DATA</code> 表示把查询结果也保存到新表中。</li>
+<li>某些实现即使省略 <code>WITH DATA</code> 也会默认保存数据。</li>
+</ul>
+<h2 id="3-基本查询语句">3. 基本查询语句</h2>
+<h3 id="31-select">3.1 <code>SELECT</code></h3>
+<p>作用：指定要输出哪些列或表达式。</p>
+<p>基本语法：</p>
+<pre><code class="language-sql">SELECT col1, col2, ...
+FROM table_name;
+</code></pre>
+<p>常见用法：</p>
+<ul>
+<li>选定具体列</li>
+<li>用 <code>*</code> 选全部列</li>
+<li>写算术表达式</li>
+<li>配合 <code>DISTINCT</code> 去重</li>
+<li>配合聚合函数</li>
+</ul>
+<p>例子：</p>
+<pre><code class="language-sql">SELECT ID, name, salary * 1.05
+FROM instructor;
+</code></pre>
+<h3 id="32-select-distinct">3.2 <code>SELECT DISTINCT</code></h3>
+<p>作用：去除重复结果。</p>
+<p>语法：</p>
+<pre><code class="language-sql">SELECT DISTINCT col1, col2
+FROM table_name;
+</code></pre>
+<p>注意：</p>
+<ul>
+<li>SQL 默认允许重复结果。</li>
+<li><code>DISTINCT</code> 可能增加代价。</li>
+</ul>
+<h3 id="33-from">3.3 <code>FROM</code></h3>
+<p>作用：指定查询所涉及的表或关系。</p>
+<p>语法：</p>
+<pre><code class="language-sql">SELECT ...
+FROM r1, r2, ..., rn;
+</code></pre>
+<p>说明：</p>
+<ul>
+<li>多个表放在 <code>FROM</code> 中，逻辑上先形成笛卡尔积，再由 <code>WHERE</code> 或 <code>JOIN</code> 过滤。</li>
+<li>若不同表中有同名属性，应写成 <code>table_name.column_name</code>。</li>
+</ul>
+<h3 id="34-where">3.4 <code>WHERE</code></h3>
+<p>作用：对行进行过滤。</p>
+<p>语法：</p>
+<pre><code class="language-sql">SELECT ...
+FROM ...
+WHERE condition;
+</code></pre>
+<p>常见条件：</p>
+<ul>
+<li>比较：<code>=</code>, <code>&lt;&gt;</code>, <code>!=</code>, <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code>, <code>&gt;=</code></li>
+<li>逻辑：<code>AND</code>, <code>OR</code>, <code>NOT</code></li>
+<li>区间：<code>BETWEEN ... AND ...</code></li>
+<li>模式匹配：<code>LIKE</code></li>
+<li>空值判断：<code>IS NULL</code>, <code>IS NOT NULL</code></li>
+</ul>
+<p>例子：</p>
+<pre><code class="language-sql">SELECT name
+FROM instructor
+WHERE salary BETWEEN 90000 AND 100000;
+</code></pre>
+<p>注意：</p>
+<ul>
+<li><code>BETWEEN a AND b</code> 是闭区间。</li>
+<li><code>NOT BETWEEN a AND b</code> 对应开区间外侧：<code>x &lt; a OR x &gt; b</code>。</li>
+<li>不能写 <code>= NULL</code>，应使用 <code>IS NULL</code>。</li>
+</ul>
+<h3 id="35-as">3.5 <code>AS</code></h3>
+<p>作用：重命名列名或表名。</p>
+<p>语法：</p>
+<pre><code class="language-sql">SELECT old_name AS new_name
+FROM table_name AS t;
+</code></pre>
+<p>用途：</p>
+<ul>
+<li>让输出列名更清晰</li>
+<li>为表起别名，简化连接语句</li>
+</ul>
+<p>例子：</p>
+<pre><code class="language-sql">SELECT name AS instructor_name, course_id
+FROM instructor, teaches
+WHERE instructor.ID = teaches.ID;
+</code></pre>
+<h3 id="36-order-by">3.6 <code>ORDER BY</code></h3>
+<p>作用：对结果排序。</p>
+<p>语法：</p>
+<pre><code class="language-sql">SELECT ...
+FROM ...
+ORDER BY col1 [ASC|DESC], col2 [ASC|DESC];
+</code></pre>
+<p>用途：</p>
+<ul>
+<li>按一个或多个属性排序</li>
+<li>默认通常为升序</li>
+</ul>
+<p>例子：</p>
+<pre><code class="language-sql">SELECT title
+FROM course
+WHERE department = 'CS'
+ORDER BY credits DESC;
+</code></pre>
+<h3 id="37-limit">3.7 <code>LIMIT</code></h3>
+<p>作用：限制返回结果的行数。</p>
+<p>语法：</p>
+<pre><code class="language-sql">SELECT ...
+FROM ...
+ORDER BY ...
+LIMIT n;
+</code></pre>
+<p>常见用途：</p>
+<ul>
+<li>取前 <code>n</code> 行</li>
+<li>结合排序实现“最大/最小”的查询</li>
+</ul>
+<h2 id="4-连接语句">4. 连接语句</h2>
+<h3 id="41-普通连接-join-on">4.1 普通连接 <code>JOIN ... ON</code></h3>
+<p>作用：按任意连接条件连接两个表。</p>
+<p>语法：</p>
+<pre><code class="language-sql">SELECT ...
+FROM r JOIN s
+ON r.a = s.b;
+</code></pre>
+<p>特点：</p>
+<ul>
+<li>最通用</li>
+<li><code>ON</code> 中可以写任意布尔条件</li>
+</ul>
+<p>例子：</p>
+<pre><code class="language-sql">SELECT *
+FROM student JOIN takes
+ON student.ID = takes.ID;
+</code></pre>
+<h3 id="42-自然连接-natural-join">4.2 自然连接 <code>NATURAL JOIN</code></h3>
+<p>作用：按所有同名属性自动相等连接。</p>
+<p>语法：</p>
+<pre><code class="language-sql">SELECT ...
+FROM r NATURAL JOIN s;
+</code></pre>
+<p>特点：</p>
+<ul>
+<li>自动使用同名属性匹配</li>
+<li>结果中只保留一份公共属性</li>
+</ul>
+<p>注意：</p>
+<ul>
+<li>虽然简洁，但容易因“同名但本不想连接”的属性导致歧义。</li>
+</ul>
+<h3 id="43-join-using">4.3 <code>JOIN ... USING</code></h3>
+<p>作用：显式指定“用哪些同名属性连接”。</p>
+<p>语法：</p>
+<pre><code class="language-sql">SELECT ...
+FROM r JOIN s USING (attr_name);
+</code></pre>
+<p>用途：</p>
+<ul>
+<li>比 <code>NATURAL JOIN</code> 更可控</li>
+<li>比 <code>ON</code> 更简洁</li>
+</ul>
+<h3 id="44-外连接">4.4 外连接</h3>
+<p>作用：保留连接失败的一侧或双方记录。</p>
+<p>语法：</p>
+<pre><code class="language-sql">SELECT ...
+FROM r LEFT OUTER JOIN s ON condition;
+
+SELECT ...
+FROM r RIGHT OUTER JOIN s ON condition;
+
+SELECT ...
+FROM r FULL OUTER JOIN s ON condition;
+</code></pre>
+<p>区别：</p>
+<ul>
+<li><code>LEFT OUTER JOIN</code>：保留左表全部行</li>
+<li><code>RIGHT OUTER JOIN</code>：保留右表全部行</li>
+<li><code>FULL OUTER JOIN</code>：保留两边全部行</li>
+</ul>
+<p>注意：</p>
+<ul>
+<li>外连接未匹配的一侧会用 <code>NULL</code> 填补。</li>
+<li>在外连接中，<code>ON</code> 与 <code>WHERE</code> 的效果不完全一样。</li>
+<li><code>ON</code> 决定如何匹配</li>
+<li><code>WHERE</code> 会在连接结果形成后再过滤，有可能把原本保留下来的 <code>NULL</code> 行过滤掉</li>
+</ul>
+<h2 id="5-分组聚合与去重">5. 分组、聚合与去重</h2>
+<h3 id="51-聚合函数">5.1 聚合函数</h3>
+<p>常见聚合函数：</p>
+<ul>
+<li><code>COUNT(*)</code></li>
+<li><code>COUNT(col)</code></li>
+<li><code>COUNT(DISTINCT col)</code></li>
+<li><code>SUM(col)</code></li>
+<li><code>AVG(col)</code></li>
+<li><code>MIN(col)</code></li>
+<li><code>MAX(col)</code></li>
+</ul>
+<p>例子：</p>
+<pre><code class="language-sql">SELECT dept_name, AVG(salary)
+FROM instructor
+GROUP BY dept_name;
+</code></pre>
+<p>注意：</p>
+<ul>
+<li><code>SUM</code> 和 <code>AVG</code> 一般要求数值类型。</li>
+<li>聚合函数不能直接放在 <code>WHERE</code> 中。</li>
+</ul>
+<h3 id="52-group-by">5.2 <code>GROUP BY</code></h3>
+<p>作用：按指定列分组。</p>
+<p>语法：</p>
+<pre><code class="language-sql">SELECT group_col, AGG(...)
+FROM table_name
+GROUP BY group_col;
+</code></pre>
+<p>注意：</p>
+<ul>
+<li><code>SELECT</code> 中凡是不在聚合函数里的列，必须出现在 <code>GROUP BY</code> 中。</li>
+</ul>
+<h3 id="53-having">5.3 <code>HAVING</code></h3>
+<p>作用：对分组后的结果再过滤。</p>
+<p>语法：</p>
+<pre><code class="language-sql">SELECT group_col, AGG(...)
+FROM table_name
+GROUP BY group_col
+HAVING condition_on_group;
+</code></pre>
+<p>与 <code>WHERE</code> 的区别：</p>
+<ul>
+<li><code>WHERE</code>：分组前过滤行</li>
+<li><code>HAVING</code>：分组后过滤组</li>
+</ul>
+<p>例子：</p>
+<pre><code class="language-sql">SELECT title, COUNT(*) AS count
+FROM course
+GROUP BY title
+HAVING COUNT(*) &gt; 1;
+</code></pre>
+<h2 id="6-子查询">6. 子查询</h2>
+<h3 id="61-普通子查询">6.1 普通子查询</h3>
+<p>作用：在一个查询里嵌套另一个查询。</p>
+<p>常见位置：</p>
+<ul>
+<li><code>WHERE</code></li>
+<li><code>FROM</code></li>
+<li><code>SELECT</code></li>
+<li><code>HAVING</code></li>
+</ul>
+<h3 id="62-in">6.2 <code>IN</code></h3>
+<p>作用：判断某值是否属于子查询结果集。</p>
+<p>语法：</p>
+<pre><code class="language-sql">SELECT ...
+FROM ...
+WHERE col IN (
+    SELECT ...
+);
+</code></pre>
+<h3 id="63-exists">6.3 <code>EXISTS</code></h3>
+<p>作用：判断子查询是否返回至少一行。</p>
+<p>语法：</p>
+<pre><code class="language-sql">SELECT ...
+FROM ...
+WHERE EXISTS (
+    SELECT ...
+);
+</code></pre>
+<p>特点：</p>
+<ul>
+<li>常用于“是否存在匹配记录”的问题。</li>
+</ul>
+<h3 id="64-all-some-any">6.4 <code>ALL</code> / <code>SOME</code> / <code>ANY</code></h3>
+<p>作用：与子查询返回的一组值比较。</p>
+<p>例子：</p>
+<pre><code class="language-sql">SELECT dept_name
+FROM instructor
+GROUP BY dept_name
+HAVING AVG(salary) &gt;= ALL (
+    SELECT AVG(salary)
+    FROM instructor
+    GROUP BY dept_name
+);
+</code></pre>
+<h3 id="65-标量子查询">6.5 标量子查询</h3>
+<p>作用：子查询只返回一个值。</p>
+<p>常见位置：</p>
+<ul>
+<li><code>SELECT</code></li>
+<li><code>WHERE</code></li>
+<li><code>HAVING</code></li>
+</ul>
+<p>例子：</p>
+<pre><code class="language-sql">SELECT dept_name,
+       (SELECT COUNT(*) FROM instructor i2
+        WHERE i2.dept_name = department.dept_name)
+FROM department;
+</code></pre>
+<h3 id="66-with">6.6 <code>WITH</code></h3>
+<p>作用：定义公共表表达式（CTE），给复杂子查询命名。</p>
+<p>语法：</p>
+<pre><code class="language-sql">WITH cte_name AS (
+    SELECT ...
+)
+SELECT ...
+FROM cte_name;
+</code></pre>
+<p>用途：</p>
+<ul>
+<li>提高可读性</li>
+<li>避免重复写同一个子查询</li>
+</ul>
+<h3 id="67-with-recursive">6.7 <code>WITH RECURSIVE</code></h3>
+<p>作用：定义递归公共表表达式。</p>
+<p>语法：</p>
+<pre><code class="language-sql">WITH RECURSIVE cte_name AS (
+    base_query
+    UNION [ALL]
+    recursive_query
+)
+SELECT ...
+FROM cte_name;
+</code></pre>
+<p>用途：</p>
+<ul>
+<li>层次结构查询</li>
+<li>递归展开</li>
+</ul>
+<h2 id="7-数据修改语句dml">7. 数据修改语句（DML）</h2>
+<h3 id="71-insert-into">7.1 <code>INSERT INTO</code></h3>
+<p>作用：插入新行。</p>
+<p>常见语法 1：直接插值</p>
+<pre><code class="language-sql">INSERT INTO table_name
+VALUES (...);
+</code></pre>
+<p>常见语法 2：指定列名</p>
+<pre><code class="language-sql">INSERT INTO table_name (col1, col2, ...)
+VALUES (...);
+</code></pre>
+<p>常见语法 3：插入查询结果</p>
+<pre><code class="language-sql">INSERT INTO table_name
+SELECT ...
+FROM ...;
+</code></pre>
+<p>例子：</p>
+<pre><code class="language-sql">INSERT INTO instructor
+SELECT ID, name, dept_name, 18000
+FROM student;
+</code></pre>
+<h3 id="72-delete-from">7.2 <code>DELETE FROM</code></h3>
+<p>作用：删除满足条件的行。</p>
+<p>语法：</p>
+<pre><code class="language-sql">DELETE FROM table_name
+WHERE condition;
+</code></pre>
+<p>若省略 <code>WHERE</code>：</p>
+<pre><code class="language-sql">DELETE FROM table_name;
+</code></pre>
+<p>表示清空整张表的数据，但不删除表本身。</p>
+<h3 id="73-update">7.3 <code>UPDATE</code></h3>
+<p>作用：更新已有行。</p>
+<p>语法：</p>
+<pre><code class="language-sql">UPDATE table_name
+SET col1 = expr1,
+    col2 = expr2
+WHERE condition;
+</code></pre>
+<p>特点：</p>
+<ul>
+<li>可结合子查询更新</li>
+<li>若省略 <code>WHERE</code>，会更新整张表</li>
+</ul>
+<p>例子：</p>
+<pre><code class="language-sql">UPDATE instructor
+SET salary = (
+    SELECT AVG(salary)
+    FROM instructor
+)
+WHERE dept_name = 'History';
+</code></pre>
+<h2 id="8-视图">8. 视图</h2>
+<h3 id="81-create-view">8.1 <code>CREATE VIEW</code></h3>
+<p>作用：创建视图。</p>
+<p>语法：</p>
+<pre><code class="language-sql">CREATE VIEW view_name AS
+SELECT ...;
+</code></pre>
+<p>例子：</p>
+<pre><code class="language-sql">CREATE VIEW faculty AS
+SELECT ID, name, dept_name
+FROM instructor;
+</code></pre>
+<p>特点：</p>
+<ul>
+<li>视图本质上保存的是定义，不一定保存结果。</li>
+<li>和 <code>WITH</code> 不同，<code>CREATE VIEW</code> 创建的是可长期复用的数据库对象。</li>
+</ul>
+<h3 id="82-带列名的视图">8.2 带列名的视图</h3>
+<p>语法：</p>
+<pre><code class="language-sql">CREATE VIEW view_name(col1, col2, ...)
+AS
+SELECT ...;
+</code></pre>
+<h3 id="83-with-check-option">8.3 <code>WITH CHECK OPTION</code></h3>
+<p>作用：防止通过视图插入/更新后，结果不再属于该视图定义范围。</p>
+<p>语法：</p>
+<pre><code class="language-sql">CREATE VIEW view_name AS
+SELECT ...
+WHERE ...
+WITH CHECK OPTION;
+</code></pre>
+<p>用途：</p>
+<ul>
+<li>保证通过视图写入的数据仍满足视图条件。</li>
+</ul>
+<h2 id="9-事务控制语句">9. 事务控制语句</h2>
+<h3 id="91-commit">9.1 <code>COMMIT</code></h3>
+<p>作用：提交当前事务，使更新永久生效。</p>
+<p>语法：</p>
+<pre><code class="language-sql">COMMIT;
+</code></pre>
+<p>或：</p>
+<pre><code class="language-sql">COMMIT WORK;
+</code></pre>
+<h3 id="92-rollback">9.2 <code>ROLLBACK</code></h3>
+<p>作用：回滚当前事务，撤销当前事务中的更新。</p>
+<p>语法：</p>
+<pre><code class="language-sql">ROLLBACK;
+</code></pre>
+<p>或：</p>
+<pre><code class="language-sql">ROLLBACK WORK;
+</code></pre>
+<h3 id="93-set-autocommit-off">9.3 <code>SET AUTOCOMMIT OFF</code></h3>
+<p>作用：关闭自动提交。</p>
+<p>语法：</p>
+<pre><code class="language-sql">SET AUTOCOMMIT OFF;
+</code></pre>
+<p>用途：</p>
+<ul>
+<li>让多条 SQL 语句组成一个完整事务</li>
+</ul>
+<h3 id="94-begin-atomic-end">9.4 <code>BEGIN ATOMIC ... END</code></h3>
+<p>作用：把多条语句当成一个事务块。</p>
+<p>语法：</p>
+<pre><code class="language-sql">BEGIN ATOMIC
+    ...
+END
+</code></pre>
+<p>注意：</p>
+<ul>
+<li>不是所有数据库都支持该语法。</li>
+</ul>
+<h2 id="10-约束相关语句">10. 约束相关语句</h2>
+<h3 id="101-primary-key">10.1 <code>PRIMARY KEY</code></h3>
+<p>作用：声明主键。</p>
+<p>语法：</p>
+<pre><code class="language-sql">PRIMARY KEY (col1, col2, ...)
+</code></pre>
+<p>特点：</p>
+<ul>
+<li>自动包含唯一和非空约束。</li>
+</ul>
+<h3 id="102-foreign-key-references">10.2 <code>FOREIGN KEY ... REFERENCES</code></h3>
+<p>作用：声明外键。</p>
+<p>语法：</p>
+<pre><code class="language-sql">FOREIGN KEY (col) REFERENCES other_table
+</code></pre>
+<p>或：</p>
+<pre><code class="language-sql">FOREIGN KEY (col) REFERENCES other_table(other_col)
+</code></pre>
+<p>扩展：</p>
+<pre><code class="language-sql">FOREIGN KEY (col) REFERENCES other_table(other_col)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+</code></pre>
+<h3 id="103-not-null">10.3 <code>NOT NULL</code></h3>
+<p>作用：禁止空值。</p>
+<p>语法：</p>
+<pre><code class="language-sql">col_name data_type NOT NULL
+</code></pre>
+<h3 id="104-unique">10.4 <code>UNIQUE</code></h3>
+<p>作用：要求值或值组唯一。</p>
+<p>语法：</p>
+<pre><code class="language-sql">UNIQUE (col1, col2, ...)
+</code></pre>
+<h3 id="105-check">10.5 <code>CHECK</code></h3>
+<p>作用：要求每个元组满足某个条件。</p>
+<p>语法：</p>
+<pre><code class="language-sql">CHECK (predicate)
+</code></pre>
+<p>例子：</p>
+<pre><code class="language-sql">salary NUMERIC(8,2),
+CONSTRAINT minsalary CHECK (salary &gt; 29000)
+</code></pre>
+<h3 id="106-constraint">10.6 <code>CONSTRAINT</code></h3>
+<p>作用：给约束命名，方便删除或管理。</p>
+<p>语法：</p>
+<pre><code class="language-sql">CONSTRAINT constraint_name CHECK (...)
+</code></pre>
+<p>配合删除：</p>
+<pre><code class="language-sql">ALTER TABLE instructor DROP CONSTRAINT minsalary;
+</code></pre>
+<h2 id="11-索引语句">11. 索引语句</h2>
+<h3 id="111-create-index">11.1 <code>CREATE INDEX</code></h3>
+<p>作用：创建索引。</p>
+<p>语法：</p>
+<pre><code class="language-sql">CREATE INDEX index_name
+ON table_name (col1, col2, ...);
+</code></pre>
+<p>若希望索引键唯一：</p>
+<pre><code class="language-sql">CREATE UNIQUE INDEX index_name
+ON table_name (col1, col2, ...);
+</code></pre>
+<h3 id="112-drop-index">11.2 <code>DROP INDEX</code></h3>
+<p>作用：删除索引。</p>
+<p>语法：</p>
+<pre><code class="language-sql">DROP INDEX index_name;
+</code></pre>
+<h2 id="12-授权与权限管理">12. 授权与权限管理</h2>
+<h3 id="121-grant">12.1 <code>GRANT</code></h3>
+<p>作用：授予用户或角色权限。</p>
+<p>语法：</p>
+<pre><code class="language-sql">GRANT privilege_list
+ON object_name
+TO user_or_role_list;
+</code></pre>
+<p>例子：</p>
+<pre><code class="language-sql">GRANT SELECT ON department TO Amit, Satoshi;
+GRANT UPDATE(budget) ON department TO Amit, Satoshi;
+</code></pre>
+<h3 id="122-with-grant-option">12.2 <code>WITH GRANT OPTION</code></h3>
+<p>作用：允许被授权者继续把该权限授予别人。</p>
+<p>语法：</p>
+<pre><code class="language-sql">GRANT SELECT
+ON department
+TO Amit
+WITH GRANT OPTION;
+</code></pre>
+<h3 id="123-revoke">12.3 <code>REVOKE</code></h3>
+<p>作用：撤销权限。</p>
+<p>语法：</p>
+<pre><code class="language-sql">REVOKE privilege_list
+ON object_name
+FROM user_or_role_list;
+</code></pre>
+<p>例子：</p>
+<pre><code class="language-sql">REVOKE SELECT ON department FROM Amit, Satoshi RESTRICT;
+</code></pre>
+<h3 id="124-角色相关-grant">12.4 角色相关 <code>GRANT</code></h3>
+<p>作用：把权限授予角色，或把角色授予用户/其他角色。</p>
+<p>例子：</p>
+<pre><code class="language-sql">GRANT SELECT ON takes TO instructor;
+GRANT instructor TO dean;
+GRANT dean TO Satoshi;
+</code></pre>
+<h3 id="125-references-权限">12.5 <code>REFERENCES</code> 权限</h3>
+<p>作用：允许他人在建表时引用该表的列作为外键。</p>
+<p>例子：</p>
+<pre><code class="language-sql">GRANT REFERENCES(dept_name) ON department TO Mariano;
+</code></pre>
+<h2 id="13-函数与存储过程">13. 函数与存储过程</h2>
+<h3 id="131-create-function">13.1 <code>CREATE FUNCTION</code></h3>
+<p>作用：定义函数，返回一个值或一张表。</p>
+<p>典型语法：</p>
+<pre><code class="language-sql">CREATE FUNCTION function_name(param_name param_type)
+RETURNS return_type
+BEGIN
+    ...
+END;
+</code></pre>
+<p>用途：</p>
+<ul>
+<li>封装重复逻辑</li>
+<li>在查询中复用</li>
+</ul>
+<h3 id="132-create-procedure">13.2 <code>CREATE PROCEDURE</code></h3>
+<p>作用：定义过程，执行一组操作，可有输入/输出参数。</p>
+<p>典型语法：</p>
+<pre><code class="language-sql">CREATE PROCEDURE procedure_name(...)
+BEGIN
+    ...
+END;
+</code></pre>
+<p>特点：</p>
+<ul>
+<li>更强调执行动作，不一定返回单个值</li>
+<li>适合批量逻辑、封装更新过程</li>
+</ul>
+<h2 id="14-触发器">14. 触发器</h2>
+<h3 id="141-create-trigger">14.1 <code>CREATE TRIGGER</code></h3>
+<p>作用：在指定事件发生时自动执行某段 SQL 逻辑。</p>
+<p>典型语法：</p>
+<pre><code class="language-sql">CREATE TRIGGER trigger_name
+{BEFORE | AFTER} {INSERT | DELETE | UPDATE}
+ON table_name
+FOR EACH ROW
+BEGIN
+    ...
+END;
+</code></pre>
+<p>常见触发时机：</p>
+<ul>
+<li><code>BEFORE INSERT</code></li>
+<li><code>AFTER INSERT</code></li>
+<li><code>BEFORE DELETE</code></li>
+<li><code>AFTER DELETE</code></li>
+<li><code>BEFORE UPDATE</code></li>
+<li><code>AFTER UPDATE</code></li>
+</ul>
+<p>还可以限定更新某个属性：</p>
+<pre><code class="language-sql">AFTER UPDATE OF grade ON takes
+</code></pre>
+<p>常见用途：</p>
+<ul>
+<li>检查复杂约束</li>
+<li>自动更新统计值/派生值</li>
+<li>防止非法更新</li>
+</ul>
+<p>注意：</p>
+<ul>
+<li>触发器执行是自动的。</li>
+<li>滥用触发器会使系统逻辑难以追踪。</li>
+</ul>
+<h2 id="15-sql-与程序接口中的常见调用">15. SQL 与程序接口中的常见调用</h2>
+<p>这部分不算纯 SQL 语句，但经常和 SQL 用法一起考。</p>
+<h3 id="151-jdbc-executequery">15.1 JDBC <code>executeQuery()</code></h3>
+<p>作用：执行查询语句（通常是 <code>SELECT</code>），返回结果集。</p>
+<h3 id="152-jdbc-executeupdate">15.2 JDBC <code>executeUpdate()</code></h3>
+<p>作用：执行非查询语句，如：</p>
+<ul>
+<li><code>INSERT</code></li>
+<li><code>UPDATE</code></li>
+<li><code>DELETE</code></li>
+<li><code>CREATE</code></li>
+<li><code>DROP</code></li>
+</ul>
+<p>返回值通常是受影响的行数。</p>
+<h3 id="153-preparedstatement">15.3 <code>PreparedStatement</code></h3>
+<p>作用：预备语句，使用占位符 <code>?</code>，防止 SQL 注入并提高重复执行效率。</p>
+<p>例子：</p>
+<pre><code class="language-sql">INSERT INTO instructor VALUES(?, ?, ?, ?)
+</code></pre>
+<h2 id="16-高频易错点">16. 高频易错点</h2>
+<ul>
+<li><code>DROP TABLE</code> 删除的是表本身；<code>DELETE FROM table</code> 删除的是数据。</li>
+<li><code>WHERE</code> 过滤的是分组前的行；<code>HAVING</code> 过滤的是分组后的组。</li>
+<li>在 <code>SELECT</code> 中，非聚合列必须出现在 <code>GROUP BY</code> 中。</li>
+<li>不能用 <code>= NULL</code>，必须用 <code>IS NULL</code>。</li>
+<li><code>JOIN ... ON</code> 最通用，<code>NATURAL JOIN</code> 最省写但也最容易误连。</li>
+<li>外连接里 <code>ON</code> 与 <code>WHERE</code> 的效果不同。</li>
+<li><code>INSERT INTO ... SELECT ...</code> 是批量插入查询结果的常见写法。</li>
+<li><code>WITH</code> 创建的是临时命名结果；<code>CREATE VIEW</code> 创建的是持久数据库对象。</li>
+<li><code>CHECK</code> 检查的是谓词；<code>FOREIGN KEY</code> 检查的是参照完整性。</li>
+<li><code>CREATE INDEX</code> 是物理优化语句，不改变逻辑查询结果。</li>
+<li><code>GRANT ... WITH GRANT OPTION</code> 允许权限继续传递。</li>
+<li>预备语句里的参数占位符是 <code>?</code>，参数编号从 <code>1</code> 开始。</li>
+</ul>
+    </div>
+    <p class="back"><a class="ef-btn" href="数据库系统-ER图画法规则总结.html">← 数据库系统 E-R 图画法规则总结</a> <a class="ef-btn" href="数据库系统-判断选择题概念总结.html">数据库系统判断/选择题概念总结 →</a> <a class="ef-btn" href="../../index.html">返回本课</a></p>
+  </div>
+  <aside class="ef-margin toc-aside" aria-label="本页目录">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>本页目录</span><span>71 节</span></p>
+      <ol>
+      <li><a class="lvl2" href="#1-sql-基本规则">1. SQL 基本规则</a></li>
+      <li><a class="lvl2" href="#2-表级定义语句ddl">2. 表级定义语句（DDL）</a></li>
+      <li><a class="lvl3" href="#21-create-table">2.1 CREATE TABLE</a></li>
+      <li><a class="lvl3" href="#22-drop-table">2.2 DROP TABLE</a></li>
+      <li><a class="lvl3" href="#23-alter-table">2.3 ALTER TABLE</a></li>
+      <li><a class="lvl3" href="#24-create-table-like">2.4 CREATE TABLE LIKE</a></li>
+      <li><a class="lvl3" href="#25-create-table-as">2.5 CREATE TABLE AS</a></li>
+      <li><a class="lvl2" href="#3-基本查询语句">3. 基本查询语句</a></li>
+      <li><a class="lvl3" href="#31-select">3.1 SELECT</a></li>
+      <li><a class="lvl3" href="#32-select-distinct">3.2 SELECT DISTINCT</a></li>
+      <li><a class="lvl3" href="#33-from">3.3 FROM</a></li>
+      <li><a class="lvl3" href="#34-where">3.4 WHERE</a></li>
+      <li><a class="lvl3" href="#35-as">3.5 AS</a></li>
+      <li><a class="lvl3" href="#36-order-by">3.6 ORDER BY</a></li>
+      <li><a class="lvl3" href="#37-limit">3.7 LIMIT</a></li>
+      <li><a class="lvl2" href="#4-连接语句">4. 连接语句</a></li>
+      <li><a class="lvl3" href="#41-普通连接-join-on">4.1 普通连接 JOIN ... ON</a></li>
+      <li><a class="lvl3" href="#42-自然连接-natural-join">4.2 自然连接 NATURAL JOIN</a></li>
+      <li><a class="lvl3" href="#43-join-using">4.3 JOIN ... USING</a></li>
+      <li><a class="lvl3" href="#44-外连接">4.4 外连接</a></li>
+      <li><a class="lvl2" href="#5-分组聚合与去重">5. 分组、聚合与去重</a></li>
+      <li><a class="lvl3" href="#51-聚合函数">5.1 聚合函数</a></li>
+      <li><a class="lvl3" href="#52-group-by">5.2 GROUP BY</a></li>
+      <li><a class="lvl3" href="#53-having">5.3 HAVING</a></li>
+      <li><a class="lvl2" href="#6-子查询">6. 子查询</a></li>
+      <li><a class="lvl3" href="#61-普通子查询">6.1 普通子查询</a></li>
+      <li><a class="lvl3" href="#62-in">6.2 IN</a></li>
+      <li><a class="lvl3" href="#63-exists">6.3 EXISTS</a></li>
+      <li><a class="lvl3" href="#64-all-some-any">6.4 ALL / SOME / ANY</a></li>
+      <li><a class="lvl3" href="#65-标量子查询">6.5 标量子查询</a></li>
+      <li><a class="lvl3" href="#66-with">6.6 WITH</a></li>
+      <li><a class="lvl3" href="#67-with-recursive">6.7 WITH RECURSIVE</a></li>
+      <li><a class="lvl2" href="#7-数据修改语句dml">7. 数据修改语句（DML）</a></li>
+      <li><a class="lvl3" href="#71-insert-into">7.1 INSERT INTO</a></li>
+      <li><a class="lvl3" href="#72-delete-from">7.2 DELETE FROM</a></li>
+      <li><a class="lvl3" href="#73-update">7.3 UPDATE</a></li>
+      <li><a class="lvl2" href="#8-视图">8. 视图</a></li>
+      <li><a class="lvl3" href="#81-create-view">8.1 CREATE VIEW</a></li>
+      <li><a class="lvl3" href="#82-带列名的视图">8.2 带列名的视图</a></li>
+      <li><a class="lvl3" href="#83-with-check-option">8.3 WITH CHECK OPTION</a></li>
+      <li><a class="lvl2" href="#9-事务控制语句">9. 事务控制语句</a></li>
+      <li><a class="lvl3" href="#91-commit">9.1 COMMIT</a></li>
+      <li><a class="lvl3" href="#92-rollback">9.2 ROLLBACK</a></li>
+      <li><a class="lvl3" href="#93-set-autocommit-off">9.3 SET AUTOCOMMIT OFF</a></li>
+      <li><a class="lvl3" href="#94-begin-atomic-end">9.4 BEGIN ATOMIC ... END</a></li>
+      <li><a class="lvl2" href="#10-约束相关语句">10. 约束相关语句</a></li>
+      <li><a class="lvl3" href="#101-primary-key">10.1 PRIMARY KEY</a></li>
+      <li><a class="lvl3" href="#102-foreign-key-references">10.2 FOREIGN KEY ... REFERENCES</a></li>
+      <li><a class="lvl3" href="#103-not-null">10.3 NOT NULL</a></li>
+      <li><a class="lvl3" href="#104-unique">10.4 UNIQUE</a></li>
+      <li><a class="lvl3" href="#105-check">10.5 CHECK</a></li>
+      <li><a class="lvl3" href="#106-constraint">10.6 CONSTRAINT</a></li>
+      <li><a class="lvl2" href="#11-索引语句">11. 索引语句</a></li>
+      <li><a class="lvl3" href="#111-create-index">11.1 CREATE INDEX</a></li>
+      <li><a class="lvl3" href="#112-drop-index">11.2 DROP INDEX</a></li>
+      <li><a class="lvl2" href="#12-授权与权限管理">12. 授权与权限管理</a></li>
+      <li><a class="lvl3" href="#121-grant">12.1 GRANT</a></li>
+      <li><a class="lvl3" href="#122-with-grant-option">12.2 WITH GRANT OPTION</a></li>
+      <li><a class="lvl3" href="#123-revoke">12.3 REVOKE</a></li>
+      <li><a class="lvl3" href="#124-角色相关-grant">12.4 角色相关 GRANT</a></li>
+      </ol>
+    </div>
+  </aside>
+</article>
+
+<footer class="foot">
+  <span class="ef-field">KYSIIN.ARCHIVE · 2026.11.15 · 由 Markdown 渲染</span>
+  <span>用 endfield-ui 渲染 · Saira（SIL OFL）自托管</span>
+</footer>
+<script type="module">
+  import { wireTheme } from '../../../../assets/fx.js'
+  wireTheme()
+</script>
+<script defer src="../../../../assets/search.js?v=202611150558"></script>
+<script>
+  /* 左栏：每个分组可独立展开/收起 */
+  (function () {
+    document.querySelectorAll('.tree-toggle').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var li = btn.closest('.tree-group');
+        var list = li ? li.querySelector('.tree-items') : null;
+        var open = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', String(!open));
+        if (list) list.hidden = open;
+        if (li) li.classList.toggle('is-open', !open);
+      });
+    });
+  })();
+</script>
+<script>
+  /* 右栏目录跟随滚动：读到哪一节就把那一行标出来 */
+  (function () {
+    var links = [].slice.call(document.querySelectorAll('.toc-aside a[href^="#"]'));
+    if (!links.length) return;
+    var items = links.map(function (a) {
+      var el = document.getElementById(a.getAttribute('href').slice(1));
+      return el ? { a: a, el: el } : null;
+    }).filter(Boolean);
+    if (!items.length) return;
+    var ticking = false;
+    function spy() {
+      ticking = false;
+      var line = window.scrollY + 140;
+      var best = null;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].el.getBoundingClientRect().top + window.scrollY <= line) best = items[i];
+      }
+      links.forEach(function (a) { a.removeAttribute('aria-current'); });
+      if (best) best.a.setAttribute('aria-current', 'true');
+    }
+    window.addEventListener('scroll', function () {
+      if (!ticking) { ticking = true; requestAnimationFrame(spy); }
+    }, { passive: true });
+    spy();
+  })();
+</script>
+</body>
+</html>

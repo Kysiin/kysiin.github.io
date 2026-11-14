@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>网络安全原理与实践 A4 核心速记 · KYSIIN.ARCHIVE</title>
+<script src="../../../../assets/variant.js"></script>
+<link rel="stylesheet" href="../../../../assets/local-fonts.css" />
+<link rel="stylesheet" href="../../../../assets/endfield.css" />
+
+<style>
+  body { --tri-h: 3px; --topbar-h: 3.1rem; }
+  body > .ef-tri { position: sticky; top: 0; z-index: 61; }
+  .topbar { position:sticky; top:var(--tri-h); z-index:60;
+    display:flex; align-items:center; gap:1.5rem; padding:.85rem var(--ef-pad);
+    border-bottom:1px solid var(--ef-rule); background:var(--ef-panel); }
+  .topbar .brand { margin:0; font-family:var(--ef-font-ui); font-size:.95rem;
+    font-stretch:var(--ef-wider); font-weight:800; letter-spacing:.08em;
+    text-decoration:none; color:var(--ef-ink); }
+  .topbar nav { display:flex; align-items:center; gap:1.25rem; margin-left:auto; }
+  .topbar nav a { text-decoration:none; color:var(--ef-ink-2); }
+  .foot { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between;
+    gap:1rem; padding:1.5rem var(--ef-pad) 2.5rem; border-top:1px solid var(--ef-rule);
+    color:var(--ef-ink-2); font-size:.875rem; }
+  @media (max-width: 959px) { .ef-spread { grid-template-columns:minmax(0,1fr); }
+    .ef-sheet { border-right:0; border-bottom:1px solid var(--ef-rule); } }
+  @media (max-width:760px) { .topbar { flex-wrap:wrap; gap:.75rem; }
+    .topbar nav { order:3; width:100%; margin-left:0; } }
+
+  .title { margin:1.5rem 0 1rem; font-size:clamp(var(--ef-t-title),5vw,var(--ef-t-h1));
+    font-weight:700; line-height:1.3; }
+  .ef-prose { margin-top:1.75rem; }
+  .ef-prose img { max-width:100%; height:auto; border:1px solid var(--ef-rule); background:#fff; }
+  .ef-prose table { width:100%; border-collapse:collapse; font-size:.9rem; }
+  .ef-prose th, .ef-prose td { border-bottom:1px solid var(--ef-rule); padding:.45rem .6rem; text-align:left; }
+  .ef-prose th { font-family:var(--ef-font-ui); font-stretch:var(--ef-wide); font-size:.8rem; }
+  /* 代码块：整块一个背景；块内的 code 不再带行内边框/内边距 */
+  .ef-prose pre { overflow:auto; margin:1rem 0; padding:.9rem 1rem;
+    background:var(--ef-chip); border-left:3px solid var(--ef-rule);
+    font-size:.85rem; line-height:1.6; tab-size:4; }
+  .ef-prose pre code { display:block; padding:0; border:0; background:none;
+    font-family:var(--ef-font-mono); font-size:.85rem; line-height:1.6; white-space:pre; }
+  .ef-prose :not(pre) > code { font-family:var(--ef-font-mono); font-size:.88em;
+    padding:.1em .35em; border:1px solid var(--ef-rule); background:var(--ef-paper); }
+  .ef-prose blockquote { border-left:3px solid var(--ef-ink); margin:1rem 0; padding:.25rem 0 .25rem 1rem;
+    color:var(--ef-ink-2); }
+
+  /* —— 公式：绝不超出正文栏；行间公式可横向滚动 —— */
+  .ef-prose mjx-container { max-width:100%; }
+  .ef-prose mjx-container[display="true"] { display:block; text-align:center; margin:1.1em 0;
+    max-width:100%; overflow-x:auto; overflow-y:hidden; padding:2px 0; }
+  .ef-prose mjx-container[jax="CHTML"] { font-size:1.02em; }
+  .eq { overflow-x:auto; overflow-y:hidden; max-width:100%; padding:2px 0; }
+  .eq mjx-container[display="true"] { margin:.35em 0; }
+
+  .toc ol { margin:0; padding:0; list-style:none; border-left:1px solid var(--ef-rule); }
+  .toc a { display:block; margin-left:-1px; padding:.22rem 0 .22rem .7rem;
+    border-left:3px solid transparent; color:var(--ef-ink-2); font-size:.85rem;
+    overflow-wrap:anywhere; }
+  .toc a:hover { color:var(--ef-ink); border-left-color:var(--ef-trace); }
+  .toc .lvl3 { padding-left:1.3rem; font-size:.8rem; }
+  .back { margin:2rem 0 0; display:flex; flex-wrap:wrap; gap:.75rem; }
+
+  /* —— 三栏铺满：两侧栏贴边，中间正文吃掉所有剩余宽度 —— */
+  .ef-spread { max-width: none; margin: 0; }
+
+  @media (min-width: 1180px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(11rem, 12vw, 14rem) minmax(0, 1fr) clamp(13rem, 14vw, 17rem);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+  }
+  @media (min-width: 960px) and (max-width: 1179px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(10rem, 12vw, 12rem) minmax(0, 1fr);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+    .ef-spread.has-rail > .toc-aside { display: none; }
+  }
+  @media (min-width: 960px) {
+    .ef-spread > .ef-margin {
+      position: sticky;
+      top: calc(var(--tri-h) + var(--topbar-h));
+      align-self: start;
+      max-height: calc(100vh - var(--tri-h) - var(--topbar-h));
+      overflow-y: auto;
+      scrollbar-width: thin;
+      padding: clamp(1.5rem, 3vw, 2.5rem) 1rem;
+    }
+    /* 两侧栏往屏幕边缘靠，别在页边留空 */
+    .ef-spread > .rail-aside { padding-left: .75rem; padding-right: 1.25rem; }
+    .ef-spread > .toc-aside { padding-left: 1.25rem; padding-right: .75rem; }
+    /* 正文左右留呼吸，但不限制宽度 */
+    .ef-spread > .ef-sheet { padding-left: clamp(2rem, 3.5vw, 4rem); padding-right: clamp(2rem, 3.5vw, 4rem); }
+    /* 套件把正文限制在 40rem；中间栏变宽后这里放开，让文字铺满 */
+    .ef-sheet .ef-prose,
+    .ef-sheet .ef-lede,
+    .ef-sheet .title,
+    .ef-sheet .ef-read,
+    .ef-sheet .ef-facts,
+    .ef-sheet .ef-empty,
+    .ef-sheet .ef-notice { max-width: none; }
+  }
+  .ef-margin .toc a { font-size: .74rem; line-height: 1.5; }
+  .toc a[aria-current] { color: var(--ef-ink); border-left-color: var(--ef-trace); font-weight: 600; }
+  .rail-head { display: block; margin: 0 0 .5rem; padding-bottom: .35rem;
+    border-bottom: 1px solid var(--ef-rule); font-size: .68rem; line-height: 1.5; }
+  .rail-head span { display: inline; }
+  .rail-head span + span { display: block; color: var(--ef-ink-2); }
+  .rail-aside .toc a { padding-top: .3rem; padding-bottom: .3rem; }
+  .rail-tree { list-style:none; margin:0; padding:0; }
+  .rail-tree .tree-name { display:block; padding:.35rem .2rem .35rem .6rem;
+    border-left:3px solid transparent; font-size:.76rem; font-weight:600; color:var(--ef-ink); }
+  .rail-tree .tree-label { display:inline; }
+  .rail-tree .tree-name .ef-field { font-size:.68rem; color:var(--ef-ink-2); margin-left:.35rem;
+    white-space:nowrap; }
+  .rail-tree .tree-group.is-open > .tree-name { border-left-color:var(--ef-trace); }
+  .rail-tree .tree-items { list-style:none; margin:.1rem 0 .5rem; padding:0 0 0 .6rem;
+    border-left:1px solid var(--ef-rule); }
+  .rail-tree .tree-items a { padding-left:.6rem; font-size:.72rem; line-height:1.45; }
+  .tree-row { display:flex; align-items:stretch; gap:.15rem; }
+  .tree-row .tree-name { flex:1 1 auto; min-width:0; }
+  .tree-toggle { flex:none; width:1.55rem; min-height:1.9rem; display:grid; place-items:center;
+    padding:0; border:1px solid var(--ef-rule); background:var(--ef-panel); color:var(--ef-ink-2);
+    cursor:pointer; transition:color .12s var(--ef-ease), border-color .12s var(--ef-ease), background .12s var(--ef-ease); }
+  .tree-toggle:hover { color:var(--ef-ink); border-color:var(--ef-ink); background:var(--ef-chip); }
+  .tree-toggle svg { width:.7rem; height:.7rem; transition:transform .15s var(--ef-ease); }
+  .tree-toggle[aria-expanded="true"] svg { transform:rotate(90deg); }
+  .rail-tree .tree-items[hidden] { display:none; }
+  /* 滚动条统一样式在 assets/local-fonts.css 里定义（页面/侧栏/搜索共用） */
+
+  /* 窄屏：正文优先，两侧栏排到后面 */
+  @media (max-width: 959px) {
+    .ef-spread.has-rail > .ef-sheet { order: 1; }
+    .ef-spread.has-rail > .rail-aside { order: 2; border-top: 1px solid var(--ef-rule); }
+    .ef-spread.has-rail > .toc-aside { order: 3; }
+  }
+
+  /* —— 复习笔记：PDF 下载 —— */
+  .pdf-dl { display:flex; flex-wrap:wrap; align-items:center; gap:.75rem; margin:1.1rem 0 0; }
+  .pdf-dl .ef-btn { border-color:var(--ef-ink); }
+
+  /* —— 打印 / 导出 PDF：只留正文 —— */
+  @page { size:A4; margin:16mm 14mm 18mm; }
+  @media print {
+    html, body { background:#fff !important; }
+    .topbar, .foot, .ef-tri, .rail-aside, .toc-aside, .back, .pdf-dl,
+    .ef-crumb, .ef-eyebrow, .ef-facts, .ef-notice { display:none !important; }
+    .ef-spread, .ef-spread.has-rail { display:block !important; max-width:none !important; }
+    .ef-sheet { border:0 !important; padding:0 !important; background:#fff !important; }
+    .ef-sheet .ef-prose, .ef-sheet .ef-lede, .ef-sheet .title { max-width:none !important; }
+    .title { margin:0 0 1rem; }
+    /* 打印用系统字体：体积小、离线打开不依赖自托管字体 */
+    body, .ef-prose, .title, .ef-lede, .ef-facts,
+    h1, h2, h3, h4, h5, h6 { font-family:"Microsoft YaHei UI","Microsoft YaHei","PingFang SC",sans-serif !important; }
+    .ef-prose pre, .ef-prose code { font-family:Consolas,"Cascadia Mono",monospace !important; }
+    .ef-prose { margin-top:1rem; }
+    .ef-prose pre { white-space:pre-wrap; word-break:break-word; }
+    .ef-prose pre code { white-space:pre-wrap; }
+    .ef-prose img, .ef-prose svg, mjx-container { max-width:100% !important; }
+    a { color:inherit !important; text-decoration:none !important; }
+    .ef-prose h2, .ef-prose h3 { break-after:avoid; }
+    .ef-prose pre, .ef-prose table, .eq { break-inside:avoid; }
+  }
+
+</style>
+</head>
+<body class="ef ef-contours">
+<div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+<header class="topbar">
+  <a class="brand" href="../../../../index.html">KYSIIN.ARCHIVE</a>
+  <nav class="ef-field" aria-label="主导航">
+    <a href="../../../../index.html">首页</a>
+    <a href="../../index.html" aria-current="page">网络安全原理与实践</a>
+  </nav>
+  <span data-search-slot></span>
+  <button class="ef-btn small" type="button" data-theme-toggle>切换深浅</button>
+</header>
+
+<article class="ef-spread has-rail">
+  <aside class="ef-margin rail-aside" aria-label="本课程分区">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>网络安全原理与实践</span><span>2 区</span></p>
+      <ol class="rail-tree">
+        <li class="tree-group is-open">
+          <div class="tree-row">
+            <a class="tree-name" href="../../index.html#sec-%E4%B8%93%E9%A2%98"><span class="tree-label">专题</span><span class="ef-field">1</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="true" aria-label="收起 专题"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items">
+            <li><a href="网络安全原理与实践_A4核心速记.html" aria-current="page">网络安全原理与实践 A4 核心速记</a></li>
+          </ol>
+        </li>
+        <li class="tree-group">
+          <div class="tree-row">
+            <a class="tree-name" href="../../index.html#sec-%E5%AE%9E%E9%AA%8C"><span class="tree-label">实验</span><span class="ef-field">5</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="false" aria-label="展开 实验"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items" hidden>
+            <li><a href="../DNS/DNS.html">DNS</a></li>
+            <li><a href="../LAB1/Sniffing and Spoofing 副本.html">Sniffing and Spoofing - 副本</a></li>
+            <li><a href="../LAB2/ARP.html">ARP</a></li>
+            <li><a href="../LAB3/TCP Attack.html">TCP Attack</a></li>
+            <li><a href="../VPN TUNNEL/VPN Tunnel.html">VPN Tunnel</a></li>
+          </ol>
+        </li>
+      </ol>
+      <p class="ef-actions" style="margin:.9rem 0 0">
+        <a class="ef-btn small" href="../../index.html">返回课程</a>
+      </p>
+    </div>
+  </aside>
+  <div class="ef-sheet">
+    <p class="ef-eyebrow slash">Course / Article</p>
+    <p class="ef-crumb ef-field"><a href="../../../../index.html">首页</a><a href="../../index.html">网络安全原理与实践</a><span>专题</span><span>ex</span></p>
+    <ul class="ef-facts ef-field">
+      <li>专题</li>
+      <li>2,056 字</li>
+      <li>2026.11.15</li>
+      <li>10 个小节</li>
+    </ul>
+    <h1 class="title ef-read">网络安全原理与实践 A4 核心速记</h1>
+    <div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+    <p class="ef-actions pdf-dl"><a class="ef-btn" href="%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8%E5%8E%9F%E7%90%86%E4%B8%8E%E5%AE%9E%E8%B7%B5%20A4%20%E6%A0%B8%E5%BF%83%E9%80%9F%E8%AE%B0.pdf" download>下载 PDF</a><span class="ef-field">离线 / 打印版</span></p>
+    
+    <div class="ef-prose">
+<p>适用范围：基于 <code>Network_Basics</code>、<code>MAC_ARP</code>、<code>Sniffing_Spoofing</code>、<code>TCP_Attacks</code>、<code>Firewall</code>、<code>VPN</code>、<code>DNS</code>、<code>PKI</code>、<code>BGP</code> 习题压缩。</p>
+<h2 id="1-基础">1. 基础</h2>
+<ul>
+<li>传输层地址=端口，网络层地址=IP，链路层地址=MAC。</li>
+<li>服务器 <code>bind()</code> 是为了固定本地接收端点；客户端通常不手工 <code>bind()</code>，内核自动分配临时端口。</li>
+<li><code>0.0.0.0</code> 表示监听所有本地接口；只收本机流量用 <code>127.0.0.1</code>。</li>
+<li>源 IP 由路由决定，源端口通常由内核从临时端口池分配。</li>
+<li>TCP 是字节流，无消息边界；UDP 保留报文边界。</li>
+</ul>
+<h2 id="2-抓包与-arp">2. 抓包与 ARP</h2>
+<ul>
+<li>混杂模式：让网卡接收非本机目的帧；交换网络下仍不保证能看到别人之间的单播。</li>
+<li>抓包需要特权；Wireshark 常由特权子进程 <code>dumpcap</code> 真正抓包。</li>
+<li>ARP 作用：同一二层网络内把 IP 解析成 MAC。</li>
+<li>访问同网段主机：ARP 目标是对方 IP；访问外网：ARP 目标是默认网关 IP。</li>
+<li>ARP 请求二层目的 MAC=<code>ff:ff:ff:ff:ff:ff</code>，ARP 目标 MAC 通常未知填 0。</li>
+<li>ARP 无认证，可被伪造请求、伪造响应、gratuitous ARP 投毒。</li>
+<li>ARP 投毒通常只能在同一广播域内做，不能跨路由器远程直接做。</li>
+<li>MITM：同时毒化 A 和 B，让双方都把对方 IP 映射到攻击者 MAC。</li>
+<li>只投毒不转发=DoS；开 IP forwarding=可透明转发；要改包通常需自己重发并重算校验和。</li>
+</ul>
+<h2 id="3-字节序与过滤">3. 字节序与过滤</h2>
+<ul>
+<li>网络字节序=大端；主机字节序可能小端。</li>
+<li>协议字段入包前做 <code>hton*</code>，出包解析时做 <code>ntoh*</code>。</li>
+<li>内核态过滤比用户态过滤高效：先过滤再复制，减少开销。</li>
+<li><code>pcap_open_live(..., promisc=0, ...)</code> 常只能看到本机相关流量。</li>
+</ul>
+<h2 id="4-tcp">4. TCP</h2>
+<ul>
+<li><code>connect()</code> 触发三次握手。</li>
+<li><code>listen()</code> 进入监听状态，不等连接才返回。</li>
+<li><code>accept()</code> 取出一个已建立连接，并返回新的已连接 socket。</li>
+<li>SYN Flood 目标是耗尽半开连接队列/状态，不一定让整机死机。</li>
+<li>SYN Flood 常伪造随机源 IP：避免本机或真实主机回 RST，增加半开连接保留时间。</li>
+<li>若伪造源 IP 对应真实在线主机，该主机通常会对意外 SYN+ACK 回 RST。</li>
+<li>RST 攻击需要知道连接四元组和可接受序列号。</li>
+<li>SSH 仍可能被 TCP RST 断开，但难以被有效会话劫持。</li>
+<li>会话劫持要对齐源/目的 IP、端口、SEQ、ACK；Telnet 易中招，SSH 因加密完整性保护难中招。</li>
+<li>若注入序列号超前太多，接收方会认为有缺口，攻击通常失败。</li>
+<li>TCP 不适合经典反射放大：三次握手让源地址伪造难以完成。</li>
+<li>Mitnick 攻击要点：信任关系、可预测 ISN、源地址欺骗、被冒充主机最好离线。</li>
+</ul>
+<h2 id="5-netfilter-防火墙">5. Netfilter / 防火墙</h2>
+<ul>
+<li>五个 hook：<code>PRE_ROUTING</code>、<code>LOCAL_IN</code>、<code>FORWARD</code>、<code>LOCAL_OUT</code>、<code>POST_ROUTING</code>。</li>
+<li>入站到本机：<code>PRE_ROUTING -&gt; LOCAL_IN</code>。</li>
+<li>经路由器转发：<code>PRE_ROUTING -&gt; FORWARD -&gt; POST_ROUTING</code>。</li>
+<li>本机发出：<code>LOCAL_OUT -&gt; POST_ROUTING</code>。</li>
+<li><code>NF_ACCEPT</code>=继续后续处理，不是“立刻最终放行”。</li>
+<li><code>NF_DROP</code>=终止该包后续处理。</li>
+<li><code>filter/INPUT -&gt; LOCAL_IN</code>，<code>nat/OUTPUT -&gt; LOCAL_OUT</code>，<code>mangle/POSTROUTING -&gt; POST_ROUTING</code>。</li>
+<li>Stateful firewall 依赖 conntrack，可写“只允许已建立连接返回流量”这类规则。</li>
+<li>UDP/ICMP 虽无连接，conntrack 仍按请求-响应关联建立带超时的伪连接。</li>
+<li><code>ufw</code> 是配置前端，不是另一套独立内核防火墙。</li>
+<li>SYNPROXY：防火墙先代理三次握手，确认客户端像真的，再替后端建立连接。</li>
+</ul>
+<h2 id="6-vpn">6. VPN</h2>
+<ul>
+<li>SSH Tunnel 偏向端口/应用转发；VPN 偏向整段网络可达。</li>
+<li>TUN 处理 IP 包，TAP 处理以太网帧。</li>
+<li>VPN 程序从 TUN 读到内层包，封装/加密后通过普通 socket 发外层包。</li>
+<li>客户端要把“目标私网”路由到 TUN。</li>
+<li>必须给“VPN 服务器公网 IP”保留一条经真实网卡的主机路由，避免隧道递归。</li>
+<li>服务器要开 IP forwarding，才能在隧道和后端网络之间转发。</li>
+<li>隧道短暂中断后 TCP 会不会断，取决于中断时长、重传与超时。</li>
+<li>非 host 模式 Docker 抓不到其他容器之间流量，因为它们不在同一网络命名空间视角。</li>
+<li><code>select()</code> 用来同时监听 TUN fd 和网络 socket fd。</li>
+<li><code>IFF_NO_PI</code> 关闭 4 字节包信息头；配置错会把额外头部误当 IP 头解析，打印出怪异结果。</li>
+</ul>
+<h2 id="7-dns">7. DNS</h2>
+<ul>
+<li>DNS 默认 UDP 53，也可 TCP 53；<code>dig +tcp</code> 可验证。</li>
+<li>递归解析路径：根 -&gt; TLD -&gt; 权威。</li>
+<li>根服务器地址来源：root hints。</li>
+<li>Cache Poisoning 根因：DNS 早期无认证、UDP 可伪造、随机性不足、解析器会缓存委派信息。</li>
+<li>抢答时关键熵值：事务 ID、源端口；查询名本身也常被随机化利用。</li>
+<li>Kaminsky：不停问随机子域，制造大量新查询机会，重点毒化目标域 NS 和 glue A。</li>
+<li>一旦域的 NS 被毒化，该域下任意主机名都可被攻击者回答。</li>
+<li>缓存策略受 bailiwick/授权范围限制，不是附加区所有数据都该缓存。</li>
+<li>开放递归解析器可被用于 DNS 放大：小请求打给解析器，大响应反射给受害者。</li>
+<li>防御：关闭开放递归、限制客户端、RRL、Anycast、多权威节点、减少超大响应面。</li>
+<li>DNS Rebinding：浏览器同源策略按主机名，不按解析后 IP；同一主机名先解析到攻击者，再解析到内网设备，JS 就能打内网。</li>
+<li>若浏览器长时间缓存该主机名到旧 IP，重绑定成功率会下降。</li>
+<li>反向 DNS 结果不能当认证依据，PTR 可被操纵。</li>
+</ul>
+<h2 id="8-pki-https">8. PKI / HTTPS</h2>
+<ul>
+<li>证书重点看：<code>Issuer</code>、<code>Subject</code>、公钥、有效期、签名算法。</li>
+<li>CA 用私钥签发证书，验证方用 CA 公钥验签。</li>
+<li>“不是受信 CA”=证书链无法回到本地信任库中的根 CA。</li>
+<li>站点改主机名后通常要换新证书，因为主机名校验会失败。</li>
+<li>直接访问 <code>https://IP</code> 常失败，因为证书通常签给域名，不签给 IP。</li>
+<li>CA 私钥泄露可导致大规模伪造证书。</li>
+<li>若攻击者的自签证书被加入受信列表，相当于植入新的根 CA。</li>
+<li>Pinning：把服务绑定到预期证书/公钥，降低假证书风险。</li>
+<li>HTTPS 代理能看明文，是因为客户端主动信任了代理根证书，不是 HTTPS 本身失效。</li>
+<li>不要用反向 DNS 得到的名字去验证证书身份。</li>
+<li>不要用 <code>strstr()</code> 做主机名校验，<code>evil-vpnserver.com.attacker.com</code> 一类名字会绕过。</li>
+</ul>
+<h2 id="9-bgp">9. BGP</h2>
+<ul>
+<li>BGP 在 AS 间传播前缀可达性与路径属性。</li>
+<li>一个路由器可能学到多条路径，但通常只把选出的最佳路径通告给某邻居。</li>
+<li>不对某邻居转发路由，常因商业/出口策略、社区属性、no-export、避免给对方做 transit。</li>
+<li>UPDATE 主要看三块：Withdrawn Routes、Path Attributes、NLRI。</li>
+<li><code>AS_PATH</code> 用于环路避免和策略判断；最前面的 AS 通常是当前通告者所属 AS。</li>
+<li><code>NEXT_HOP</code> 指示实际下一跳。</li>
+<li>备份链路控制：</li>
+<li>出站偏好常用 local-pref/weight。</li>
+<li>入站偏好常用 AS_PATH prepend、MED、运营商社区。</li>
+<li>eBGP TTL 常设 1，因为对端应是直连邻居。</li>
+<li>TTL 设 255 常用于 GTSM/TTL Security，防远端伪造会话。</li>
+<li>BGP 劫持常利用“更具体前缀优先”；防守也常靠通告更具体前缀并联系上游过滤。</li>
+<li>Anycast 适合 DNS 这类无状态服务；不适合 Telnet 这类强状态会话。</li>
+</ul>
+<h2 id="10-最后必背">10. 最后必背</h2>
+<ul>
+<li>访问外网前 ARP 的是网关，不是远端主机。</li>
+<li>TCP 无消息边界，UDP 有。</li>
+<li><code>NF_ACCEPT</code> 不等于“一票通过”。</li>
+<li>VPN 外层流量不能被再次路由进 TUN。</li>
+<li>DNS 投毒最值钱的是毒化 NS 委派，不只是改单个 A 记录。</li>
+<li>DNS Rebinding 绕过的是浏览器按主机名定义的同源策略。</li>
+<li>反向 DNS 和字符串包含匹配都不能拿来做安全认证。</li>
+<li>SSH 能被 RST 断，但难被会话注入。</li>
+<li>更具体前缀优先，是 BGP 劫持与防守的共同基础。</li>
+</ul>
+    </div>
+    <p class="back"><a class="ef-btn" href="../DNS/DNS.html">DNS →</a> <a class="ef-btn" href="../../index.html">返回本课</a></p>
+  </div>
+  <aside class="ef-margin toc-aside" aria-label="本页目录">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>本页目录</span><span>10 节</span></p>
+      <ol>
+      <li><a class="lvl2" href="#1-基础">1. 基础</a></li>
+      <li><a class="lvl2" href="#2-抓包与-arp">2. 抓包与 ARP</a></li>
+      <li><a class="lvl2" href="#3-字节序与过滤">3. 字节序与过滤</a></li>
+      <li><a class="lvl2" href="#4-tcp">4. TCP</a></li>
+      <li><a class="lvl2" href="#5-netfilter-防火墙">5. Netfilter / 防火墙</a></li>
+      <li><a class="lvl2" href="#6-vpn">6. VPN</a></li>
+      <li><a class="lvl2" href="#7-dns">7. DNS</a></li>
+      <li><a class="lvl2" href="#8-pki-https">8. PKI / HTTPS</a></li>
+      <li><a class="lvl2" href="#9-bgp">9. BGP</a></li>
+      <li><a class="lvl2" href="#10-最后必背">10. 最后必背</a></li>
+      </ol>
+    </div>
+  </aside>
+</article>
+
+<footer class="foot">
+  <span class="ef-field">KYSIIN.ARCHIVE · 2026.11.15 · 由 Markdown 渲染</span>
+  <span>用 endfield-ui 渲染 · Saira（SIL OFL）自托管</span>
+</footer>
+<script type="module">
+  import { wireTheme } from '../../../../assets/fx.js'
+  wireTheme()
+</script>
+<script defer src="../../../../assets/search.js?v=202611150558"></script>
+<script>
+  /* 左栏：每个分组可独立展开/收起 */
+  (function () {
+    document.querySelectorAll('.tree-toggle').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var li = btn.closest('.tree-group');
+        var list = li ? li.querySelector('.tree-items') : null;
+        var open = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', String(!open));
+        if (list) list.hidden = open;
+        if (li) li.classList.toggle('is-open', !open);
+      });
+    });
+  })();
+</script>
+<script>
+  /* 右栏目录跟随滚动：读到哪一节就把那一行标出来 */
+  (function () {
+    var links = [].slice.call(document.querySelectorAll('.toc-aside a[href^="#"]'));
+    if (!links.length) return;
+    var items = links.map(function (a) {
+      var el = document.getElementById(a.getAttribute('href').slice(1));
+      return el ? { a: a, el: el } : null;
+    }).filter(Boolean);
+    if (!items.length) return;
+    var ticking = false;
+    function spy() {
+      ticking = false;
+      var line = window.scrollY + 140;
+      var best = null;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].el.getBoundingClientRect().top + window.scrollY <= line) best = items[i];
+      }
+      links.forEach(function (a) { a.removeAttribute('aria-current'); });
+      if (best) best.a.setAttribute('aria-current', 'true');
+    }
+    window.addEventListener('scroll', function () {
+      if (!ticking) { ticking = true; requestAnimationFrame(spy); }
+    }, { passive: true });
+    spy();
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>物联网与信息电子应用导论 · KYSIIN.ARCHIVE</title>
+<meta name="description" content="物联网课程的结课设计报告。" />
+<script src="../../assets/variant.js"></script>
+<link rel="stylesheet" href="../../assets/local-fonts.css" />
+<link rel="stylesheet" href="../../assets/endfield.css" />
+<style>
+  body { --tri-h: 3px; --topbar-h: 3.1rem; }
+  body > .ef-tri { position: sticky; top: 0; z-index: 61; }
+  .topbar { position:sticky; top:var(--tri-h); z-index:60;
+    display:flex; align-items:center; gap:1.5rem; padding:.85rem var(--ef-pad);
+    border-bottom:1px solid var(--ef-rule); background:var(--ef-panel); }
+  .topbar .brand { margin:0; font-family:var(--ef-font-ui); font-size:.95rem;
+    font-stretch:var(--ef-wider); font-weight:800; letter-spacing:.08em;
+    text-decoration:none; color:var(--ef-ink); }
+  .topbar nav { display:flex; align-items:center; gap:1.25rem; margin-left:auto; }
+  .topbar nav a { text-decoration:none; color:var(--ef-ink-2);
+    padding-bottom:2px; border-bottom:2px solid transparent; }
+  .topbar nav a[aria-current='page'] { color:var(--ef-ink); border-bottom-color:var(--ef-trace); }
+  /* 点顶栏跳分区时，别让粘性顶栏盖住那一段的标题 */
+  #all, #stats { scroll-margin-top: calc(var(--tri-h) + var(--topbar-h) + .6rem); }
+  .title { margin:1.5rem 0 1rem; font-size:clamp(var(--ef-t-title),5.5vw,var(--ef-t-h1));
+    font-weight:700; line-height:1.25; }
+  .ids { display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; margin:0 0 .75rem; }
+  .foot { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between;
+    gap:1rem; padding:1.5rem var(--ef-pad) 2.5rem; border-top:1px solid var(--ef-rule);
+    color:var(--ef-ink-2); font-size:.875rem; }
+  .back { margin:1.5rem 0 0; }
+  @media (min-width: 960px) {
+    .ef-spread > .ef-margin {
+      position: sticky; top: calc(var(--tri-h) + var(--topbar-h)); align-self: start;
+      max-height: calc(100vh - var(--tri-h) - var(--topbar-h)); overflow-y: auto; scrollbar-width: thin;
+    }
+  }
+
+  /* 铺满：正文吃掉剩余宽度，右栏贴边 */
+  @media (min-width: 960px) {
+    .ef-spread {
+      grid-template-columns: minmax(0, 1fr) clamp(14rem, 16vw, 19rem);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+      max-width: none;
+      margin: 0;
+    }
+    .ef-spread > .ef-margin {
+      padding: clamp(1.5rem, 3vw, 2.5rem) .75rem clamp(1.5rem, 3vw, 2.5rem) 1.25rem;
+    }
+    .ef-spread > .ef-sheet {
+      padding-left: clamp(2rem, 3.5vw, 4rem);
+      padding-right: clamp(2rem, 3.5vw, 4rem);
+    }
+    /* 正文不再被 40rem 卡住 */
+    .ef-sheet .ef-prose,
+    .ef-sheet .ef-lede,
+    .ef-sheet .ef-read,
+    .ef-sheet .ef-facts,
+    .ef-sheet .ef-empty,
+    .ef-sheet .ef-notice { max-width: none; }
+  }
+  .ef-margin .ef-ledger li,
+  .ef-margin .toc a { font-size: .82rem; }
+
+  /* 滚动条统一样式在 assets/local-fonts.css 里定义（页面/侧栏/搜索共用） */
+
+
+  .band { display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between;
+    gap:1.5rem; padding:clamp(1.5rem,3vw,2.5rem) var(--ef-pad) clamp(1.25rem,2.5vw,2rem);
+    border-bottom:1px solid var(--ef-rule); background:var(--ef-panel); }
+  .band-title { margin:.2rem 0 .8rem; font-family:var(--ef-font-ui); font-stretch:var(--ef-wider);
+    font-weight:800; line-height:.95; letter-spacing:-.01em; font-size:clamp(2rem,4vw,3.4rem); }
+  .band-title .hollow { color:transparent; -webkit-text-stroke:1.5px var(--ef-ink); }
+  .band-note { max-width:32rem; margin:0; color:var(--ef-ink-2); }
+  .filters { padding:1rem var(--ef-pad); border-bottom:1px solid var(--ef-rule); }
+  .chip-row { display:flex; flex-wrap:wrap; align-items:center; gap:.4rem; margin-bottom:.5rem; }
+  .chip-row .ef-field { width:3rem; flex:none; }
+  .chip { font:inherit; font-size:.78rem; line-height:1.6; padding:.15em .7em; cursor:pointer;
+    border:1px solid var(--ef-rule); background:var(--ef-panel); color:var(--ef-ink-2); }
+  .chip:hover { color:var(--ef-ink); border-color:var(--ef-ink); }
+  .chip.is-on { background:var(--ef-signal); border-color:var(--ef-signal); color:var(--ef-on-signal); font-weight:600; }
+  .cols { display:grid; grid-template-columns:repeat(auto-fill,minmax(17rem,1fr));
+    gap:0; border-top:1px solid var(--ef-rule); }
+  /* 每格自己画右边框：网格的竖线不再依赖"后一张卡片"，末行不满也照常收边，
+     筛选隐藏卡片后也不会错位 */
+  .col-card { display:flex; flex-direction:column; gap:.35rem; padding:1.1rem var(--ef-pad);
+    border-right:1px solid var(--ef-rule); border-bottom:1px solid var(--ef-rule);
+    text-decoration:none; color:var(--ef-ink);
+    transition:background .15s var(--ef-ease); }
+  .col-card:hover { background:var(--ef-chip); }
+  .col-card .card-name { font-size:1.02rem; font-weight:700; line-height:1.4; }
+  .col-card .card-meta { color:var(--ef-ink-2); }
+  .col-card[hidden] { display:none; }
+  .recent { padding:clamp(1.5rem,3vw,2.5rem) var(--ef-pad) 1rem; }
+  .recent .ef-bar-title { margin-bottom:1rem; }
+  .hero { --mx:0; --my:0; display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,40%);
+    grid-template-rows:auto 1fr auto auto;
+    column-gap:clamp(1.5rem,4vw,3.5rem);
+    min-height:min(41rem,calc(100dvh - 3px)); padding-top:1.25rem;
+    border-bottom:1px solid var(--ef-rule); overflow:hidden; }
+  .hero > .meta { grid-column:1; margin:0; padding-inline:var(--ef-pad); }
+  .hero > .meta > * + *::before { content:'/'; margin-inline:.75em; color:var(--ef-rule); }
+  .hero .ef-wordmark { grid-column:1; align-self:end; margin-top:2rem; padding-left:var(--ef-pad); }
+  .hero .copy { grid-column:1; padding:1.75rem var(--ef-pad) 2.25rem; }
+  .hero .copy p { margin:0; }
+  .hero .claim { font-size:clamp(1.1rem,2.1vw,1.5rem); }
+  .hero .bio { max-width:33rem; margin-top:.9rem !important; color:var(--ef-ink-2); }
+  .hero .ef-actions { margin-top:1.5rem; }
+  .hero .ef-frame { grid-column:2; grid-row:1 / 4; margin:0 var(--ef-pad) 2.25rem 0; }
+  .hero .ef-frame::before { transform:translate(calc(var(--mx) * 12px),calc(var(--my) * 10px)); }
+  .hero .ef-frame svg { width:100%; height:100%;
+    transform:translate(calc(var(--mx) * -14px),calc(var(--my) * -8px));
+    transition:transform .4s var(--ef-ease); }
+  .hero .ef-ticker { grid-column:1 / -1; }
+  @media (max-width:899px) {
+    .hero { grid-template-columns:minmax(0,1fr); grid-template-rows:none; min-height:0; }
+    .hero .ef-frame { grid-column:1; grid-row:auto; height:18rem;
+      margin:0 calc(var(--ef-pad) + 1rem) 2.25rem var(--ef-pad); }
+  }
+  @media (max-width:760px) { .topbar { flex-wrap:wrap; gap:.75rem; }
+    .topbar nav { order:3; width:100%; margin-left:0; } }
+</style>
+</head>
+<body class="ef ef-contours">
+<div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+<header class="topbar">
+  <a class="brand" href="../../index.html">KYSIIN.ARCHIVE</a>
+  <nav class="ef-field" aria-label="主导航">
+    <a href="../../index.html">首页</a>
+    <a href="../../index.html#all" aria-current="page">资料库</a>
+    <a href="../../index.html#stats">统计</a>
+  </nav>
+  <span data-search-slot></span>
+  <button class="ef-btn small" type="button" data-theme-toggle>切换深浅</button>
+</header>
+
+<article class="ef-spread">
+  <div class="ef-sheet">
+    <p class="ef-eyebrow slash">Course / Index</p>
+    <p class="ef-crumb ef-field"><a href="../../index.html">首页</a><span>计算机拓展</span><span>物联网与信息电子应用导论</span></p>
+    <ul class="ef-facts ef-field">
+      <li>1 篇文章</li>
+      <li>1 文件</li>
+      <li>0.0 MB</li>
+      <li>最近 2026.11.15</li>
+    </ul>
+    <h1 class="title ef-read">物联网与信息电子应用导论</h1>
+    <div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+    <p class="ef-lede ef-read">物联网课程的结课设计报告。</p>
+    
+    <h2 class="ef-group-head ef-read" id="sec-专题"><span>专题</span><span class="ef-field">1 篇</span></h2>
+      <ol class="ef-records">
+          <li><a class="ef-record" href="files/%E8%AF%BE%E7%A8%8B%E5%AD%A6%E4%B9%A0%E6%8A%A5%E5%91%8A.html"><span class="ef-tag">MD</span><span class="ef-field">2,216 字</span><span class="name ef-read">物联网与信息电子应用导论 —— 课程学习报告</span><span class="ef-field">2026.11.15</span></a></li>
+      </ol>
+    
+    <p class="ef-actions back"><a class="ef-btn" href="../ads-2024/index.html">← 高级数据结构与算法分析</a> <a class="ef-btn" href="../compiler-2026/index.html">编译原理 →</a> <a class="ef-btn" href="../../index.html#all">返回资料库</a></p>
+  </div>
+  <aside class="ef-margin" aria-label="分区与类型">
+    <h2 class="ef-field" style="margin:0 0 .75rem">按分区</h2>
+    <ul class="ef-ledger">
+        <li><span>专题</span><span class="ef-field">1 篇</span></li>
+    </ul>
+    <h2 class="ef-field" style="margin:1.25rem 0 .75rem">按类型</h2>
+    <ul class="ef-ledger">
+        <li><span>MD</span><span class="ef-field">1</span></li>
+    </ul>
+  </aside>
+</article>
+
+<footer class="foot">
+  <span class="ef-field">KYSIIN.ARCHIVE · 2026.11.15 · 自动生成</span>
+  <span>用 endfield-ui 渲染 · Saira（SIL OFL）自托管</span>
+</footer>
+<script type="module">
+  import { wireTheme } from './../../assets/fx.js'
+  wireTheme()
+</script>
+<script defer src="../../assets/search.js?v=202611150558"></script>
+<script>
+  /* 首页筛选：三个维度各自单选，组合生效 */
+  (function () {
+    var state = { area: '', term: '' };
+    var cards = [].slice.call(document.querySelectorAll('.col-card'));
+    var count = document.getElementById('filter-count');
+    function apply() {
+      var shown = 0;
+      cards.forEach(function (c) {
+        var ok = (!state.area || c.dataset.area === state.area)
+              && (!state.term || c.dataset.term === state.term);
+        c.hidden = !ok;
+        if (ok) shown++;
+      });
+      if (count) count.textContent = shown + ' 门课';
+    }
+    document.querySelectorAll('.chip').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var dim = b.dataset.dim;
+        state[dim] = b.dataset.val;
+        document.querySelectorAll('.chip[data-dim="' + dim + '"]').forEach(function (x) {
+          x.classList.toggle('is-on', x === b);
+        });
+        apply();
+      });
+    });
+  })();
+</script>
+<script>
+  /* 顶栏高亮：首页有「资料库 / 统计」两个锚点分区，滚到哪一块就点亮哪一项。
+     课程页 / 文章页没有这些锚点，保持静态的「资料库」不变。 */
+  (function () {
+    var nav = document.querySelector('.topbar nav');
+    if (!nav) return;
+    var links = [].slice.call(nav.querySelectorAll('a'));
+    function target(a) {
+      var h = a.getAttribute('href') || '';
+      var i = h.indexOf('#');
+      return i < 0 ? null : document.getElementById(h.slice(i + 1));
+    }
+    var items = links.map(function (a) { return { a: a, el: target(a) }; });
+    if (!items.some(function (t) { return t.el; })) return;
+    var home = items.filter(function (t) { return !t.el; })[0];
+    function setActive(a) {
+      links.forEach(function (x) { x.removeAttribute('aria-current'); });
+      if (a) a.setAttribute('aria-current', 'page');
+    }
+    var ticking = false;
+    function spy() {
+      ticking = false;
+      var line = window.scrollY + 140;
+      var current = home ? home.a : null;
+      items.forEach(function (t) {
+        if (t.el && t.el.getBoundingClientRect().top + window.scrollY <= line) current = t.a;
+      });
+      /* 页面滚到底时最后一块到不了阈值（它下面没有内容了），直接点亮最后一项；
+         但整页本来就装得下时不算"滚到底"，仍按位置判断 */
+      var doc = document.documentElement;
+      if (window.innerHeight + window.scrollY >= doc.scrollHeight - 4
+          && doc.scrollHeight > window.innerHeight + 40) {
+        current = items[items.length - 1].a;
+      }
+      setActive(current);
+    }
+    window.addEventListener('scroll', function () {
+      if (!ticking) { ticking = true; requestAnimationFrame(spy); }
+    }, { passive: true });
+    window.addEventListener('resize', spy);
+    /* 点了某个分区（页面装得下、不发生滚动的情况）：立刻点亮被点的那一项 */
+    window.addEventListener('hashchange', function () {
+      var h = location.hash.slice(1);
+      var hit = items.filter(function (t) { return t.el && t.el.id === h; })[0];
+      if (hit) setActive(hit.a); else spy();
+    });
+    spy();
+  })();
+</script>
+</body>
+</html>

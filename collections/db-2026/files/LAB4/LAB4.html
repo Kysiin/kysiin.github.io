@@ -1,0 +1,837 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LAB4 · KYSIIN.ARCHIVE</title>
+<script src="../../../../assets/variant.js"></script>
+<link rel="stylesheet" href="../../../../assets/local-fonts.css" />
+<link rel="stylesheet" href="../../../../assets/endfield.css" />
+
+<style>
+  body { --tri-h: 3px; --topbar-h: 3.1rem; }
+  body > .ef-tri { position: sticky; top: 0; z-index: 61; }
+  .topbar { position:sticky; top:var(--tri-h); z-index:60;
+    display:flex; align-items:center; gap:1.5rem; padding:.85rem var(--ef-pad);
+    border-bottom:1px solid var(--ef-rule); background:var(--ef-panel); }
+  .topbar .brand { margin:0; font-family:var(--ef-font-ui); font-size:.95rem;
+    font-stretch:var(--ef-wider); font-weight:800; letter-spacing:.08em;
+    text-decoration:none; color:var(--ef-ink); }
+  .topbar nav { display:flex; align-items:center; gap:1.25rem; margin-left:auto; }
+  .topbar nav a { text-decoration:none; color:var(--ef-ink-2); }
+  .foot { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between;
+    gap:1rem; padding:1.5rem var(--ef-pad) 2.5rem; border-top:1px solid var(--ef-rule);
+    color:var(--ef-ink-2); font-size:.875rem; }
+  @media (max-width: 959px) { .ef-spread { grid-template-columns:minmax(0,1fr); }
+    .ef-sheet { border-right:0; border-bottom:1px solid var(--ef-rule); } }
+  @media (max-width:760px) { .topbar { flex-wrap:wrap; gap:.75rem; }
+    .topbar nav { order:3; width:100%; margin-left:0; } }
+
+  .title { margin:1.5rem 0 1rem; font-size:clamp(var(--ef-t-title),5vw,var(--ef-t-h1));
+    font-weight:700; line-height:1.3; }
+  .ef-prose { margin-top:1.75rem; }
+  .ef-prose img { max-width:100%; height:auto; border:1px solid var(--ef-rule); background:#fff; }
+  .ef-prose table { width:100%; border-collapse:collapse; font-size:.9rem; }
+  .ef-prose th, .ef-prose td { border-bottom:1px solid var(--ef-rule); padding:.45rem .6rem; text-align:left; }
+  .ef-prose th { font-family:var(--ef-font-ui); font-stretch:var(--ef-wide); font-size:.8rem; }
+  /* 代码块：整块一个背景；块内的 code 不再带行内边框/内边距 */
+  .ef-prose pre { overflow:auto; margin:1rem 0; padding:.9rem 1rem;
+    background:var(--ef-chip); border-left:3px solid var(--ef-rule);
+    font-size:.85rem; line-height:1.6; tab-size:4; }
+  .ef-prose pre code { display:block; padding:0; border:0; background:none;
+    font-family:var(--ef-font-mono); font-size:.85rem; line-height:1.6; white-space:pre; }
+  .ef-prose :not(pre) > code { font-family:var(--ef-font-mono); font-size:.88em;
+    padding:.1em .35em; border:1px solid var(--ef-rule); background:var(--ef-paper); }
+  .ef-prose blockquote { border-left:3px solid var(--ef-ink); margin:1rem 0; padding:.25rem 0 .25rem 1rem;
+    color:var(--ef-ink-2); }
+
+  /* —— 公式：绝不超出正文栏；行间公式可横向滚动 —— */
+  .ef-prose mjx-container { max-width:100%; }
+  .ef-prose mjx-container[display="true"] { display:block; text-align:center; margin:1.1em 0;
+    max-width:100%; overflow-x:auto; overflow-y:hidden; padding:2px 0; }
+  .ef-prose mjx-container[jax="CHTML"] { font-size:1.02em; }
+  .eq { overflow-x:auto; overflow-y:hidden; max-width:100%; padding:2px 0; }
+  .eq mjx-container[display="true"] { margin:.35em 0; }
+
+  .toc ol { margin:0; padding:0; list-style:none; border-left:1px solid var(--ef-rule); }
+  .toc a { display:block; margin-left:-1px; padding:.22rem 0 .22rem .7rem;
+    border-left:3px solid transparent; color:var(--ef-ink-2); font-size:.85rem;
+    overflow-wrap:anywhere; }
+  .toc a:hover { color:var(--ef-ink); border-left-color:var(--ef-trace); }
+  .toc .lvl3 { padding-left:1.3rem; font-size:.8rem; }
+  .back { margin:2rem 0 0; display:flex; flex-wrap:wrap; gap:.75rem; }
+
+  /* —— 三栏铺满：两侧栏贴边，中间正文吃掉所有剩余宽度 —— */
+  .ef-spread { max-width: none; margin: 0; }
+
+  @media (min-width: 1180px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(11rem, 12vw, 14rem) minmax(0, 1fr) clamp(13rem, 14vw, 17rem);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+  }
+  @media (min-width: 960px) and (max-width: 1179px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(10rem, 12vw, 12rem) minmax(0, 1fr);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+    .ef-spread.has-rail > .toc-aside { display: none; }
+  }
+  @media (min-width: 960px) {
+    .ef-spread > .ef-margin {
+      position: sticky;
+      top: calc(var(--tri-h) + var(--topbar-h));
+      align-self: start;
+      max-height: calc(100vh - var(--tri-h) - var(--topbar-h));
+      overflow-y: auto;
+      scrollbar-width: thin;
+      padding: clamp(1.5rem, 3vw, 2.5rem) 1rem;
+    }
+    /* 两侧栏往屏幕边缘靠，别在页边留空 */
+    .ef-spread > .rail-aside { padding-left: .75rem; padding-right: 1.25rem; }
+    .ef-spread > .toc-aside { padding-left: 1.25rem; padding-right: .75rem; }
+    /* 正文左右留呼吸，但不限制宽度 */
+    .ef-spread > .ef-sheet { padding-left: clamp(2rem, 3.5vw, 4rem); padding-right: clamp(2rem, 3.5vw, 4rem); }
+    /* 套件把正文限制在 40rem；中间栏变宽后这里放开，让文字铺满 */
+    .ef-sheet .ef-prose,
+    .ef-sheet .ef-lede,
+    .ef-sheet .title,
+    .ef-sheet .ef-read,
+    .ef-sheet .ef-facts,
+    .ef-sheet .ef-empty,
+    .ef-sheet .ef-notice { max-width: none; }
+  }
+  .ef-margin .toc a { font-size: .74rem; line-height: 1.5; }
+  .toc a[aria-current] { color: var(--ef-ink); border-left-color: var(--ef-trace); font-weight: 600; }
+  .rail-head { display: block; margin: 0 0 .5rem; padding-bottom: .35rem;
+    border-bottom: 1px solid var(--ef-rule); font-size: .68rem; line-height: 1.5; }
+  .rail-head span { display: inline; }
+  .rail-head span + span { display: block; color: var(--ef-ink-2); }
+  .rail-aside .toc a { padding-top: .3rem; padding-bottom: .3rem; }
+  .rail-tree { list-style:none; margin:0; padding:0; }
+  .rail-tree .tree-name { display:block; padding:.35rem .2rem .35rem .6rem;
+    border-left:3px solid transparent; font-size:.76rem; font-weight:600; color:var(--ef-ink); }
+  .rail-tree .tree-label { display:inline; }
+  .rail-tree .tree-name .ef-field { font-size:.68rem; color:var(--ef-ink-2); margin-left:.35rem;
+    white-space:nowrap; }
+  .rail-tree .tree-group.is-open > .tree-name { border-left-color:var(--ef-trace); }
+  .rail-tree .tree-items { list-style:none; margin:.1rem 0 .5rem; padding:0 0 0 .6rem;
+    border-left:1px solid var(--ef-rule); }
+  .rail-tree .tree-items a { padding-left:.6rem; font-size:.72rem; line-height:1.45; }
+  .tree-row { display:flex; align-items:stretch; gap:.15rem; }
+  .tree-row .tree-name { flex:1 1 auto; min-width:0; }
+  .tree-toggle { flex:none; width:1.55rem; min-height:1.9rem; display:grid; place-items:center;
+    padding:0; border:1px solid var(--ef-rule); background:var(--ef-panel); color:var(--ef-ink-2);
+    cursor:pointer; transition:color .12s var(--ef-ease), border-color .12s var(--ef-ease), background .12s var(--ef-ease); }
+  .tree-toggle:hover { color:var(--ef-ink); border-color:var(--ef-ink); background:var(--ef-chip); }
+  .tree-toggle svg { width:.7rem; height:.7rem; transition:transform .15s var(--ef-ease); }
+  .tree-toggle[aria-expanded="true"] svg { transform:rotate(90deg); }
+  .rail-tree .tree-items[hidden] { display:none; }
+  /* 滚动条统一样式在 assets/local-fonts.css 里定义（页面/侧栏/搜索共用） */
+
+  /* 窄屏：正文优先，两侧栏排到后面 */
+  @media (max-width: 959px) {
+    .ef-spread.has-rail > .ef-sheet { order: 1; }
+    .ef-spread.has-rail > .rail-aside { order: 2; border-top: 1px solid var(--ef-rule); }
+    .ef-spread.has-rail > .toc-aside { order: 3; }
+  }
+
+  /* —— 复习笔记：PDF 下载 —— */
+  .pdf-dl { display:flex; flex-wrap:wrap; align-items:center; gap:.75rem; margin:1.1rem 0 0; }
+  .pdf-dl .ef-btn { border-color:var(--ef-ink); }
+
+  /* —— 打印 / 导出 PDF：只留正文 —— */
+  @page { size:A4; margin:16mm 14mm 18mm; }
+  @media print {
+    html, body { background:#fff !important; }
+    .topbar, .foot, .ef-tri, .rail-aside, .toc-aside, .back, .pdf-dl,
+    .ef-crumb, .ef-eyebrow, .ef-facts, .ef-notice { display:none !important; }
+    .ef-spread, .ef-spread.has-rail { display:block !important; max-width:none !important; }
+    .ef-sheet { border:0 !important; padding:0 !important; background:#fff !important; }
+    .ef-sheet .ef-prose, .ef-sheet .ef-lede, .ef-sheet .title { max-width:none !important; }
+    .title { margin:0 0 1rem; }
+    /* 打印用系统字体：体积小、离线打开不依赖自托管字体 */
+    body, .ef-prose, .title, .ef-lede, .ef-facts,
+    h1, h2, h3, h4, h5, h6 { font-family:"Microsoft YaHei UI","Microsoft YaHei","PingFang SC",sans-serif !important; }
+    .ef-prose pre, .ef-prose code { font-family:Consolas,"Cascadia Mono",monospace !important; }
+    .ef-prose { margin-top:1rem; }
+    .ef-prose pre { white-space:pre-wrap; word-break:break-word; }
+    .ef-prose pre code { white-space:pre-wrap; }
+    .ef-prose img, .ef-prose svg, mjx-container { max-width:100% !important; }
+    a { color:inherit !important; text-decoration:none !important; }
+    .ef-prose h2, .ef-prose h3 { break-after:avoid; }
+    .ef-prose pre, .ef-prose table, .eq { break-inside:avoid; }
+  }
+
+</style>
+</head>
+<body class="ef ef-contours">
+<div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+<header class="topbar">
+  <a class="brand" href="../../../../index.html">KYSIIN.ARCHIVE</a>
+  <nav class="ef-field" aria-label="主导航">
+    <a href="../../../../index.html">首页</a>
+    <a href="../../index.html" aria-current="page">数据库系统</a>
+  </nav>
+  <span data-search-slot></span>
+  <button class="ef-btn small" type="button" data-theme-toggle>切换深浅</button>
+</header>
+
+<article class="ef-spread has-rail">
+  <aside class="ef-margin rail-aside" aria-label="本课程分区">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>数据库系统</span><span>2 区</span></p>
+      <ol class="rail-tree">
+        <li class="tree-group">
+          <div class="tree-row">
+            <a class="tree-name" href="../../index.html#sec-%E4%B8%93%E9%A2%98"><span class="tree-label">专题</span><span class="ef-field">5</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="false" aria-label="展开 专题"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items" hidden>
+            <li><a href="../final/数据库系统-ER图画法规则总结.html">数据库系统 E-R 图画法规则总结</a></li>
+            <li><a href="../final/数据库系统-SQL语句用法总结.html">数据库系统 SQL 语句用法总结</a></li>
+            <li><a href="../final/数据库系统-判断选择题概念总结.html">数据库系统判断/选择题概念总结</a></li>
+            <li><a href="../final/数据库系统-查询优化规则总结.html">数据库系统查询优化规则总结</a></li>
+            <li><a href="../final/数据库系统-计算公式总结.html">数据库系统计算公式总结</a></li>
+          </ol>
+        </li>
+        <li class="tree-group is-open">
+          <div class="tree-row">
+            <a class="tree-name" href="../../index.html#sec-%E5%AE%9E%E9%AA%8C"><span class="tree-label">实验</span><span class="ef-field">9</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="true" aria-label="收起 实验"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items">
+            <li><a href="../HW/hw6_answers.html">HW6</a></li>
+            <li><a href="../LAB1/LAB1.html">LAB1</a></li>
+            <li><a href="../LAB2/LAB2.html">LAB2</a></li>
+            <li><a href="../LAB3/LAB3.html">LAB3</a></li>
+            <li><a href="LAB4.html" aria-current="page">LAB4</a></li>
+            <li><a href="../LAB5/实验报告.html">图书管理系统实验报告</a></li>
+            <li><a href="../大作业/proj/docs/AI辅助开发方法.html">MiniSQL —— AI 辅助开发方法说明</a></li>
+            <li><a href="../大作业/proj/docs/实验报告.html">MiniSQL 实验报告</a></li>
+            <li><a href="../大作业/proj/README.html">MiniSQL —— 精简型单用户 SQL 引擎（C++）</a></li>
+          </ol>
+        </li>
+      </ol>
+      <p class="ef-actions" style="margin:.9rem 0 0">
+        <a class="ef-btn small" href="../../index.html">返回课程</a>
+      </p>
+    </div>
+  </aside>
+  <div class="ef-sheet">
+    <p class="ef-eyebrow slash">Course / Article</p>
+    <p class="ef-crumb ef-field"><a href="../../../../index.html">首页</a><a href="../../index.html">数据库系统</a><span>实验</span><span>LAB4</span></p>
+    <ul class="ef-facts ef-field">
+      <li>实验</li>
+      <li>2,304 字</li>
+      <li>2026.11.15</li>
+      <li>14 个小节</li>
+    </ul>
+    <h1 class="title ef-read">LAB4</h1>
+    <div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+    
+    <p class="ef-notice" data-flag="pdf-fallback">本页引用的 10 张图片没有随文件复制过来，完整版见同目录 PDF：<a href="%E6%95%B0%E6%8D%AE%E5%BA%93%E7%B3%BB%E7%BB%9F-LAB4-%E5%87%BD%E6%95%B0%E4%B8%8E%E5%AD%98%E5%82%A8%E8%BF%87%E7%A8%8B.pdf">数据库系统-LAB4-函数与存储过程.pdf</a></p>
+    <div class="ef-prose">
+<h2 id="1">1</h2>
+<pre><code class="language-mysql">CREATE DATABASE course_select_sys;
+-- 创建学生表
+CREATE TABLE S (
+    SID VARCHAR(10) PRIMARY KEY,
+    SNAME VARCHAR(50) NOT NULL,
+    AGE INT,
+    SEX CHAR(1)
+);
+
+-- 创建课程表
+CREATE TABLE C (
+    CID VARCHAR(10) PRIMARY KEY,
+    CNAME VARCHAR(100) NOT NULL,
+    TEACHER VARCHAR(50) NOT NULL
+);
+
+-- 创建选课表
+CREATE TABLE SC (
+    SID VARCHAR(10),
+    CID VARCHAR(10),
+    GRADE INT,
+    PRIMARY KEY (SID, CID),
+    FOREIGN KEY (SID) REFERENCES S(SID),
+    FOREIGN KEY (CID) REFERENCES C(CID)
+);
+
+-- 插入学生数据
+INSERT INTO S (SID, SNAME, AGE, SEX) VALUES
+('S1', 'Wang feng', 20, 'M'),
+('S2', 'Liu fang', 19, 'M'),
+('S3', 'Chen yun', 22, 'M'),
+('S4', 'Wu kai', 19, 'M'),
+('S5', 'Liu li', 21, 'F'),
+('S6', 'Dong qing', 18, 'F');
+
+-- 插入课程数据
+INSERT INTO C (CID, CNAME, TEACHER) VALUES
+('C1', 'DB', 'Li'),
+('C2', 'maths', 'Ma'),
+('C3', 'chemistry', 'Zhou'),
+('C4', 'physics', 'Shi'),
+('C5', 'OS', 'Wen');
+
+-- 插入选课数据
+INSERT INTO SC (SID, CID, GRADE) VALUES
+('S1', 'C1', 70),
+('S2', 'C1', 81),
+('S3', 'C1', 92),
+('S4', 'C1', 85),
+('S1', 'C2', 65),
+('S2', 'C3', 57),
+('S3', 'C5', 87);
+</code></pre>
+<p><strong>［图片缺失］</strong></p>
+<h2 id="2">2</h2>
+<h3 id="a">a</h3>
+<pre><code class="language-mysql">-- 创建函数：统计某个学生选修的课程数量
+DELIMITER $$
+
+CREATE FUNCTION GetStudentCourseCount(p_SID VARCHAR(10))
+RETURNS INT
+DETERMINISTIC
+READS SQL DATA
+BEGIN
+    DECLARE course_count INT;
+    SELECT COUNT(*) INTO course_count
+    FROM SC
+    WHERE SID = p_SID;
+
+    RETURN course_count;
+END$$
+
+DELIMITER ;
+</code></pre>
+<p><strong>［图片缺失］</strong></p>
+<h3 id="b">b</h3>
+<pre><code class="language-mysql">-- 添加学分列
+ALTER TABLE C ADD COLUMN CREDITS INT DEFAULT 3;
+
+-- 设置每门课程的学分（可自定义）
+UPDATE C SET CREDITS = 3 WHERE CID IN ('C2', 'C3');
+UPDATE C SET CREDITS = 2 WHERE CID IN ('C1', 'C4');
+UPDATE C SET CREDITS = 4 WHERE CID IN ('C5');
+
+DELIMITER $$
+
+CREATE PROCEDURE GetStudentTotalCreditsWithCredits(IN student_id VARCHAR(10))
+BEGIN
+    DECLARE total_credits INT DEFAULT 0;
+
+    -- 计算总学分（根据课程表实际学分）
+    SELECT SUM(c.CREDITS) INTO total_credits
+    FROM SC sc
+    JOIN C c ON sc.CID = c.CID
+    WHERE sc.SID = student_id;
+
+    -- 查询学生信息和总学分
+    SELECT
+        s.SID,
+        s.SNAME,
+        s.AGE,
+        s.SEX,
+        IFNULL(total_credits, 0) AS total_credits,
+        COUNT(sc.CID) AS course_count,
+        GROUP_CONCAT(CONCAT(c.CNAME, '(', c.CREDITS, '学分)') SEPARATOR ', ') AS course_list
+    FROM S s
+    LEFT JOIN SC sc ON s.SID = sc.SID
+    LEFT JOIN C c ON sc.CID = c.CID
+    WHERE s.SID = student_id
+    GROUP BY s.SID, s.SNAME, s.AGE, s.SEX;
+END$$
+
+DELIMITER ;
+</code></pre>
+<p><strong>［图片缺失］</strong></p>
+<h2 id="3">3</h2>
+<pre><code class="language-mysql">-- a) 删除学生信息时，自动删除SC表中该学生的选课记录
+DELIMITER $$
+
+CREATE TRIGGER delete_student_cascade
+BEFORE DELETE ON S
+FOR EACH ROW
+BEGIN
+    -- 删除该学生的所有选课记录
+    DELETE FROM SC WHERE SID = OLD.SID;
+END$$
+
+DELIMITER ;
+
+
+-- b) 添加选课信息时，确保课程存在
+DELIMITER $$
+
+CREATE TRIGGER check_course_exists
+BEFORE INSERT ON SC
+FOR EACH ROW
+BEGIN
+    DECLARE course_exists INT;
+
+    -- 检查课程是否存在
+    SELECT COUNT(*) INTO course_exists
+    FROM C
+    WHERE CID = NEW.CID;
+
+    -- 如果课程不存在，则阻止插入并报错
+    IF course_exists = 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = '错误：课程不存在，无法添加选课记录！';
+    END IF;
+END$$
+
+DELIMITER ;
+</code></pre>
+<h2 id="4">4</h2>
+<pre><code class="language-java">package com.example;
+
+import java.sql.*;
+import java.util.Scanner;
+
+public class CourseSelectionSystem {
+
+    // 数据库连接参数
+    private static final String URL = &quot;jdbc:mysql://localhost:3306/course_select_sys?useSSL=false&amp;serverTimezone=UTC&quot;;
+    private static final String USERNAME = &quot;root&quot;;
+    private static final String PASSWORD = &quot;********&quot;; // 请修改为你的数据库密码
+
+    private Connection connection;
+    private Scanner scanner;
+    private String currentStudentId;
+
+    public CourseSelectionSystem() {
+        scanner = new Scanner(System.in);
+    }
+
+    // a) 数据库连接
+    public void connectToDatabase() throws SQLException {
+        try {
+            // 加载MySQL驱动（MySQL 8.0以上版本可省略，但保留以兼容旧版本）
+            Class.forName(&quot;com.mysql.cj.jdbc.Driver&quot;);
+
+            // 建立连接
+            connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+            System.out.println(&quot;数据库连接成功！&quot;);
+        } catch (ClassNotFoundException e) {
+            System.out.println(&quot;MySQL驱动未找到: &quot; + e.getMessage());
+            throw new SQLException(&quot;驱动加载失败&quot;);
+        } catch (SQLException e) {
+            System.out.println(&quot;数据库连接失败: &quot; + e.getMessage());
+            throw e;
+        }
+    }
+
+    // 学生登录
+    public boolean login() {
+        System.out.print(&quot;请输入学号: &quot;);
+        currentStudentId = scanner.nextLine().trim();
+
+        String sql = &quot;SELECT * FROM S WHERE SID = ?&quot;;
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, currentStudentId);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                System.out.println(&quot;欢迎 &quot; + rs.getString(&quot;SNAME&quot;) + &quot; 同学！&quot;);
+                return true;
+            } else {
+                System.out.println(&quot;学号不存在，请重新输入！&quot;);
+                return false;
+            }
+        } catch (SQLException e) {
+            System.out.println(&quot;登录失败: &quot; + e.getMessage());
+            return false;
+        }
+    }
+
+    // b) 读取可选课程信息（学生未选的课程）
+    public void viewAvailableCourses() {
+        System.out.println(&quot;\n========== 可选课程列表 ==========&quot;);
+
+        String sql = &quot;SELECT C.CID, C.CNAME, C.TEACHER &quot; +
+                &quot;FROM C &quot; +
+                &quot;WHERE C.CID NOT IN (SELECT CID FROM SC WHERE SID = ?)&quot;;
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, currentStudentId);
+            ResultSet rs = pstmt.executeQuery();
+
+            System.out.printf(&quot;%-10s %-20s %-15s\n&quot;, &quot;课程号&quot;, &quot;课程名&quot;, &quot;任课教师&quot;);
+            System.out.println(&quot;----------------------------------------&quot;);
+
+            boolean hasCourses = false;
+            while (rs.next()) {
+                hasCourses = true;
+                System.out.printf(&quot;%-10s %-20s %-15s\n&quot;,
+                        rs.getString(&quot;CID&quot;),
+                        rs.getString(&quot;CNAME&quot;),
+                        rs.getString(&quot;TEACHER&quot;));
+            }
+
+            if (!hasCourses) {
+                System.out.println(&quot;暂无可选课程（可能已选修所有课程）&quot;);
+            }
+        } catch (SQLException e) {
+            System.out.println(&quot;查询可选课程失败: &quot; + e.getMessage());
+        }
+    }
+
+    // c) 选课
+    public void selectCourse() {
+        viewAvailableCourses();
+
+        System.out.print(&quot;\n请输入要选修的课程号: &quot;);
+        String courseId = scanner.nextLine().trim();
+
+        // 检查课程是否存在
+        String checkCourseSql = &quot;SELECT * FROM C WHERE CID = ?&quot;;
+        String checkSelectionSql = &quot;SELECT * FROM SC WHERE SID = ? AND CID = ?&quot;;
+        String insertSql = &quot;INSERT INTO SC (SID, CID, GRADE) VALUES (?, ?, NULL)&quot;;
+
+        try {
+            // 检查课程是否存在
+            PreparedStatement checkCourseStmt = connection.prepareStatement(checkCourseSql);
+            checkCourseStmt.setString(1, courseId);
+            ResultSet courseRs = checkCourseStmt.executeQuery();
+
+            if (!courseRs.next()) {
+                System.out.println(&quot;错误：课程不存在！&quot;);
+                return;
+            }
+
+            // 检查是否已选过该课程
+            PreparedStatement checkSelectionStmt = connection.prepareStatement(checkSelectionSql);
+            checkSelectionStmt.setString(1, currentStudentId);
+            checkSelectionStmt.setString(2, courseId);
+            ResultSet selectionRs = checkSelectionStmt.executeQuery();
+
+            if (selectionRs.next()) {
+                System.out.println(&quot;错误：你已经选修过该课程！&quot;);
+                return;
+            }
+
+            // 执行选课
+            PreparedStatement insertStmt = connection.prepareStatement(insertSql);
+            insertStmt.setString(1, currentStudentId);
+            insertStmt.setString(2, courseId);
+            int rows = insertStmt.executeUpdate();
+
+            if (rows &gt; 0) {
+                System.out.println(&quot;选课成功！&quot;);
+            }
+
+        } catch (SQLException e) {
+            System.out.println(&quot;选课失败: &quot; + e.getMessage());
+        }
+    }
+
+    // d) 读取选修课程信息（查看已选课程）
+    public void viewSelectedCourses() {
+        System.out.println(&quot;\n========== 已选课程列表 ==========&quot;);
+
+        String sql = &quot;SELECT SC.CID, C.CNAME, C.TEACHER, SC.GRADE &quot; +
+                &quot;FROM SC &quot; +
+                &quot;JOIN C ON SC.CID = C.CID &quot; +
+                &quot;WHERE SC.SID = ? &quot; +
+                &quot;ORDER BY SC.CID&quot;;
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, currentStudentId);
+            ResultSet rs = pstmt.executeQuery();
+
+            System.out.printf(&quot;%-10s %-20s %-15s %-10s\n&quot;, &quot;课程号&quot;, &quot;课程名&quot;, &quot;任课教师&quot;, &quot;成绩&quot;);
+            System.out.println(&quot;--------------------------------------------------&quot;);
+
+            boolean hasCourses = false;
+            while (rs.next()) {
+                hasCourses = true;
+                String grade = rs.getString(&quot;GRADE&quot;);
+                String gradeDisplay = (grade == null) ? &quot;未录入&quot; : grade;
+                System.out.printf(&quot;%-10s %-20s %-15s %-10s\n&quot;,
+                        rs.getString(&quot;CID&quot;),
+                        rs.getString(&quot;CNAME&quot;),
+                        rs.getString(&quot;TEACHER&quot;),
+                        gradeDisplay);
+            }
+
+            if (!hasCourses) {
+                System.out.println(&quot;尚未选修任何课程&quot;);
+            }
+
+            // 显示总学分和选课数量
+            getStudentSummary();
+
+        } catch (SQLException e) {
+            System.out.println(&quot;查询已选课程失败: &quot; + e.getMessage());
+        }
+    }
+
+    // 获取学生选课汇总信息
+    private void getStudentSummary() {
+        String sql = &quot;SELECT COUNT(*) as course_count, COUNT(*) * 3 as total_credits &quot; +
+                &quot;FROM SC WHERE SID = ?&quot;;
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, currentStudentId);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                int courseCount = rs.getInt(&quot;course_count&quot;);
+                int totalCredits = rs.getInt(&quot;total_credits&quot;);
+                System.out.println(&quot;\n选课统计：&quot;);
+                System.out.println(&quot;选修课程数: &quot; + courseCount);
+                System.out.println(&quot;总学分: &quot; + totalCredits + &quot; 学分&quot;);
+            }
+        } catch (SQLException e) {
+            System.out.println(&quot;查询汇总信息失败: &quot; + e.getMessage());
+        }
+    }
+
+    // e) 退选课程
+    public void dropCourse() {
+        viewSelectedCourses();
+
+        System.out.print(&quot;\n请输入要退选的课程号: &quot;);
+        String courseId = scanner.nextLine().trim();
+
+        String sql = &quot;DELETE FROM SC WHERE SID = ? AND CID = ?&quot;;
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, currentStudentId);
+            pstmt.setString(2, courseId);
+            int rows = pstmt.executeUpdate();
+
+            if (rows &gt; 0) {
+                System.out.println(&quot;退选成功！&quot;);
+                // 显示更新后的选课列表
+                viewSelectedCourses();
+            } else {
+                System.out.println(&quot;退选失败：未找到该选课记录&quot;);
+            }
+        } catch (SQLException e) {
+            System.out.println(&quot;退选失败: &quot; + e.getMessage());
+        }
+    }
+
+    // 查看课程选修情况（管理员视角）
+    public void viewCourseEnrollment() {
+        System.out.println(&quot;\n========== 课程选修情况统计 ==========&quot;);
+
+        String sql = &quot;SELECT C.CID, C.CNAME, C.TEACHER, &quot; +
+                &quot;COUNT(SC.SID) as student_count, &quot; +
+                &quot;ROUND(AVG(SC.GRADE), 2) as avg_grade &quot; +
+                &quot;FROM C &quot; +
+                &quot;LEFT JOIN SC ON C.CID = SC.CID &quot; +
+                &quot;GROUP BY C.CID, C.CNAME, C.TEACHER &quot; +
+                &quot;ORDER BY student_count DESC&quot;;
+
+        try (Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            System.out.printf(&quot;%-10s %-20s %-15s %-12s %-10s\n&quot;,
+                    &quot;课程号&quot;, &quot;课程名&quot;, &quot;任课教师&quot;, &quot;选修人数&quot;, &quot;平均成绩&quot;);
+            System.out.println(&quot;------------------------------------------------------------&quot;);
+
+            while (rs.next()) {
+                String avgGrade = rs.getString(&quot;avg_grade&quot;);
+                String avgDisplay = (avgGrade == null) ? &quot;0&quot; : avgGrade;
+                System.out.printf(&quot;%-10s %-20s %-15s %-12s %-10s\n&quot;,
+                        rs.getString(&quot;CID&quot;),
+                        rs.getString(&quot;CNAME&quot;),
+                        rs.getString(&quot;TEACHER&quot;),
+                        rs.getInt(&quot;student_count&quot;),
+                        avgDisplay);
+            }
+
+        } catch (SQLException e) {
+            System.out.println(&quot;查询课程统计失败: &quot; + e.getMessage());
+        }
+    }
+
+    // 显示主菜单
+    public void showMenu() {
+        System.out.println(&quot;\n========== 选课系统菜单 ==========&quot;);
+        System.out.println(&quot;1. 查看可选课程&quot;);
+        System.out.println(&quot;2. 选修课程&quot;);
+        System.out.println(&quot;3. 查看已选课程&quot;);
+        System.out.println(&quot;4. 退选课程&quot;);
+        System.out.println(&quot;5. 查看所有课程选修情况（统计）&quot;);
+        System.out.println(&quot;6. 切换学生&quot;);
+        System.out.println(&quot;0. 退出系统&quot;);
+        System.out.print(&quot;请选择操作: &quot;);
+    }
+
+    // 运行主程序
+    public void run() {
+        try {
+            connectToDatabase();
+
+            // 首次登录
+            while (currentStudentId == null) {
+                login();
+            }
+
+            int choice;
+            do {
+                showMenu();
+                choice = scanner.nextInt();
+                scanner.nextLine(); // 清除缓冲区
+
+                switch (choice) {
+                    case 1:
+                        viewAvailableCourses();
+                        break;
+                    case 2:
+                        selectCourse();
+                        break;
+                    case 3:
+                        viewSelectedCourses();
+                        break;
+                    case 4:
+                        dropCourse();
+                        break;
+                    case 5:
+                        viewCourseEnrollment();
+                        break;
+                    case 6:
+                        currentStudentId = null;
+                        while (currentStudentId == null) {
+                            login();
+                        }
+                        break;
+                    case 0:
+                        System.out.println(&quot;感谢使用选课系统，再见！&quot;);
+                        break;
+                    default:
+                        System.out.println(&quot;无效选择，请重新输入！&quot;);
+                }
+            } while (choice != 0);
+
+        } catch (SQLException e) {
+            System.out.println(&quot;系统初始化失败: &quot; + e.getMessage());
+        } finally {
+            // 关闭资源
+            try {
+                if (connection != null &amp;&amp; !connection.isClosed()) {
+                    connection.close();
+                    System.out.println(&quot;数据库连接已关闭&quot;);
+                }
+                if (scanner != null) {
+                    scanner.close();
+                }
+            } catch (SQLException e) {
+                System.out.println(&quot;关闭连接失败: &quot; + e.getMessage());
+            }
+        }
+    }
+
+    // 主方法
+    public static void main(String[] args) {
+        CourseSelectionSystem system = new CourseSelectionSystem();
+        system.run();
+    }
+}
+</code></pre>
+<h3 id="b_1">b</h3>
+<p><strong>［图片缺失］</strong></p>
+<h3 id="c">c</h3>
+<p><strong>［图片缺失］</strong></p>
+<h3 id="d">d</h3>
+<p><strong>［图片缺失］</strong></p>
+<h3 id="e">e</h3>
+<p><strong>［图片缺失］</strong></p>
+<h3 id="f">f</h3>
+<p><strong>［图片缺失］</strong></p>
+<h2 id="5">5</h2>
+<h3 id="a_1">a</h3>
+<pre><code class="language-shell">mysqldump -u root -p course_select_sys &gt; D:\Documentary\Table\SHIT\数据库系统\backup\course_db_backup.sql
+mysql -u root -p course_select_sys &lt; D:\Documentary\Table\SHIT\数据库系统\backup\course_db_backup.sql
+</code></pre>
+<h3 id="b_2">b</h3>
+<p><strong>［图片缺失］</strong></p>
+<p><strong>［图片缺失］</strong></p>
+    </div>
+    <p class="back"><a class="ef-btn" href="../LAB3/LAB3.html">← LAB3</a> <a class="ef-btn" href="../LAB5/实验报告.html">图书管理系统实验报告 →</a> <a class="ef-btn" href="../../index.html">返回本课</a></p>
+  </div>
+  <aside class="ef-margin toc-aside" aria-label="本页目录">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>本页目录</span><span>14 节</span></p>
+      <ol>
+      <li><a class="lvl2" href="#1">1</a></li>
+      <li><a class="lvl2" href="#2">2</a></li>
+      <li><a class="lvl3" href="#a">a</a></li>
+      <li><a class="lvl3" href="#b">b</a></li>
+      <li><a class="lvl2" href="#3">3</a></li>
+      <li><a class="lvl2" href="#4">4</a></li>
+      <li><a class="lvl3" href="#b_1">b</a></li>
+      <li><a class="lvl3" href="#c">c</a></li>
+      <li><a class="lvl3" href="#d">d</a></li>
+      <li><a class="lvl3" href="#e">e</a></li>
+      <li><a class="lvl3" href="#f">f</a></li>
+      <li><a class="lvl2" href="#5">5</a></li>
+      <li><a class="lvl3" href="#a_1">a</a></li>
+      <li><a class="lvl3" href="#b_2">b</a></li>
+      </ol>
+    </div>
+  </aside>
+</article>
+
+<footer class="foot">
+  <span class="ef-field">KYSIIN.ARCHIVE · 2026.11.15 · 由 Markdown 渲染</span>
+  <span>用 endfield-ui 渲染 · Saira（SIL OFL）自托管</span>
+</footer>
+<script type="module">
+  import { wireTheme } from '../../../../assets/fx.js'
+  wireTheme()
+</script>
+<script defer src="../../../../assets/search.js?v=202611150558"></script>
+<script>
+  /* 左栏：每个分组可独立展开/收起 */
+  (function () {
+    document.querySelectorAll('.tree-toggle').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var li = btn.closest('.tree-group');
+        var list = li ? li.querySelector('.tree-items') : null;
+        var open = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', String(!open));
+        if (list) list.hidden = open;
+        if (li) li.classList.toggle('is-open', !open);
+      });
+    });
+  })();
+</script>
+<script>
+  /* 右栏目录跟随滚动：读到哪一节就把那一行标出来 */
+  (function () {
+    var links = [].slice.call(document.querySelectorAll('.toc-aside a[href^="#"]'));
+    if (!links.length) return;
+    var items = links.map(function (a) {
+      var el = document.getElementById(a.getAttribute('href').slice(1));
+      return el ? { a: a, el: el } : null;
+    }).filter(Boolean);
+    if (!items.length) return;
+    var ticking = false;
+    function spy() {
+      ticking = false;
+      var line = window.scrollY + 140;
+      var best = null;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].el.getBoundingClientRect().top + window.scrollY <= line) best = items[i];
+      }
+      links.forEach(function (a) { a.removeAttribute('aria-current'); });
+      if (best) best.a.setAttribute('aria-current', 'true');
+    }
+    window.addEventListener('scroll', function () {
+      if (!ticking) { ticking = true; requestAnimationFrame(spy); }
+    }, { passive: true });
+    spy();
+  })();
+</script>
+</body>
+</html>

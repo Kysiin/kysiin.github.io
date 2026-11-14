@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LAB1 &amp; LAB2 · KYSIIN.ARCHIVE</title>
+<script src="../../../assets/variant.js"></script>
+<link rel="stylesheet" href="../../../assets/local-fonts.css" />
+<link rel="stylesheet" href="../../../assets/endfield.css" />
+
+<style>
+  body { --tri-h: 3px; --topbar-h: 3.1rem; }
+  body > .ef-tri { position: sticky; top: 0; z-index: 61; }
+  .topbar { position:sticky; top:var(--tri-h); z-index:60;
+    display:flex; align-items:center; gap:1.5rem; padding:.85rem var(--ef-pad);
+    border-bottom:1px solid var(--ef-rule); background:var(--ef-panel); }
+  .topbar .brand { margin:0; font-family:var(--ef-font-ui); font-size:.95rem;
+    font-stretch:var(--ef-wider); font-weight:800; letter-spacing:.08em;
+    text-decoration:none; color:var(--ef-ink); }
+  .topbar nav { display:flex; align-items:center; gap:1.25rem; margin-left:auto; }
+  .topbar nav a { text-decoration:none; color:var(--ef-ink-2); }
+  .foot { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between;
+    gap:1rem; padding:1.5rem var(--ef-pad) 2.5rem; border-top:1px solid var(--ef-rule);
+    color:var(--ef-ink-2); font-size:.875rem; }
+  @media (max-width: 959px) { .ef-spread { grid-template-columns:minmax(0,1fr); }
+    .ef-sheet { border-right:0; border-bottom:1px solid var(--ef-rule); } }
+  @media (max-width:760px) { .topbar { flex-wrap:wrap; gap:.75rem; }
+    .topbar nav { order:3; width:100%; margin-left:0; } }
+
+  .title { margin:1.5rem 0 1rem; font-size:clamp(var(--ef-t-title),5vw,var(--ef-t-h1));
+    font-weight:700; line-height:1.3; }
+  .ef-prose { margin-top:1.75rem; }
+  .ef-prose img { max-width:100%; height:auto; border:1px solid var(--ef-rule); background:#fff; }
+  .ef-prose table { width:100%; border-collapse:collapse; font-size:.9rem; }
+  .ef-prose th, .ef-prose td { border-bottom:1px solid var(--ef-rule); padding:.45rem .6rem; text-align:left; }
+  .ef-prose th { font-family:var(--ef-font-ui); font-stretch:var(--ef-wide); font-size:.8rem; }
+  /* 代码块：整块一个背景；块内的 code 不再带行内边框/内边距 */
+  .ef-prose pre { overflow:auto; margin:1rem 0; padding:.9rem 1rem;
+    background:var(--ef-chip); border-left:3px solid var(--ef-rule);
+    font-size:.85rem; line-height:1.6; tab-size:4; }
+  .ef-prose pre code { display:block; padding:0; border:0; background:none;
+    font-family:var(--ef-font-mono); font-size:.85rem; line-height:1.6; white-space:pre; }
+  .ef-prose :not(pre) > code { font-family:var(--ef-font-mono); font-size:.88em;
+    padding:.1em .35em; border:1px solid var(--ef-rule); background:var(--ef-paper); }
+  .ef-prose blockquote { border-left:3px solid var(--ef-ink); margin:1rem 0; padding:.25rem 0 .25rem 1rem;
+    color:var(--ef-ink-2); }
+
+  /* —— 公式：绝不超出正文栏；行间公式可横向滚动 —— */
+  .ef-prose mjx-container { max-width:100%; }
+  .ef-prose mjx-container[display="true"] { display:block; text-align:center; margin:1.1em 0;
+    max-width:100%; overflow-x:auto; overflow-y:hidden; padding:2px 0; }
+  .ef-prose mjx-container[jax="CHTML"] { font-size:1.02em; }
+  .eq { overflow-x:auto; overflow-y:hidden; max-width:100%; padding:2px 0; }
+  .eq mjx-container[display="true"] { margin:.35em 0; }
+
+  .toc ol { margin:0; padding:0; list-style:none; border-left:1px solid var(--ef-rule); }
+  .toc a { display:block; margin-left:-1px; padding:.22rem 0 .22rem .7rem;
+    border-left:3px solid transparent; color:var(--ef-ink-2); font-size:.85rem;
+    overflow-wrap:anywhere; }
+  .toc a:hover { color:var(--ef-ink); border-left-color:var(--ef-trace); }
+  .toc .lvl3 { padding-left:1.3rem; font-size:.8rem; }
+  .back { margin:2rem 0 0; display:flex; flex-wrap:wrap; gap:.75rem; }
+
+  /* —— 三栏铺满：两侧栏贴边，中间正文吃掉所有剩余宽度 —— */
+  .ef-spread { max-width: none; margin: 0; }
+
+  @media (min-width: 1180px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(11rem, 12vw, 14rem) minmax(0, 1fr) clamp(13rem, 14vw, 17rem);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+  }
+  @media (min-width: 960px) and (max-width: 1179px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(10rem, 12vw, 12rem) minmax(0, 1fr);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+    .ef-spread.has-rail > .toc-aside { display: none; }
+  }
+  @media (min-width: 960px) {
+    .ef-spread > .ef-margin {
+      position: sticky;
+      top: calc(var(--tri-h) + var(--topbar-h));
+      align-self: start;
+      max-height: calc(100vh - var(--tri-h) - var(--topbar-h));
+      overflow-y: auto;
+      scrollbar-width: thin;
+      padding: clamp(1.5rem, 3vw, 2.5rem) 1rem;
+    }
+    /* 两侧栏往屏幕边缘靠，别在页边留空 */
+    .ef-spread > .rail-aside { padding-left: .75rem; padding-right: 1.25rem; }
+    .ef-spread > .toc-aside { padding-left: 1.25rem; padding-right: .75rem; }
+    /* 正文左右留呼吸，但不限制宽度 */
+    .ef-spread > .ef-sheet { padding-left: clamp(2rem, 3.5vw, 4rem); padding-right: clamp(2rem, 3.5vw, 4rem); }
+    /* 套件把正文限制在 40rem；中间栏变宽后这里放开，让文字铺满 */
+    .ef-sheet .ef-prose,
+    .ef-sheet .ef-lede,
+    .ef-sheet .title,
+    .ef-sheet .ef-read,
+    .ef-sheet .ef-facts,
+    .ef-sheet .ef-empty,
+    .ef-sheet .ef-notice { max-width: none; }
+  }
+  .ef-margin .toc a { font-size: .74rem; line-height: 1.5; }
+  .toc a[aria-current] { color: var(--ef-ink); border-left-color: var(--ef-trace); font-weight: 600; }
+  .rail-head { display: block; margin: 0 0 .5rem; padding-bottom: .35rem;
+    border-bottom: 1px solid var(--ef-rule); font-size: .68rem; line-height: 1.5; }
+  .rail-head span { display: inline; }
+  .rail-head span + span { display: block; color: var(--ef-ink-2); }
+  .rail-aside .toc a { padding-top: .3rem; padding-bottom: .3rem; }
+  .rail-tree { list-style:none; margin:0; padding:0; }
+  .rail-tree .tree-name { display:block; padding:.35rem .2rem .35rem .6rem;
+    border-left:3px solid transparent; font-size:.76rem; font-weight:600; color:var(--ef-ink); }
+  .rail-tree .tree-label { display:inline; }
+  .rail-tree .tree-name .ef-field { font-size:.68rem; color:var(--ef-ink-2); margin-left:.35rem;
+    white-space:nowrap; }
+  .rail-tree .tree-group.is-open > .tree-name { border-left-color:var(--ef-trace); }
+  .rail-tree .tree-items { list-style:none; margin:.1rem 0 .5rem; padding:0 0 0 .6rem;
+    border-left:1px solid var(--ef-rule); }
+  .rail-tree .tree-items a { padding-left:.6rem; font-size:.72rem; line-height:1.45; }
+  .tree-row { display:flex; align-items:stretch; gap:.15rem; }
+  .tree-row .tree-name { flex:1 1 auto; min-width:0; }
+  .tree-toggle { flex:none; width:1.55rem; min-height:1.9rem; display:grid; place-items:center;
+    padding:0; border:1px solid var(--ef-rule); background:var(--ef-panel); color:var(--ef-ink-2);
+    cursor:pointer; transition:color .12s var(--ef-ease), border-color .12s var(--ef-ease), background .12s var(--ef-ease); }
+  .tree-toggle:hover { color:var(--ef-ink); border-color:var(--ef-ink); background:var(--ef-chip); }
+  .tree-toggle svg { width:.7rem; height:.7rem; transition:transform .15s var(--ef-ease); }
+  .tree-toggle[aria-expanded="true"] svg { transform:rotate(90deg); }
+  .rail-tree .tree-items[hidden] { display:none; }
+  /* 滚动条统一样式在 assets/local-fonts.css 里定义（页面/侧栏/搜索共用） */
+
+  /* 窄屏：正文优先，两侧栏排到后面 */
+  @media (max-width: 959px) {
+    .ef-spread.has-rail > .ef-sheet { order: 1; }
+    .ef-spread.has-rail > .rail-aside { order: 2; border-top: 1px solid var(--ef-rule); }
+    .ef-spread.has-rail > .toc-aside { order: 3; }
+  }
+
+  /* —— 复习笔记：PDF 下载 —— */
+  .pdf-dl { display:flex; flex-wrap:wrap; align-items:center; gap:.75rem; margin:1.1rem 0 0; }
+  .pdf-dl .ef-btn { border-color:var(--ef-ink); }
+
+  /* —— 打印 / 导出 PDF：只留正文 —— */
+  @page { size:A4; margin:16mm 14mm 18mm; }
+  @media print {
+    html, body { background:#fff !important; }
+    .topbar, .foot, .ef-tri, .rail-aside, .toc-aside, .back, .pdf-dl,
+    .ef-crumb, .ef-eyebrow, .ef-facts, .ef-notice { display:none !important; }
+    .ef-spread, .ef-spread.has-rail { display:block !important; max-width:none !important; }
+    .ef-sheet { border:0 !important; padding:0 !important; background:#fff !important; }
+    .ef-sheet .ef-prose, .ef-sheet .ef-lede, .ef-sheet .title { max-width:none !important; }
+    .title { margin:0 0 1rem; }
+    /* 打印用系统字体：体积小、离线打开不依赖自托管字体 */
+    body, .ef-prose, .title, .ef-lede, .ef-facts,
+    h1, h2, h3, h4, h5, h6 { font-family:"Microsoft YaHei UI","Microsoft YaHei","PingFang SC",sans-serif !important; }
+    .ef-prose pre, .ef-prose code { font-family:Consolas,"Cascadia Mono",monospace !important; }
+    .ef-prose { margin-top:1rem; }
+    .ef-prose pre { white-space:pre-wrap; word-break:break-word; }
+    .ef-prose pre code { white-space:pre-wrap; }
+    .ef-prose img, .ef-prose svg, mjx-container { max-width:100% !important; }
+    a { color:inherit !important; text-decoration:none !important; }
+    .ef-prose h2, .ef-prose h3 { break-after:avoid; }
+    .ef-prose pre, .ef-prose table, .eq { break-inside:avoid; }
+  }
+
+</style>
+</head>
+<body class="ef ef-contours">
+<div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+<header class="topbar">
+  <a class="brand" href="../../../index.html">KYSIIN.ARCHIVE</a>
+  <nav class="ef-field" aria-label="主导航">
+    <a href="../../../index.html">首页</a>
+    <a href="../index.html" aria-current="page">计算机系统Ⅱ</a>
+  </nav>
+  <span data-search-slot></span>
+  <button class="ef-btn small" type="button" data-theme-toggle>切换深浅</button>
+</header>
+
+<article class="ef-spread has-rail">
+  <aside class="ef-margin rail-aside" aria-label="本课程分区">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>计算机系统Ⅱ</span><span>1 区</span></p>
+      <ol class="rail-tree">
+        <li class="tree-group is-open">
+          <div class="tree-row">
+            <a class="tree-name" href="../index.html#sec-%E5%AE%9E%E9%AA%8C"><span class="tree-label">实验</span><span class="ef-field">1</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="true" aria-label="收起 实验"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items">
+            <li><a href="LAB1+2.html" aria-current="page">LAB1 &amp; LAB2</a></li>
+          </ol>
+        </li>
+      </ol>
+      <p class="ef-actions" style="margin:.9rem 0 0">
+        <a class="ef-btn small" href="../index.html">返回课程</a>
+      </p>
+    </div>
+  </aside>
+  <div class="ef-sheet">
+    <p class="ef-eyebrow slash">Course / Article</p>
+    <p class="ef-crumb ef-field"><a href="../../../index.html">首页</a><a href="../index.html">计算机系统Ⅱ</a><span>实验</span><span>根目录</span></p>
+    <ul class="ef-facts ef-field">
+      <li>实验</li>
+      <li>2,492 字</li>
+      <li>2026.11.04</li>
+      <li>10 个小节</li>
+    </ul>
+    <h1 class="title ef-read">LAB1 &amp; LAB2</h1>
+    <div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+    
+    
+    <div class="ef-prose">
+<h2 id="lab1">LAB1</h2>
+<h3 id="实验目的">实验目的</h3>
+<p>在单周期CPU的基础上实现六级流水线</p>
+<h3 id="实验过程">实验过程</h3>
+<p>由于本人基础不牢于是向AI寻求帮助让它在AGENT.md的限制下帮我解释一下实验的思路并参照着思路写了代码。
+Checkpoint拿到的代码是一个有MultiFSM实现的单周期CPU，MultiFSM与流水线互斥，因此暂时注释掉Core.sv中的MultiFSM部分和stall部分（stall在LAB2实现）
+随后在开头加入<code>import PipelinePack::*</code>打算用结构体实现，定义如下：</p>
+<pre><code class="language-VERILOG">IF1IF2   if1if2_reg;
+IFID     ifid_reg;
+IDEXE    idexe_reg;
+EXEMEM   exemem_reg;
+MEMWB    memwb_reg;
+</code></pre>
+<p>随后实现，替代原来的inst、pc等，让每个寄存器的输入都是上一个寄存器的输出
+pc-&gt;IF1-&gt;IF2-&gt;ID-&gt;EXE-&gt;MEM-&gt;WB
+例如exemem_reg使用idexe_reg的输出</p>
+<pre><code class="language-VERILOG">/*=====================exemem_reg=====================*/
+
+always_ff @(posedge clk or posedge rst) begin
+    if (rst) begin
+        exemem_reg.valid &lt;= 1'b0;
+    end else begin
+        exemem_reg &lt;= '{
+            pc:         idexe_reg.pc,
+            pc_4:       idexe_reg.pc_4,
+            inst:       idexe_reg.inst,
+            valid:      idexe_reg.valid,
+
+            we_reg:     idexe_reg.we_reg,
+            we_mem:     idexe_reg.we_mem,
+            re_mem:     idexe_reg.re_mem,
+            reg_data_1: idexe_reg.reg_data_1,
+            reg_data_2: idexe_reg.reg_data_2,
+            rd:         idexe_reg.rd,
+            rs1:        idexe_reg.rs1,
+            rs2:        idexe_reg.rs2,
+
+            wb_sel:     idexe_reg.wb_sel,
+            mem_op:     idexe_reg.mem_op,
+
+            br_taken:   br_taken,
+            alu_res:    alu_res,
+            mem_wdata:  data_package,
+            npc:        (br_taken | idexe_reg.npc_sel) ? alu_res : idexe_reg.pc_4
+        };
+    end
+end
+</code></pre>
+<p>然后在<code>if1if2_reg</code>和<code>exemem_reg</code>、<code>memwb_reg</code>前补上总线握手信号
+然后cosim的接口交给<code>memwb_reg</code>
+最后实现flush，条件为 <code>idexe_reg.valid &amp; (br_taken | idexe_reg.npc_sel)</code>，<code>assign imem_ift.r_request_valid = ~flush;</code></p>
+<p>debug：
+<code>flush</code>和<code>rst</code>的归0时没注意直接把结构&lt;=0了发生编译错误，加上<code>.valid</code>后解决，这又导致了下一个bug，<code>flush</code>只清掉<code>valid</code>，<code>npc_sel=1</code>、<code>reg_data_1/2</code>都没被清理，因此如果pc_unit里一开始写<code>else if(idexe_reg.npc_sel|br_taken) next_pc = alu_res;</code>没有判断 valid，就会导致DUT 在跳转后把 0x0c重复提交，修改为如下代码后通过
+<code>else if(idexe_reg.valid &amp; (idexe_reg.npc_sel | br_taken)) next_pc = alu_res;</code>
+<img alt="" src="attachments/Pasted image 20261104000451.png" /></p>
+<p>下板前接上线：</p>
+<pre><code class="language-VERILOG">assign cosim_core_info.valid_IF1 = ~flush;
+assign cosim_core_info.valid_IF  = if1if2_reg.valid;
+assign cosim_core_info.valid_ID  = ifid_reg.valid;
+assign cosim_core_info.valid_EXE = idexe_reg.valid;
+assign cosim_core_info.valid_MEM = exemem_reg.valid;
+assign cosim_core_info.valid_WB  = memwb_reg.valid;
+</code></pre>
+<p><img alt="" src="attachments/Pasted image 20261104002208.png" />
+<img alt="" src="attachments/d7b0ec744691193d904c5270bf5eeff2.jpg" /></p>
+<h3 id="思考题">思考题</h3>
+<h4 id="对于synasm的fibonacci的如下代码段请计算该loop在流水线cpuscpu多周期cpu-各自的-cpi对比三者的cpi">对于syn.asm的fibonacci的如下代码段，请计算该loop在流水线CPU、SCPU、多周期CPU 各自的 CPI，对比三者的CPI。</h4>
+<pre><code>000000000000000c &lt;fibonacci&gt;:
+   c:   00000013            addi    zero,zero,0
+  10:   00000013            addi    zero,zero,0
+  14:   002081b3            add gp,ra,sp
+  18:   00000013            addi    zero,zero,0
+  1c:   00000013            addi    zero,zero,0
+  20:   00000013            addi    zero,zero,0
+  24:   003100b3            add ra,sp,gp
+  28:   00000013            addi    zero,zero,0
+  2c:   00000013            addi    zero,zero,0
+  30:   00000013            addi    zero,zero,0
+  34:   00308133            add sp,ra,gp
+  38:   fff20213            addi    tp,tp,-1 # ffffffffffffffff &lt;_end+0xfffffffffffffccf&gt;
+  3c:   00000013            addi    zero,zero,0
+  40:   00000013            addi    zero,zero,0
+  44:   00000013            addi    zero,zero,0
+  48:   fc4012e3            bne zero,tp,c &lt;fibonacci&gt;
+</code></pre>
+<p>16条指令，5次循环，全部非访存，一共80条指令
+流水线CPU：（4*（16+3）+16）/ 80 = 1.15
+SCPU：80/80=1
+多周期CPU：3 * 80/80=3</p>
+<h4 id="假设scpu的时钟频率是100mhz如果流水线想要有比单周期cpu更高的执行效率它的时钟频率至少需要是多少">假设SCPU的时钟频率是100MHz，如果流水线想要有比单周期CPU更高的执行效率，它的时钟频率至少需要是多少？</h4>
+<p>115MHz</p>
+<h4 id="从时钟频率和cpi的角度解释为什么多周期cpu优于单周期cpu流水线cpu优于多周期cpu">从时钟频率和CPI的角度解释，为什么多周期CPU优于单周期CPU，流水线CPU优于多周期CPU。</h4>
+<p>执行时间=指令数 * CPI * 时钟周期
+单周期的CPI小，但是执行一个指令的时钟周期大
+多周期的时钟周期小，但是CPI大，但是相乘后仍然比单周期小
+流水线CPI小，时钟周期也小</p>
+<h3 id="心得感想">心得感想</h3>
+<p>感谢助教给的checkpoint和仓库里各种提前写好的结构，帮大忙了。</p>
+<h2 id="lab2">LAB2</h2>
+<h3 id="实验目的_1">实验目的</h3>
+<p>在流水线CPU的基础上实现forwarding和stall来处理冲突</p>
+<h3 id="实验过程_1">实验过程</h3>
+<p>声明两个fwd用于forwarding，并在代码最后面写出forwarding selector
+if EXE 段那条指令要写同一个寄存器 → 用它的结果；else if MEM 段那条要写 → 用它的结果；else if WB 段那条要写 → 用它的写回值
+hit_rs1/2就是该段有有效指令且会写寄存器且rd!=0且rd!=rs1且不是load</p>
+<pre><code class="language-VERILOG">assign EXE_hit_rs1 = idexe_reg.valid &amp; idexe_reg.we_reg &amp; (idexe_reg.rd != 5'b0)
+               &amp; (idexe_reg.rd == rs1) &amp; ~idexe_reg.re_mem;
+assign MEM_hit_rs1 = exemem_reg.valid &amp; exemem_reg.we_reg &amp; (exemem_reg.rd != 5'b0)
+                &amp; (exemem_reg.rd == rs1);
+assign WB_hit_rs1  = memwb_reg.valid &amp; memwb_reg.we_reg &amp; (memwb_reg.rd != 5'b0)
+                &amp; (memwb_reg.rd == rs1);
+assign EXE_hit_rs2 = idexe_reg.valid &amp; idexe_reg.we_reg &amp; (idexe_reg.rd != 5'b0)
+               &amp; (idexe_reg.rd == rs2) &amp; ~idexe_reg.re_mem;
+assign MEM_hit_rs2 = exemem_reg.valid &amp; exemem_reg.we_reg &amp; (exemem_reg.rd != 5'b0)
+                &amp; (exemem_reg.rd == rs2);
+assign WB_hit_rs2  = memwb_reg.valid &amp; memwb_reg.we_reg &amp; (memwb_reg.rd != 5'b0)
+                &amp; (memwb_reg.rd == rs2);
+/*===================== forwarding =====================*/
+always_comb begin
+    fwd_1 = read_data_1;
+    fwd_2 = read_data_2;
+    if (EXE_hit_rs1)      fwd_1 = (idexe_reg.wb_sel == WB_SEL_PC) ? idexe_reg.pc_4 : alu_res;
+    else if (MEM_hit_rs1) fwd_1 = (exemem_reg.wb_sel == WB_SEL_PC)  ? exemem_reg.pc_4
+                                : (exemem_reg.wb_sel == WB_SEL_MEM) ? data_trunc
+                                :                                      exemem_reg.alu_res;
+    else if (WB_hit_rs1)  fwd_1 = wb_val;
+    if (EXE_hit_rs2)      fwd_2 = (idexe_reg.wb_sel == WB_SEL_PC) ? idexe_reg.pc_4 : alu_res;
+    else if (MEM_hit_rs2) fwd_2 = (exemem_reg.wb_sel == WB_SEL_PC)  ? exemem_reg.pc_4
+                                : (exemem_reg.wb_sel == WB_SEL_MEM) ? data_trunc
+                                :                                      exemem_reg.alu_res;
+    else if (WB_hit_rs2)  fwd_2 = wb_val;
+end
+/*=====================================================*/
+</code></pre>
+<p><img alt="" src="attachments/Pasted image 20261104020905.png" />
+LAB1的访存全在EXE段，EXE发完请求后直接到MEM再到WB，LAB2的话要把发请求挪到MEM和WB之间并等待回复，然后才WB
+那么先将dmem_ift的一系列信号从原来的idexe_reg改为exemem_reg</p>
+<pre><code class="language-VERILOG">assign dmem_ift.r_request_valid = exemem_reg.valid &amp; exemem_reg.re_mem &amp; ~req_sent;
+assign dmem_ift.r_request_bits = '{raddr: exemem_reg.alu_res};
+assign dmem_ift.w_request_valid = exemem_reg.valid &amp; exemem_reg.we_mem &amp; ~req_sent;
+assign dmem_ift.w_request_bits = '{waddr: exemem_reg.alu_res, wdata: exemem_reg.mem_wdata, wmask: mask_mem};
+</code></pre>
+<p>然后把MaskGen移到MEM，也就是输入改为exemem_reg
+然后新增一个req_sent，请求后valid立刻置零</p>
+<pre><code class="language-VERILOG">/*===================== req_sent =====================*/
+assign r_req_fire = dmem_ift.r_request_valid &amp; dmem_ift.r_request_ready;
+assign w_req_fire = dmem_ift.w_request_valid &amp; dmem_ift.w_request_ready;
+assign mem_done   = (exemem_reg.re_mem &amp; dmem_ift.r_reply_valid &amp; dmem_ift.r_reply_ready)
+                  | (exemem_reg.we_mem &amp; dmem_ift.w_reply_valid &amp; dmem_ift.w_reply_ready);
+assign mem_wait   = exemem_reg.valid &amp; (exemem_reg.re_mem | exemem_reg.we_mem) &amp; ~mem_done;
+always_ff @(posedge clk or posedge rst) begin
+    if (rst) begin
+        req_sent &lt;= 1'b0;
+    end else if (r_req_fire | w_req_fire) begin
+        req_sent &lt;= 1'b1;
+    end else if (~mem_wait) begin
+        req_sent &lt;= 1'b0;
+    end
+end
+</code></pre>
+<p>然后开始给每个寄存器的flush之前加stall保持，定义两个stall，stall_mem用于等内存，load_use用于等数据，stall_front是stall_mem | load_use。</p>
+<p>debug：
+一开始在memwb_reg里的stall也写成保持了，但这会使同一条指令反复生效，改memwb_reg.valid &lt;= 1'b0后测试通过
+<img alt="" src="attachments/Pasted image 20261104025135.png" />
+<img alt="" src="attachments/Pasted image 20261104025307.png" />
+<img alt="" src="attachments/f8402a38b984950471bc8a832b91b8fd.jpg" /></p>
+<h3 id="思考题_1">思考题</h3>
+<h4 id="分析-forward-和-stall-两种技术各自的优缺点可以从-cpi时钟频率元器件开销等角度进行分析">分析 forward 和 stall 两种技术各自的优缺点，可以从 CPI、时钟频率、元器件开销等角度进行分析</h4>
+<p>stall里会有许多无效气泡导致CPI增大，forwarding则不会
+forwarding在选择器里加入了复杂逻辑，会导致时钟频率下降，stall则不会</p>
+<h4 id="真实世界的内存通常只有一个读写口且每次内存读写都会消耗若干个周期假设在我们的实验中采用这种内存且通过一个模块将该唯一的读写口转化为两个内存接口-imem_ift-和-dmem_ift-暴露给-core那么它们之间会产生结构竞争你可以设计一个状态机来解决这个问题吗不需要写代码说明你的设计即可给出各个状态的含义所做的事情以及状态转移条件">真实世界的内存通常只有一个读写口，且每次内存读写都会消耗若干个周期。假设在我们的实验中采用这种内存，且通过一个模块将该唯一的读写口转化为两个内存接口 imem_ift 和 dmem_ift 暴露给 Core，那么它们之间会产生结构竞争。你可以设计一个状态机来解决这个问题吗？不需要写代码，说明你的设计即可，给出各个状态的含义、所做的事情以及状态转移条件。</h4>
+<table>
+<thead>
+<tr>
+<th>状态</th>
+<th>执行</th>
+<th>条件</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>空闲</td>
+<td></td>
+<td>谁请求给谁，同时请求则给imem</td>
+</tr>
+<tr>
+<td>imem正在使用</td>
+<td>dmem的<code>r/w_request_ready</code>置0</td>
+<td><code>r_reply_valid &amp; r_reply_ready</code>成立</td>
+</tr>
+<tr>
+<td>dmem正在使用</td>
+<td>imem的<code>r_request_ready</code>置0，<code>stall_front</code></td>
+<td>reply fire</td>
+</tr>
+<tr>
+<td>#### AXI4 是 ARM 提出的片上总线标准，被广泛用于 CPU 与内存、外设之间的互连。请你自行搜索了解 AXI4-Lite 总线的组成和特性，简要介绍它的总线协议。我们实验中实际采用的 mem_ift 总线和它有哪些异同？</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>AXI4是一种面向地址映射通信需求的，允许最大256轮数据突发的总线协议。而AXI4_Lite是一种轻量型的面向地址映射通信需求的，但不允许突发的总线协议。</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>1、读地址通道：用于发送读请求的地址和传输属性</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>2、读数据通道：从设备通过该通道返回读取的数据和状态</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>3、写地址通道：主设备通过该通道发送写请求的地址和传输属性</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>4、写数据通道：主设备通过该通道发送待写入的数据</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>5、写响应通道：从设备通过该通道返回写操作状态</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>同：都用valid-ready握手/读写分离
+异：AXI4-Lite有五个通道，mem_ift四组通道/AXI4-Lite有事务ID、乱序，mem_ift没有</p>
+<h4 id="下面这段汇编在你的六级流水线上运行">下面这段汇编在你的六级流水线上运行：</h4>
+<pre><code>        addi     sp,  sp,  -16
+        sd       x0,  0(sp)          # 计数器初值 = 0
+        li       t0,  3              # 循环 3 次
+loop:
+        ld       a0,  0(sp)          # 读计数器
+        addi     a0,  a0,  1         # 加一
+        sd       a0,  0(sp)          # 写回
+        addi     t0,  t0,  -1
+        bne      t0,  x0,  loop
+        ld       a1,  0(sp)
+        j        ...
+</code></pre>
+<p>请回答：在 lab2 的内存设计下（dmem 每次访存会随机等待 0~4 拍才返回，即最坏第 5 拍返回），这段代码需要的周期数的最小值和最大值分别是多少？给出计算过程。</p>
+<p>访存 8 次、load-use 3 次、分支 2 次
+最小值 20 + 8 * 0 + 3 + 6 = 29
+最大值 20 + 8 * 4 + 3 + 6 = 61</p>
+<h3 id="心得体会">心得体会</h3>
+<p>不知道说什么了现在是凌晨三点半我已经做晕了</p>
+    </div>
+    <p class="back"> <a class="ef-btn" href="../index.html">返回本课</a></p>
+  </div>
+  <aside class="ef-margin toc-aside" aria-label="本页目录">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>本页目录</span><span>10 节</span></p>
+      <ol>
+      <li><a class="lvl2" href="#lab1">LAB1</a></li>
+      <li><a class="lvl3" href="#实验目的">实验目的</a></li>
+      <li><a class="lvl3" href="#实验过程">实验过程</a></li>
+      <li><a class="lvl3" href="#思考题">思考题</a></li>
+      <li><a class="lvl3" href="#心得感想">心得感想</a></li>
+      <li><a class="lvl2" href="#lab2">LAB2</a></li>
+      <li><a class="lvl3" href="#实验目的_1">实验目的</a></li>
+      <li><a class="lvl3" href="#实验过程_1">实验过程</a></li>
+      <li><a class="lvl3" href="#思考题_1">思考题</a></li>
+      <li><a class="lvl3" href="#心得体会">心得体会</a></li>
+      </ol>
+    </div>
+  </aside>
+</article>
+
+<footer class="foot">
+  <span class="ef-field">KYSIIN.ARCHIVE · 2026.11.15 · 由 Markdown 渲染</span>
+  <span>用 endfield-ui 渲染 · Saira（SIL OFL）自托管</span>
+</footer>
+<script type="module">
+  import { wireTheme } from '../../../assets/fx.js'
+  wireTheme()
+</script>
+<script defer src="../../../assets/search.js?v=202611150558"></script>
+<script>
+  /* 左栏：每个分组可独立展开/收起 */
+  (function () {
+    document.querySelectorAll('.tree-toggle').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var li = btn.closest('.tree-group');
+        var list = li ? li.querySelector('.tree-items') : null;
+        var open = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', String(!open));
+        if (list) list.hidden = open;
+        if (li) li.classList.toggle('is-open', !open);
+      });
+    });
+  })();
+</script>
+<script>
+  /* 右栏目录跟随滚动：读到哪一节就把那一行标出来 */
+  (function () {
+    var links = [].slice.call(document.querySelectorAll('.toc-aside a[href^="#"]'));
+    if (!links.length) return;
+    var items = links.map(function (a) {
+      var el = document.getElementById(a.getAttribute('href').slice(1));
+      return el ? { a: a, el: el } : null;
+    }).filter(Boolean);
+    if (!items.length) return;
+    var ticking = false;
+    function spy() {
+      ticking = false;
+      var line = window.scrollY + 140;
+      var best = null;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].el.getBoundingClientRect().top + window.scrollY <= line) best = items[i];
+      }
+      links.forEach(function (a) { a.removeAttribute('aria-current'); });
+      if (best) best.a.setAttribute('aria-current', 'true');
+    }
+    window.addEventListener('scroll', function () {
+      if (!ticking) { ticking = true; requestAnimationFrame(spy); }
+    }, { passive: true });
+    spy();
+  })();
+</script>
+</body>
+</html>

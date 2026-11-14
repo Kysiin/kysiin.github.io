@@ -1,0 +1,131 @@
+{
+  "_note": "课程内分区：每篇文章归到 章节 / 专题 / 实验 之一。键是分组 slug + files/ 下的相对路径（用改名后的名字）。没登记的文件按 fallback 规则猜，猜错就在这里补一行。",
+  "sections": ["章节", "专题", "实验"],
+  "fallback": [
+    ["(^|/)(lab|实验|project|proj|hw|大作业|code|src)", "实验"],
+    ["(final|期末|复习|总结|速记|tips|自测|问答|判断|附录|路线|使用说明|速查)", "专题"]
+  ],
+  "articles": {
+    "ads-2024": {
+      "TIPS.md": "专题",
+      "FDS/A+B with Binary Search Trees.md": "实验",
+      "project_3/Recover the Design.md": "实验",
+      "project_6/Complexity.md": "实验"
+    },
+    "animation-review": {
+      "content/01_基础.md": "章节",
+      "content/02_原则.md": "章节",
+      "content/03_朝向.md": "章节",
+      "content/04_二维渐变.md": "章节",
+      "content/05_三维渐变.md": "章节",
+      "content/06_粒子群组.md": "章节",
+      "content/07_关节动画.md": "章节",
+      "content/08_运动捕获.md": "章节",
+      "content/09_变形.md": "章节",
+      "content/10_布料.md": "章节",
+      "content/11_隐式曲面.md": "章节",
+      "content/12_碰撞.md": "章节",
+      "content/13_数值积分.md": "章节",
+      "content/14_判断题.md": "专题",
+      "content/15_问答.md": "专题",
+      "content/16_附录.md": "专题"
+    },
+    "clothlab-src": {
+      "README.md": "实验",
+      "选题与规划.md": "实验"
+    },
+    "clothlab-out": {},
+    "compiler-2026": {
+      "HW/解答.md": "实验"
+    },
+    "crypto-2026": {
+      "密码学算法详解.md": "章节",
+      "crack_enigma/crack_enigma_代码详解.md": "实验",
+      "enigma(easy)/解答说明.md": "实验",
+      "myaes/解析.md": "实验"
+    },
+    "db-2026": {
+      "final/数据库系统-ER图画法规则总结.md": "专题",
+      "final/数据库系统-SQL语句用法总结.md": "专题",
+      "final/数据库系统-判断选择题概念总结.md": "专题",
+      "final/数据库系统-查询优化规则总结.md": "专题",
+      "final/数据库系统-计算公式总结.md": "专题",
+      "HW/hw6_answers.md": "实验",
+      "LAB1/LAB1.md": "实验",
+      "LAB2/LAB2.md": "实验",
+      "LAB3/LAB3.md": "实验",
+      "LAB4/LAB4.md": "实验",
+      "LAB5/实验报告.md": "实验",
+      "大作业/proj/README.md": "实验",
+      "大作业/proj/docs/AI辅助开发方法.md": "实验",
+      "大作业/proj/docs/实验报告.md": "实验"
+    },
+    "iot-2026": {
+      "课程学习报告.md": "专题"
+    },
+    "netlab": {
+      "HW/HW1.md": "实验",
+      "Lab1/lab1.md": "实验",
+      "Lab2/lab2.md": "实验",
+      "Lab3/lab3.md": "实验"
+    },
+    "netsec-2026": {
+      "DNS/DNS.md": "实验",
+      "ex/网络安全原理与实践_A4核心速记.md": "专题",
+      "LAB1/Sniffing and Spoofing 副本.md": "实验",
+      "LAB2/ARP.md": "实验",
+      "LAB3/TCP Attack.md": "实验",
+      "VPN TUNNEL/VPN Tunnel.md": "实验"
+    },
+    "oop": {
+      "LAB/Castle/实验报告.md": "实验",
+      "LAB/LAB2/Clock/9-1 Clock Display.md": "实验",
+      "补充/Perosonal_Diary/IMPLEMENTATION.md": "章节"
+    },
+    "phy-notes": {
+      "01-公式速查表.md": "专题"
+    },
+    "physics-review": {
+      "00-复习路线与使用说明.md": "专题",
+      "01-公式速查表.md": "专题",
+      "02-通用做题方法与题型套路.md": "专题",
+      "03-综合自测卷.md": "专题",
+      "ch12-静电场.md": "章节",
+      "ch13-导体与电介质.md": "章节",
+      "ch14-电流与磁场.md": "章节"
+    },
+    "sfs": {
+      "LAB1_SET_UID/Lab1 Set-UID.md": "实验",
+      "LAB2/LAB2 STACK OVERFLOW.md": "实验",
+      "LAB3/Lab3 Race Condition.md": "实验",
+      "LAB4/Lab4 Spectre Attack and Meltdown Attack.md": "实验",
+      "LAB5/Lab5 Format String.md": "实验",
+      "LAB6/LAB6.md": "实验",
+      "LAB7/LAB7.md": "实验"
+    },
+    "signal": {
+      "LAB1/LAB1.md": "实验"
+    },
+    "sys1-2024": {
+      "LAB0实验报告.md": "实验",
+      "LAB1/LAB1 REPOERT/LAB1 REPORT.md": "实验",
+      "LAB2/LAB 2 REPORT.md": "实验",
+      "LAB3/LAB3 REPORT.md": "实验",
+      "LAB5/LAB5 REPORT.md": "实验",
+      "PROJECT/PROJECT REPORT.md": "实验"
+    },
+    "sys2": {
+      "LAB1+2.md": "实验"
+    },
+    "sysintro-2023": {
+      "LAB1 REPORT.md": "实验",
+      "LAB2 REPORT.md": "实验",
+      "LAB3 REPORT.md": "实验",
+      "LAB4 REPORT.md": "实验",
+      "LAB5 REPORT.md": "实验",
+      "LAB6 REPORT.md": "实验",
+      "学习计划.md": "专题"
+    },
+    "wireless": {}
+  }
+}

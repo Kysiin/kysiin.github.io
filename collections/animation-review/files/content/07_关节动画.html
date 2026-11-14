@@ -1,0 +1,576 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>第八部分　关节动画：正向运动学与逆向运动学 · KYSIIN.ARCHIVE</title>
+<script src="../../../../assets/variant.js"></script>
+<link rel="stylesheet" href="../../../../assets/local-fonts.css" />
+<link rel="stylesheet" href="../../../../assets/endfield.css" />
+<link rel="stylesheet" href="../../../../assets/mathjax/mathjax.css" />
+<style>
+  body { --tri-h: 3px; --topbar-h: 3.1rem; }
+  body > .ef-tri { position: sticky; top: 0; z-index: 61; }
+  .topbar { position:sticky; top:var(--tri-h); z-index:60;
+    display:flex; align-items:center; gap:1.5rem; padding:.85rem var(--ef-pad);
+    border-bottom:1px solid var(--ef-rule); background:var(--ef-panel); }
+  .topbar .brand { margin:0; font-family:var(--ef-font-ui); font-size:.95rem;
+    font-stretch:var(--ef-wider); font-weight:800; letter-spacing:.08em;
+    text-decoration:none; color:var(--ef-ink); }
+  .topbar nav { display:flex; align-items:center; gap:1.25rem; margin-left:auto; }
+  .topbar nav a { text-decoration:none; color:var(--ef-ink-2); }
+  .foot { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between;
+    gap:1rem; padding:1.5rem var(--ef-pad) 2.5rem; border-top:1px solid var(--ef-rule);
+    color:var(--ef-ink-2); font-size:.875rem; }
+  @media (max-width: 959px) { .ef-spread { grid-template-columns:minmax(0,1fr); }
+    .ef-sheet { border-right:0; border-bottom:1px solid var(--ef-rule); } }
+  @media (max-width:760px) { .topbar { flex-wrap:wrap; gap:.75rem; }
+    .topbar nav { order:3; width:100%; margin-left:0; } }
+
+  .title { margin:1.5rem 0 1rem; font-size:clamp(var(--ef-t-title),5vw,var(--ef-t-h1));
+    font-weight:700; line-height:1.3; }
+  .ef-prose { margin-top:1.75rem; }
+  .ef-prose img { max-width:100%; height:auto; border:1px solid var(--ef-rule); background:#fff; }
+  .ef-prose table { width:100%; border-collapse:collapse; font-size:.9rem; }
+  .ef-prose th, .ef-prose td { border-bottom:1px solid var(--ef-rule); padding:.45rem .6rem; text-align:left; }
+  .ef-prose th { font-family:var(--ef-font-ui); font-stretch:var(--ef-wide); font-size:.8rem; }
+  /* 代码块：整块一个背景；块内的 code 不再带行内边框/内边距 */
+  .ef-prose pre { overflow:auto; margin:1rem 0; padding:.9rem 1rem;
+    background:var(--ef-chip); border-left:3px solid var(--ef-rule);
+    font-size:.85rem; line-height:1.6; tab-size:4; }
+  .ef-prose pre code { display:block; padding:0; border:0; background:none;
+    font-family:var(--ef-font-mono); font-size:.85rem; line-height:1.6; white-space:pre; }
+  .ef-prose :not(pre) > code { font-family:var(--ef-font-mono); font-size:.88em;
+    padding:.1em .35em; border:1px solid var(--ef-rule); background:var(--ef-paper); }
+  .ef-prose blockquote { border-left:3px solid var(--ef-ink); margin:1rem 0; padding:.25rem 0 .25rem 1rem;
+    color:var(--ef-ink-2); }
+
+  /* —— 公式：绝不超出正文栏；行间公式可横向滚动 —— */
+  .ef-prose mjx-container { max-width:100%; }
+  .ef-prose mjx-container[display="true"] { display:block; text-align:center; margin:1.1em 0;
+    max-width:100%; overflow-x:auto; overflow-y:hidden; padding:2px 0; }
+  .ef-prose mjx-container[jax="CHTML"] { font-size:1.02em; }
+  .eq { overflow-x:auto; overflow-y:hidden; max-width:100%; padding:2px 0; }
+  .eq mjx-container[display="true"] { margin:.35em 0; }
+
+  .toc ol { margin:0; padding:0; list-style:none; border-left:1px solid var(--ef-rule); }
+  .toc a { display:block; margin-left:-1px; padding:.22rem 0 .22rem .7rem;
+    border-left:3px solid transparent; color:var(--ef-ink-2); font-size:.85rem;
+    overflow-wrap:anywhere; }
+  .toc a:hover { color:var(--ef-ink); border-left-color:var(--ef-trace); }
+  .toc .lvl3 { padding-left:1.3rem; font-size:.8rem; }
+  .back { margin:2rem 0 0; display:flex; flex-wrap:wrap; gap:.75rem; }
+
+  /* —— 三栏铺满：两侧栏贴边，中间正文吃掉所有剩余宽度 —— */
+  .ef-spread { max-width: none; margin: 0; }
+
+  @media (min-width: 1180px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(11rem, 12vw, 14rem) minmax(0, 1fr) clamp(13rem, 14vw, 17rem);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+  }
+  @media (min-width: 960px) and (max-width: 1179px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(10rem, 12vw, 12rem) minmax(0, 1fr);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+    .ef-spread.has-rail > .toc-aside { display: none; }
+  }
+  @media (min-width: 960px) {
+    .ef-spread > .ef-margin {
+      position: sticky;
+      top: calc(var(--tri-h) + var(--topbar-h));
+      align-self: start;
+      max-height: calc(100vh - var(--tri-h) - var(--topbar-h));
+      overflow-y: auto;
+      scrollbar-width: thin;
+      padding: clamp(1.5rem, 3vw, 2.5rem) 1rem;
+    }
+    /* 两侧栏往屏幕边缘靠，别在页边留空 */
+    .ef-spread > .rail-aside { padding-left: .75rem; padding-right: 1.25rem; }
+    .ef-spread > .toc-aside { padding-left: 1.25rem; padding-right: .75rem; }
+    /* 正文左右留呼吸，但不限制宽度 */
+    .ef-spread > .ef-sheet { padding-left: clamp(2rem, 3.5vw, 4rem); padding-right: clamp(2rem, 3.5vw, 4rem); }
+    /* 套件把正文限制在 40rem；中间栏变宽后这里放开，让文字铺满 */
+    .ef-sheet .ef-prose,
+    .ef-sheet .ef-lede,
+    .ef-sheet .title,
+    .ef-sheet .ef-read,
+    .ef-sheet .ef-facts,
+    .ef-sheet .ef-empty,
+    .ef-sheet .ef-notice { max-width: none; }
+  }
+  .ef-margin .toc a { font-size: .74rem; line-height: 1.5; }
+  .toc a[aria-current] { color: var(--ef-ink); border-left-color: var(--ef-trace); font-weight: 600; }
+  .rail-head { display: block; margin: 0 0 .5rem; padding-bottom: .35rem;
+    border-bottom: 1px solid var(--ef-rule); font-size: .68rem; line-height: 1.5; }
+  .rail-head span { display: inline; }
+  .rail-head span + span { display: block; color: var(--ef-ink-2); }
+  .rail-aside .toc a { padding-top: .3rem; padding-bottom: .3rem; }
+  .rail-tree { list-style:none; margin:0; padding:0; }
+  .rail-tree .tree-name { display:block; padding:.35rem .2rem .35rem .6rem;
+    border-left:3px solid transparent; font-size:.76rem; font-weight:600; color:var(--ef-ink); }
+  .rail-tree .tree-label { display:inline; }
+  .rail-tree .tree-name .ef-field { font-size:.68rem; color:var(--ef-ink-2); margin-left:.35rem;
+    white-space:nowrap; }
+  .rail-tree .tree-group.is-open > .tree-name { border-left-color:var(--ef-trace); }
+  .rail-tree .tree-items { list-style:none; margin:.1rem 0 .5rem; padding:0 0 0 .6rem;
+    border-left:1px solid var(--ef-rule); }
+  .rail-tree .tree-items a { padding-left:.6rem; font-size:.72rem; line-height:1.45; }
+  .tree-row { display:flex; align-items:stretch; gap:.15rem; }
+  .tree-row .tree-name { flex:1 1 auto; min-width:0; }
+  .tree-toggle { flex:none; width:1.55rem; min-height:1.9rem; display:grid; place-items:center;
+    padding:0; border:1px solid var(--ef-rule); background:var(--ef-panel); color:var(--ef-ink-2);
+    cursor:pointer; transition:color .12s var(--ef-ease), border-color .12s var(--ef-ease), background .12s var(--ef-ease); }
+  .tree-toggle:hover { color:var(--ef-ink); border-color:var(--ef-ink); background:var(--ef-chip); }
+  .tree-toggle svg { width:.7rem; height:.7rem; transition:transform .15s var(--ef-ease); }
+  .tree-toggle[aria-expanded="true"] svg { transform:rotate(90deg); }
+  .rail-tree .tree-items[hidden] { display:none; }
+  /* 滚动条统一样式在 assets/local-fonts.css 里定义（页面/侧栏/搜索共用） */
+
+  /* 窄屏：正文优先，两侧栏排到后面 */
+  @media (max-width: 959px) {
+    .ef-spread.has-rail > .ef-sheet { order: 1; }
+    .ef-spread.has-rail > .rail-aside { order: 2; border-top: 1px solid var(--ef-rule); }
+    .ef-spread.has-rail > .toc-aside { order: 3; }
+  }
+
+  /* —— 复习笔记：PDF 下载 —— */
+  .pdf-dl { display:flex; flex-wrap:wrap; align-items:center; gap:.75rem; margin:1.1rem 0 0; }
+  .pdf-dl .ef-btn { border-color:var(--ef-ink); }
+
+  /* —— 打印 / 导出 PDF：只留正文 —— */
+  @page { size:A4; margin:16mm 14mm 18mm; }
+  @media print {
+    html, body { background:#fff !important; }
+    .topbar, .foot, .ef-tri, .rail-aside, .toc-aside, .back, .pdf-dl,
+    .ef-crumb, .ef-eyebrow, .ef-facts, .ef-notice { display:none !important; }
+    .ef-spread, .ef-spread.has-rail { display:block !important; max-width:none !important; }
+    .ef-sheet { border:0 !important; padding:0 !important; background:#fff !important; }
+    .ef-sheet .ef-prose, .ef-sheet .ef-lede, .ef-sheet .title { max-width:none !important; }
+    .title { margin:0 0 1rem; }
+    /* 打印用系统字体：体积小、离线打开不依赖自托管字体 */
+    body, .ef-prose, .title, .ef-lede, .ef-facts,
+    h1, h2, h3, h4, h5, h6 { font-family:"Microsoft YaHei UI","Microsoft YaHei","PingFang SC",sans-serif !important; }
+    .ef-prose pre, .ef-prose code { font-family:Consolas,"Cascadia Mono",monospace !important; }
+    .ef-prose { margin-top:1rem; }
+    .ef-prose pre { white-space:pre-wrap; word-break:break-word; }
+    .ef-prose pre code { white-space:pre-wrap; }
+    .ef-prose img, .ef-prose svg, mjx-container { max-width:100% !important; }
+    a { color:inherit !important; text-decoration:none !important; }
+    .ef-prose h2, .ef-prose h3 { break-after:avoid; }
+    .ef-prose pre, .ef-prose table, .eq { break-inside:avoid; }
+  }
+
+</style>
+</head>
+<body class="ef ef-contours">
+<div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+<header class="topbar">
+  <a class="brand" href="../../../../index.html">KYSIIN.ARCHIVE</a>
+  <nav class="ef-field" aria-label="主导航">
+    <a href="../../../../index.html">首页</a>
+    <a href="../../index.html" aria-current="page">计算机动画</a>
+  </nav>
+  <span data-search-slot></span>
+  <button class="ef-btn small" type="button" data-theme-toggle>切换深浅</button>
+</header>
+
+<article class="ef-spread has-rail">
+  <aside class="ef-margin rail-aside" aria-label="本课程分区">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>计算机动画</span><span>3 区</span></p>
+      <ol class="rail-tree">
+        <li class="tree-group is-open">
+          <div class="tree-row">
+            <a class="tree-name" href="../../index.html#sec-%E7%AB%A0%E8%8A%82"><span class="tree-label">章节</span><span class="ef-field">13</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="true" aria-label="收起 章节"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items">
+            <li><a href="01_基础.html">第一部分　考试概况与复习方法</a></li>
+            <li><a href="02_原则.html">第三部分　动画的12条基本原则</a></li>
+            <li><a href="03_朝向.html">第四部分　物体朝向的表示与四元数</a></li>
+            <li><a href="04_二维渐变.html">第五部分　二维形状渐变与图像 Morphing</a></li>
+            <li><a href="05_三维渐变.html">第六部分　三维形状渐变（3D Morphing）</a></li>
+            <li><a href="06_粒子群组.html">第七部分　粒子系统、元球与群组动画</a></li>
+            <li><a href="07_关节动画.html" aria-current="page">第八部分　关节动画：正向运动学与逆向运动学</a></li>
+            <li><a href="08_运动捕获.html">第九部分　运动捕获、角色绑定与表情动画</a></li>
+            <li><a href="09_变形.html">第十部分　变形（Deformation）</a></li>
+            <li><a href="10_布料.html">第十一部分　布料动画</a></li>
+            <li><a href="11_隐式曲面.html">第十二部分　隐式曲面与元球自动拟合</a></li>
+            <li><a href="12_碰撞.html">第十三部分　碰撞检测与碰撞响应</a></li>
+            <li><a href="13_数值积分.html">第十四部分　数值积分与物理动画基础</a></li>
+          </ol>
+        </li>
+        <li class="tree-group">
+          <div class="tree-row">
+            <a class="tree-name" href="../../index.html#sec-%E4%B8%93%E9%A2%98"><span class="tree-label">专题</span><span class="ef-field">3</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="false" aria-label="展开 专题"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items" hidden>
+            <li><a href="14_判断题.html">第十五部分　判断题易错点（123 条自查）</a></li>
+            <li><a href="15_问答.html">第十六部分　问答题预测与答题模板</a></li>
+            <li><a href="16_附录.html">第十七部分　附录</a></li>
+          </ol>
+        </li>
+        <li class="tree-group">
+          <div class="tree-row">
+            <a class="tree-name" href="../../index.html#sec-%E5%AE%9E%E9%AA%8C"><span class="tree-label">实验</span><span class="ef-field">2</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="false" aria-label="展开 实验"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items" hidden>
+            <li><a href="../../../clothlab-src/files/README.html">ClothLab — 基于质点-弹簧模型的布料动画与碰撞响应</a></li>
+            <li><a href="../../../clothlab-src/files/选题与规划.html">计算机动画课程设计 · 选题与实施规划</a></li>
+          </ol>
+        </li>
+      </ol>
+      <p class="ef-actions" style="margin:.9rem 0 0">
+        <a class="ef-btn small" href="../../index.html">返回课程</a>
+      </p>
+    </div>
+  </aside>
+  <div class="ef-sheet">
+    <p class="ef-eyebrow slash">Course / Article</p>
+    <p class="ef-crumb ef-field"><a href="../../../../index.html">首页</a><a href="../../index.html">计算机动画</a><span>章节</span><span>content</span></p>
+    <ul class="ef-facts ef-field">
+      <li>章节</li>
+      <li>3,164 字</li>
+      <li>2026.11.15</li>
+      <li>11 个小节</li>
+    </ul>
+    <h1 class="title ef-read">第八部分　关节动画：正向运动学与逆向运动学</h1>
+    <div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+    <p class="ef-actions pdf-dl"><a class="ef-btn" href="%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%8A%A8%E7%94%BB-%E7%AC%AC%E5%85%AB%E9%83%A8%E5%88%86%20%E5%85%B3%E8%8A%82%E5%8A%A8%E7%94%BB%EF%BC%9A%E6%AD%A3%E5%90%91%E8%BF%90%E5%8A%A8%E5%AD%A6%E4%B8%8E%E9%80%86%E5%90%91%E8%BF%90%E5%8A%A8%E5%AD%A6.pdf" download>下载 PDF</a><span class="ef-field">离线 / 打印版</span></p>
+    
+    <div class="ef-prose">
+<h2 id="71-关节骨架与自由度">7.1 关节、骨架与自由度</h2>
+<ul>
+<li><strong>骨架（skeleton）</strong>：由<strong>关节（joint）</strong>与连接关节的<strong>骨段（bone/segment）</strong>组成的树状结构，从<strong>根关节（root）</strong>出发逐级相连；</li>
+<li><strong>关节类型</strong>：转动关节（铰链，1 DOF）、移动关节（滑轨，1 DOF）、球关节（3 DOF）、万向节（2 DOF）、固定关节（0 DOF）；</li>
+<li><strong>自由度（DOF）</strong>：整个骨架的自由度 = 各关节自由度之和，n 个关节角构成<strong>关节向量 q ∈ Rⁿ</strong>；</li>
+<li><strong>末端执行器（end effector）</strong>：需要控制位置/朝向的末端（手、脚、工具尖端）。</li>
+</ul>
+<p><strong>两个空间</strong>：</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>关节空间（joint space / configuration space）</th>
+<th>笛卡尔空间（Cartesian space / task space）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>表示</td>
+<td>各关节角度/位移 q ∈ Rⁿ</td>
+<td>末端位姿 x ∈ R⁶（位置 3 + 朝向 3）或 R³</td>
+</tr>
+<tr>
+<td>优点</td>
+<td>维数等于自由度、<strong>无奇异</strong>、便于插值与关键帧、计算简单</td>
+<td><strong>直观</strong>：直接指定"手放在桌上"；便于与场景/物体交互、便于约束</td>
+</tr>
+<tr>
+<td>缺点</td>
+<td>不直观，难精确控制末端；需处理关节限位</td>
+<td>映射非线性；可能<strong>多解、无解、奇异</strong>；计算慢</td>
+</tr>
+<tr>
+<td>动画中的角色</td>
+<td>关键帧插值、动作捕捉数据、曲线编辑</td>
+<td>用户交互（拖手）、目标约束、IK 的目标定义</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>动画流程的典型做法</strong>：用户在<strong>笛卡尔空间</strong>给出目标（把手放到杯子上）→ 用 <strong>IK</strong> 解出关节角 → 在<strong>关节空间</strong>里做插值/平滑/加缓动 → 再用 <strong>FK</strong> 计算各骨骼的世界变换 → 蒙皮渲染。</p>
+</blockquote>
+<h2 id="72-正向运动学forward-kinematics-fk">7.2 正向运动学（Forward Kinematics, FK）</h2>
+<p><strong>定义</strong>：已知<strong>所有关节的角度 q</strong>（以及骨段长度、关节局部变换），求<strong>末端执行器的位姿</strong>。</p>
+<p><strong>数学形式</strong>：沿运动链依次相乘齐次变换矩阵</p>
+<div class="eq"><mjx-container class="MathJax" jax="CHTML" display="true"><mjx-math display="true" style="margin-left: 0; margin-right: 0;" class=" MJX-TEX"><mjx-msub><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D447 TEX-I"></mjx-c></mjx-mi><mjx-script style="vertical-align: -0.15em; margin-left: -0.12em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D452 TEX-I"></mjx-c></mjx-mi><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D45B TEX-I"></mjx-c></mjx-mi><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D451 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-script></mjx-msub><mjx-mo class="mjx-n"><mjx-c class="mjx-c28"></mjx-c></mjx-mo><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D45E TEX-I"></mjx-c></mjx-mi><mjx-mo class="mjx-n"><mjx-c class="mjx-c29"></mjx-c></mjx-mo><mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c3D"></mjx-c></mjx-mo><mjx-msub space="4"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D447 TEX-I"></mjx-c></mjx-mi><mjx-script style="vertical-align: -0.15em; margin-left: -0.12em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D45F TEX-I"></mjx-c></mjx-mi><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D45C TEX-I"></mjx-c></mjx-mi><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D45C TEX-I"></mjx-c></mjx-mi><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D461 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-script></mjx-msub><mjx-munderover space="2"><mjx-over style="padding-bottom: 0.192em; padding-left: 0.427em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D45B TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-over><mjx-box><mjx-munder><mjx-row><mjx-base><mjx-mo class="mjx-lop"><mjx-c class="mjx-c220F TEX-S2"></mjx-c></mjx-mo></mjx-base></mjx-row><mjx-row><mjx-under style="padding-top: 0.167em; padding-left: 0.065em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D456 TEX-I"></mjx-c></mjx-mi><mjx-mo class="mjx-n"><mjx-c class="mjx-c3D"></mjx-c></mjx-mo><mjx-mn class="mjx-n"><mjx-c class="mjx-c31"></mjx-c></mjx-mn></mjx-TeXAtom></mjx-under></mjx-row></mjx-munder></mjx-box></mjx-munderover><mjx-msub space="2"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D447 TEX-I"></mjx-c></mjx-mi><mjx-script style="vertical-align: -0.15em; margin-left: -0.12em;"><mjx-mi class="mjx-i" size="s"><mjx-c class="mjx-c1D456 TEX-I"></mjx-c></mjx-mi></mjx-script></mjx-msub><mjx-mo class="mjx-n"><mjx-c class="mjx-c28"></mjx-c></mjx-mo><mjx-msub><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D45E TEX-I"></mjx-c></mjx-mi><mjx-script style="vertical-align: -0.15em; margin-left: -0.014em;"><mjx-mi class="mjx-i" size="s"><mjx-c class="mjx-c1D456 TEX-I"></mjx-c></mjx-mi></mjx-script></mjx-msub><mjx-mo class="mjx-n"><mjx-c class="mjx-c29"></mjx-c></mjx-mo><mjx-mo class="mjx-n"><mjx-c class="mjx-c2C"></mjx-c></mjx-mo><mjx-mstyle><mjx-mspace style="width: 2em;"></mjx-mspace></mjx-mstyle><mjx-msub space="2"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D447 TEX-I"></mjx-c></mjx-mi><mjx-script style="vertical-align: -0.15em; margin-left: -0.12em;"><mjx-mi class="mjx-i" size="s"><mjx-c class="mjx-c1D456 TEX-I"></mjx-c></mjx-mi></mjx-script></mjx-msub><mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c3D"></mjx-c></mjx-mo><mjx-mrow space="4"><mjx-mo class="mjx-s3"><mjx-c class="mjx-c5B TEX-S3"></mjx-c></mjx-mo><mjx-mtable style="min-width: 4.411em;"><mjx-table><mjx-itable><mjx-mtr><mjx-mtd style="padding-right: 0.5em; padding-bottom: 0.2em;"><mjx-msub><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D445 TEX-I"></mjx-c></mjx-mi><mjx-script style="vertical-align: -0.15em;"><mjx-mi class="mjx-i" size="s"><mjx-c class="mjx-c1D456 TEX-I"></mjx-c></mjx-mi></mjx-script></mjx-msub><mjx-mo class="mjx-n"><mjx-c class="mjx-c28"></mjx-c></mjx-mo><mjx-msub><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D45E TEX-I"></mjx-c></mjx-mi><mjx-script style="vertical-align: -0.15em; margin-left: -0.014em;"><mjx-mi class="mjx-i" size="s"><mjx-c class="mjx-c1D456 TEX-I"></mjx-c></mjx-mi></mjx-script></mjx-msub><mjx-mo class="mjx-n"><mjx-c class="mjx-c29"></mjx-c></mjx-mo><mjx-tstrut></mjx-tstrut></mjx-mtd><mjx-mtd style="padding-left: 0.5em; padding-bottom: 0.2em;"><mjx-msub><mjx-TeXAtom texclass="ORD"><mjx-mi class="mjx-b"><mjx-c class="mjx-c1D42D TEX-B"></mjx-c></mjx-mi></mjx-TeXAtom><mjx-script style="vertical-align: -0.15em;"><mjx-mi class="mjx-i" size="s"><mjx-c class="mjx-c1D456 TEX-I"></mjx-c></mjx-mi></mjx-script></mjx-msub><mjx-tstrut></mjx-tstrut></mjx-mtd></mjx-mtr><mjx-mtr><mjx-mtd style="padding-right: 0.5em; padding-top: 0.2em;"><mjx-TeXAtom texclass="ORD"><mjx-mn class="mjx-b"><mjx-c class="mjx-c1D7CE TEX-B"></mjx-c></mjx-mn></mjx-TeXAtom><mjx-tstrut></mjx-tstrut></mjx-mtd><mjx-mtd style="padding-left: 0.5em; padding-top: 0.2em;"><mjx-mn class="mjx-n"><mjx-c class="mjx-c31"></mjx-c></mjx-mn><mjx-tstrut></mjx-tstrut></mjx-mtd></mjx-mtr></mjx-itable></mjx-table></mjx-mtable><mjx-mo class="mjx-s3"><mjx-c class="mjx-c5D TEX-S3"></mjx-c></mjx-mo></mjx-mrow><mjx-mo class="mjx-n"><mjx-c class="mjx-c2C"></mjx-c></mjx-mo><mjx-mstyle><mjx-mspace style="width: 2em;"></mjx-mspace></mjx-mstyle><mjx-TeXAtom space="2" texclass="ORD"><mjx-mi class="mjx-b"><mjx-c class="mjx-c1D431 TEX-B"></mjx-c></mjx-mi></mjx-TeXAtom><mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c3D"></mjx-c></mjx-mo><mjx-mi class="mjx-i" space="4"><mjx-c class="mjx-c1D453 TEX-I"></mjx-c></mjx-mi><mjx-mo class="mjx-n"><mjx-c class="mjx-c28"></mjx-c></mjx-mo><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D45E TEX-I"></mjx-c></mjx-mi><mjx-mo class="mjx-n"><mjx-c class="mjx-c29"></mjx-c></mjx-mo></mjx-math></mjx-container></div>
+<p>（T_i 由关节类型决定：转动关节为绕轴旋转 + 沿骨段的固定平移；移动关节为沿轴平移。工业机器人常用 D-H 参数描述。）</p>
+<p><strong>特点</strong>：</p>
+<ul>
+<li><strong>唯一、直接、稳定</strong>：给定 q 一定有唯一 x；计算量 O(n)；无奇异、无多解问题；</li>
+<li><strong>适合播放</strong>：动捕数据、关键帧都是关节角，用 FK 逐帧算骨骼矩阵，非常适合实时；</li>
+<li><strong>缺点</strong>：<strong>控制末端困难</strong>——想让手碰到目标，只能不断试角度（试错）；不能自动满足"脚不滑、手固定"等约束。</li>
+</ul>
+<p><strong>基于 FK 的动画</strong>：给每个关节的角度设关键帧 + 插值曲线；用 FK 算出世界矩阵；骨骼层级自动带动子关节（父动子随）。</p>
+<h2 id="73-逆向运动学inverse-kinematics-ik">7.3 逆向运动学（Inverse Kinematics, IK）</h2>
+<p><strong>定义</strong>：已知<strong>末端目标位姿 x_d</strong>（位置 + 朝向），求<strong>关节角 q</strong> 使得</p>
+<div class="eq"><mjx-container class="MathJax" jax="CHTML" display="true"><mjx-math display="true" style="margin-left: 0; margin-right: 0;" class=" MJX-TEX"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D453 TEX-I"></mjx-c></mjx-mi><mjx-mo class="mjx-n"><mjx-c class="mjx-c28"></mjx-c></mjx-mo><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D45E TEX-I"></mjx-c></mjx-mi><mjx-mo class="mjx-n"><mjx-c class="mjx-c29"></mjx-c></mjx-mo><mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c3D"></mjx-c></mjx-mo><mjx-msub space="4"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D465 TEX-I"></mjx-c></mjx-mi><mjx-script style="vertical-align: -0.15em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D451 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-script></mjx-msub></mjx-math></mjx-container></div>
+<p><strong>难点（问答题常考"为什么 IK 难"）</strong>：</p>
+<ol>
+<li><strong>非线性</strong>：f 是三角函数/矩阵的复合，方程非线性，无通用解析解；</li>
+<li><strong>多解</strong>：同一末端位置可有多组关节角（肘部朝上/朝下、手腕翻转）——需要选"最自然"的解并保证<strong>帧间连续</strong>（不能突然翻转）；</li>
+<li><strong>冗余（redundancy）</strong>：n &gt; 6 时有无穷多解，多余自由度可用于次级目标（避障、姿态自然、关节限位）；</li>
+<li><strong>可能无解</strong>：目标超出可达范围（工作空间外）；</li>
+<li><strong>奇异位形（singularity）</strong>：某些姿态下雅可比降秩，末端某些方向无法移动，数值方法会"卡住/爆炸"；</li>
+<li><strong>关节限位</strong>：解必须落在 [q_min, q_max] 内；</li>
+<li><strong>计算与实时性</strong>：迭代法需要多次迭代与矩阵求逆。</li>
+</ol>
+<p><strong>分类</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>类别</th>
+<th>方法</th>
+<th>适用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>解析法</td>
+<td>几何/代数闭式解（两连杆、球腕）</td>
+<td>结构简单、特定构型；快、可求全部解</td>
+</tr>
+<tr>
+<td>数值迭代法</td>
+<td><strong>逆雅可比（伪逆/DLS）</strong>、<strong>CCD</strong>、<strong>FABRIK</strong></td>
+<td>通用、任意骨架</td>
+</tr>
+<tr>
+<td>优化法</td>
+<td>最小化目标函数 + 约束（LM/SQP）</td>
+<td>需多约束、离线或后处理</td>
+</tr>
+<tr>
+<td>基于样例</td>
+<td>从数据库检索/插值</td>
+<td>需自然真实的表演</td>
+</tr>
+<tr>
+<td>学习法</td>
+<td>神经网络回归关节角/姿态先验</td>
+<td>单目视觉、实时估计</td>
+</tr>
+</tbody>
+</table>
+<h2 id="74-逆雅可比方法求解-ik-的原理">7.4 逆雅可比方法求解 IK 的原理</h2>
+<p><strong>雅可比矩阵</strong>：末端位置 x 对关节角 q 的偏导</p>
+<div class="eq"><mjx-container class="MathJax" jax="CHTML" display="true"><mjx-math display="true" style="margin-left: 0; margin-right: 0;" class=" MJX-TEX"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D43D TEX-I"></mjx-c></mjx-mi><mjx-mo class="mjx-n"><mjx-c class="mjx-c28"></mjx-c></mjx-mo><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D45E TEX-I"></mjx-c></mjx-mi><mjx-mo class="mjx-n"><mjx-c class="mjx-c29"></mjx-c></mjx-mo><mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c3D"></mjx-c></mjx-mo><mjx-mfrac space="4"><mjx-frac type="d"><mjx-num><mjx-nstrut type="d"></mjx-nstrut><mjx-mrow><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D715"></mjx-c></mjx-mi><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D453 TEX-I"></mjx-c></mjx-mi></mjx-mrow></mjx-num><mjx-dbox><mjx-dtable><mjx-line type="d"></mjx-line><mjx-row><mjx-den><mjx-dstrut type="d"></mjx-dstrut><mjx-mrow><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D715"></mjx-c></mjx-mi><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D45E TEX-I"></mjx-c></mjx-mi></mjx-mrow></mjx-den></mjx-row></mjx-dtable></mjx-dbox></mjx-frac></mjx-mfrac><mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c2208"></mjx-c></mjx-mo><mjx-msup space="4"><mjx-TeXAtom texclass="ORD"><mjx-mi class="mjx-ds mjx-b"><mjx-c class="mjx-c211D TEX-A"></mjx-c></mjx-mi></mjx-TeXAtom><mjx-script style="vertical-align: 0.413em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mn class="mjx-n"><mjx-c class="mjx-c36"></mjx-c></mjx-mn><mjx-mo class="mjx-n"><mjx-c class="mjx-cD7"></mjx-c></mjx-mo><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D45B TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-script></mjx-msup><mjx-mstyle><mjx-mspace style="width: 1em;"></mjx-mspace></mjx-mstyle><mjx-mo class="mjx-n"><mjx-c class="mjx-c28"></mjx-c></mjx-mo><mjx-mtext class="mjx-n"><mjx-utext style="font-family: MJXZERO, serif;" variant="normal">位</mjx-utext><mjx-utext style="font-family: MJXZERO, serif;" variant="normal">置</mjx-utext><mjx-c class="mjx-c20"></mjx-c><mjx-c class="mjx-c33"></mjx-c><mjx-c class="mjx-c20"></mjx-c><mjx-utext style="font-family: MJXZERO, serif;" variant="normal">行</mjx-utext><mjx-c class="mjx-c20"></mjx-c><mjx-c class="mjx-c2B"></mjx-c><mjx-c class="mjx-c20"></mjx-c><mjx-utext style="font-family: MJXZERO, serif;" variant="normal">朝</mjx-utext><mjx-utext style="font-family: MJXZERO, serif;" variant="normal">向</mjx-utext><mjx-c class="mjx-c20"></mjx-c><mjx-c class="mjx-c33"></mjx-c><mjx-c class="mjx-c20"></mjx-c><mjx-utext style="font-family: MJXZERO, serif;" variant="normal">行</mjx-utext></mjx-mtext><mjx-mo class="mjx-n"><mjx-c class="mjx-c29"></mjx-c></mjx-mo></mjx-math></mjx-container></div>
+<p>它描述"关节角微小变化 → 末端位姿变化"的<strong>线性近似</strong>：Δx ≈ J·Δq。</p>
+<p><strong>迭代算法</strong>：</p>
+<ol>
+<li>计算当前末端位姿 x = f(q)，误差 e = x_d − x；</li>
+<li>若 ‖e‖ &lt; ε 停止；</li>
+<li>求解线性方程 J·Δq = e。当 n = 6 且 J 可逆：Δq = J⁻¹e；一般情况用<strong>伪逆</strong>：
+<mjx-container class="MathJax" jax="CHTML" display="true"><mjx-math display="true" style="margin-left: 0; margin-right: 0;" class=" MJX-TEX"><mjx-mi class="mjx-n"><mjx-c class="mjx-c394"></mjx-c></mjx-mi><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D45E TEX-I"></mjx-c></mjx-mi><mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c3D"></mjx-c></mjx-mo><mjx-msup space="4"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D43D TEX-I"></mjx-c></mjx-mi><mjx-script style="vertical-align: 0.413em; margin-left: 0.054em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mo class="mjx-n"><mjx-c class="mjx-c2B"></mjx-c></mjx-mo></mjx-TeXAtom></mjx-script></mjx-msup><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D452 TEX-I"></mjx-c></mjx-mi><mjx-mo class="mjx-n"><mjx-c class="mjx-c2C"></mjx-c></mjx-mo><mjx-mstyle><mjx-mspace style="width: 2em;"></mjx-mspace></mjx-mstyle><mjx-msup space="2"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D43D TEX-I"></mjx-c></mjx-mi><mjx-script style="vertical-align: 0.413em; margin-left: 0.054em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mo class="mjx-n"><mjx-c class="mjx-c2B"></mjx-c></mjx-mo></mjx-TeXAtom></mjx-script></mjx-msup><mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c3D"></mjx-c></mjx-mo><mjx-msup space="4"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D43D TEX-I"></mjx-c></mjx-mi><mjx-script style="vertical-align: 0.413em; margin-left: 0.054em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D447 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-script></mjx-msup><mjx-msup><mjx-mrow><mjx-mo class="mjx-sop"><mjx-c class="mjx-c28 TEX-S1"></mjx-c></mjx-mo><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D43D TEX-I"></mjx-c></mjx-mi><mjx-msup><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D43D TEX-I"></mjx-c></mjx-mi><mjx-script style="vertical-align: 0.413em; margin-left: 0.054em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D447 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-script></mjx-msup><mjx-mo class="mjx-sop"><mjx-c class="mjx-c29 TEX-S1"></mjx-c></mjx-mo></mjx-mrow><mjx-script style="vertical-align: 0.619em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mo class="mjx-n"><mjx-c class="mjx-c2212"></mjx-c></mjx-mo><mjx-mn class="mjx-n"><mjx-c class="mjx-c31"></mjx-c></mjx-mn></mjx-TeXAtom></mjx-script></mjx-msup><mjx-mtext class="mjx-n"><mjx-c class="mjx-cA0"></mjx-c></mjx-mtext><mjx-mo class="mjx-n"><mjx-c class="mjx-c28"></mjx-c></mjx-mo><mjx-mtext class="mjx-n"><mjx-utext style="font-family: MJXZERO, serif;" variant="normal">行</mjx-utext><mjx-utext style="font-family: MJXZERO, serif;" variant="normal">满</mjx-utext><mjx-utext style="font-family: MJXZERO, serif;" variant="normal">秩</mjx-utext><mjx-utext style="font-family: MJXZERO, serif;" variant="normal">时</mjx-utext></mjx-mtext><mjx-mo class="mjx-n"><mjx-c class="mjx-c29"></mjx-c></mjx-mo></mjx-math></mjx-container></li>
+<li>更新 q ← q + α·Δq（α 为步长），回第 1 步。</li>
+</ol>
+<p><strong>奇异与阻尼最小二乘（DLS / Levenberg–Marquardt）</strong>：在奇异位形附近 JJᵀ 接近奇异，伪逆会给出巨大的 Δq（关节"飞出去"）。加入阻尼 λ：</p>
+<div class="eq"><mjx-container class="MathJax" jax="CHTML" display="true"><mjx-math display="true" style="margin-left: 0; margin-right: 0;" class=" MJX-TEX"><mjx-mi class="mjx-n"><mjx-c class="mjx-c394"></mjx-c></mjx-mi><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D45E TEX-I"></mjx-c></mjx-mi><mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c3D"></mjx-c></mjx-mo><mjx-msup space="4"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D43D TEX-I"></mjx-c></mjx-mi><mjx-script style="vertical-align: 0.413em; margin-left: 0.054em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D447 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-script></mjx-msup><mjx-msup><mjx-mrow><mjx-mo class="mjx-sop"><mjx-c class="mjx-c28 TEX-S1"></mjx-c></mjx-mo><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D43D TEX-I"></mjx-c></mjx-mi><mjx-msup><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D43D TEX-I"></mjx-c></mjx-mi><mjx-script style="vertical-align: 0.413em; margin-left: 0.054em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D447 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-script></mjx-msup><mjx-mo class="mjx-n" space="3"><mjx-c class="mjx-c2B"></mjx-c></mjx-mo><mjx-msup space="3"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D706 TEX-I"></mjx-c></mjx-mi><mjx-script style="vertical-align: 0.413em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mn class="mjx-n"><mjx-c class="mjx-c32"></mjx-c></mjx-mn></mjx-TeXAtom></mjx-script></mjx-msup><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D43C TEX-I"></mjx-c></mjx-mi><mjx-mo class="mjx-sop"><mjx-c class="mjx-c29 TEX-S1"></mjx-c></mjx-mo></mjx-mrow><mjx-script style="vertical-align: 0.619em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mo class="mjx-n"><mjx-c class="mjx-c2212"></mjx-c></mjx-mo><mjx-mn class="mjx-n"><mjx-c class="mjx-c31"></mjx-c></mjx-mn></mjx-TeXAtom></mjx-script></mjx-msup><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D452 TEX-I"></mjx-c></mjx-mi></mjx-math></mjx-container></div>
+<p>λ 越大越稳定但收敛越慢；可自适应调整 λ（误差大时减小、接近奇异时增大）。</p>
+<p><strong>零空间（null space）利用</strong>：冗余时</p>
+<div class="eq"><mjx-container class="MathJax" jax="CHTML" display="true"><mjx-math display="true" style="margin-left: 0; margin-right: 0;" class=" MJX-TEX"><mjx-mi class="mjx-n"><mjx-c class="mjx-c394"></mjx-c></mjx-mi><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D45E TEX-I"></mjx-c></mjx-mi><mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c3D"></mjx-c></mjx-mo><mjx-msup space="4"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D43D TEX-I"></mjx-c></mjx-mi><mjx-script style="vertical-align: 0.413em; margin-left: 0.054em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mo class="mjx-n"><mjx-c class="mjx-c2B"></mjx-c></mjx-mo></mjx-TeXAtom></mjx-script></mjx-msup><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D452 TEX-I"></mjx-c></mjx-mi><mjx-mo class="mjx-n" space="3"><mjx-c class="mjx-c2B"></mjx-c></mjx-mo><mjx-mrow space="3"><mjx-mo class="mjx-sop"><mjx-c class="mjx-c28 TEX-S1"></mjx-c></mjx-mo><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D43C TEX-I"></mjx-c></mjx-mi><mjx-mo class="mjx-n" space="3"><mjx-c class="mjx-c2212"></mjx-c></mjx-mo><mjx-msup space="3"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D43D TEX-I"></mjx-c></mjx-mi><mjx-script style="vertical-align: 0.413em; margin-left: 0.054em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mo class="mjx-n"><mjx-c class="mjx-c2B"></mjx-c></mjx-mo></mjx-TeXAtom></mjx-script></mjx-msup><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D43D TEX-I"></mjx-c></mjx-mi><mjx-mo class="mjx-sop"><mjx-c class="mjx-c29 TEX-S1"></mjx-c></mjx-mo></mjx-mrow><mjx-mi class="mjx-n"><mjx-c class="mjx-c394"></mjx-c></mjx-mi><mjx-msub><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D45E TEX-I"></mjx-c></mjx-mi><mjx-script style="vertical-align: -0.15em; margin-left: -0.014em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D460 TEX-I"></mjx-c></mjx-mi><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D452 TEX-I"></mjx-c></mjx-mi><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D450 TEX-I"></mjx-c></mjx-mi><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D45C TEX-I"></mjx-c></mjx-mi><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D45B TEX-I"></mjx-c></mjx-mi><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D451 TEX-I"></mjx-c></mjx-mi><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D44E TEX-I"></mjx-c></mjx-mi><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D45F TEX-I"></mjx-c></mjx-mi><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D466 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-script></mjx-msub></mjx-math></mjx-container></div>
+<p>第二项位于 J 的零空间，<strong>不改变末端位置</strong>，可用于满足次级目标：关节限位、姿态自然（贴近参考姿态）、避障、保持重心、平滑。</p>
+<p><strong>优点</strong>：通用（任意 DOF 与骨架）、能利用冗余做次级任务、数学清晰、可与物理/约束结合。
+<strong>缺点</strong>：需计算雅可比与矩阵求逆（O(n³)）；<strong>只做局部线性化</strong>，大步长会震荡、小步长收敛慢；奇异附近需阻尼；可能陷入局部极小或不收敛；关节限位需额外处理（截断/投影）。</p>
+<h2 id="75-循环坐标下降法ccd-cyclic-coordinate-descent">7.5 循环坐标下降法（CCD, Cyclic Coordinate Descent）</h2>
+<p><strong>思想</strong>：不去解整个雅可比系统，而是<strong>一次只调一个关节</strong>，从<strong>末端向根部</strong>依次处理，每步都让"当前末端→目标"的误差在该关节的旋转下最小。</p>
+<p><strong>单步（对第 i 个关节）</strong>：</p>
+<ol>
+<li>计算从关节 i 到<strong>末端</strong>的向量 u = p_end − p_i，从关节 i 到<strong>目标</strong>的向量 v = p_target − p_i；</li>
+<li>求把 u 转到 v 的旋转：转轴 = u × v（归一化），转角 = arccos(û·v̂)（二维中直接是角度差 atan2）；</li>
+<li>把该旋转应用到关节 i（及其所有子关节随之转动），末端随之移动；</li>
+<li>处理下一个关节 i−1（向根部推进）。</li>
+</ol>
+<p><strong>外层循环</strong>：把上述"从末端到根"的一遍称为一次迭代（cycle），重复多遍直到末端误差小于阈值或达到迭代上限。</p>
+<p><strong>优点</strong>：实现极简单、无需雅可比与求逆、每次迭代计算量小、对任意 DOF/链长都适用、收敛通常较快（末端关节先对齐）。
+<strong>缺点</strong>：<strong>结果不自然</strong>——末端关节承担大部分旋转，前面关节几乎不动（"像面条"）；容易受关节限位影响；不保证收敛到精确解；目标不可达时行为不理想；没有全局最优性。</p>
+<h2 id="76-fabrik-法的原理">7.6 FABRIK 法的原理</h2>
+<p><strong>FABRIK（Forward And Backward Reaching Inverse Kinematics）</strong>：用<strong>位置</strong>而非角度迭代，靠"保持骨长"的前后两遍传播来逼近目标，速度很快、稳定、易实现。</p>
+<p><strong>流程</strong>：</p>
+<ol>
+<li><strong>判断可达性</strong>：若 ‖p_target − p_root‖ &gt; Σ l_i（总骨长），目标不可达 → 把所有关节沿"根→目标"方向<strong>伸直</strong>（尽量靠近），结束；</li>
+<li><strong>后向传播（backward reaching）</strong>：把<strong>末端</strong>放到目标位置，然后沿链往回（向根）逐段重定位：对每个关节 i，令 p_i 位于"从 p_{i+1} 出发、方向为原 p_i−p_{i+1}、长度为 l_i"的位置上（即保持骨长，方向沿用当前方向）；</li>
+<li><strong>前向传播（forward reaching）</strong>：把<strong>根</strong>放回原始位置，再沿链往前逐段重定位：p_{i+1} = p_i + l_i ·（原方向单位向量）；</li>
+<li>重复 2~3，直到 ‖p_end − p_target‖ &lt; ε 或达到迭代上限。</li>
+</ol>
+<p><strong>优点</strong>：计算量小、收敛快、<strong>天然保持骨长</strong>、稳定、无需雅可比/矩阵运算、适合实时与游戏/交互。
+<strong>缺点</strong>：只保证末端位置，<strong>不直接保证关节限位与朝向</strong>；3D 中需要额外的"关节朝向/极向量（pole vector）"控制避免扭转；结果可能不自然（需后处理约束）；对朝向目标（手的方向）需扩展。</p>
+<h2 id="77-基于优化的-ik-计算方法与目标函数">7.7 基于优化的 IK 计算方法与目标函数</h2>
+<p><strong>思想</strong>：把 IK 写成一个<strong>带约束的非线性优化问题</strong>，一次求解同时满足多个目标。</p>
+<p><strong>典型目标函数</strong>：</p>
+<div class="eq"><mjx-container class="MathJax" jax="CHTML" display="true"><mjx-math display="true" style="margin-left: 0; margin-right: 0;" class=" MJX-TEX"><mjx-munder><mjx-row><mjx-base><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c69"></mjx-c><mjx-c class="mjx-c6E"></mjx-c></mjx-mo></mjx-base></mjx-row><mjx-row><mjx-under style="padding-top: 0.287em; padding-left: 0.671em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D45E TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-under></mjx-row></mjx-munder><mjx-mtext class="mjx-n" space="2"><mjx-c class="mjx-cA0"></mjx-c></mjx-mtext><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D438 TEX-I"></mjx-c></mjx-mi><mjx-mo class="mjx-n"><mjx-c class="mjx-c28"></mjx-c></mjx-mo><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D45E TEX-I"></mjx-c></mjx-mi><mjx-mo class="mjx-n"><mjx-c class="mjx-c29"></mjx-c></mjx-mo><mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c3D"></mjx-c></mjx-mo><mjx-msup space="4"><mjx-mrow><mjx-mo class="mjx-n"><mjx-c class="mjx-c2225"></mjx-c></mjx-mo><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D453 TEX-I"></mjx-c></mjx-mi><mjx-mo class="mjx-n"><mjx-c class="mjx-c28"></mjx-c></mjx-mo><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D45E TEX-I"></mjx-c></mjx-mi><mjx-mo class="mjx-n"><mjx-c class="mjx-c29"></mjx-c></mjx-mo><mjx-mo class="mjx-n" space="3"><mjx-c class="mjx-c2212"></mjx-c></mjx-mo><mjx-msub space="3"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D465 TEX-I"></mjx-c></mjx-mi><mjx-script style="vertical-align: -0.15em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D451 TEX-I"></mjx-c></mjx-mi></mjx-TeXAtom></mjx-script></mjx-msub><mjx-mo class="mjx-n"><mjx-c class="mjx-c2225"></mjx-c></mjx-mo></mjx-mrow><mjx-script style="vertical-align: 0.477em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mn class="mjx-n"><mjx-c class="mjx-c32"></mjx-c></mjx-mn></mjx-TeXAtom></mjx-script></mjx-msup><mjx-mo class="mjx-n" space="3"><mjx-c class="mjx-c2B"></mjx-c></mjx-mo><mjx-msub space="3"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D706 TEX-I"></mjx-c></mjx-mi><mjx-script style="vertical-align: -0.15em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mn class="mjx-n"><mjx-c class="mjx-c31"></mjx-c></mjx-mn></mjx-TeXAtom></mjx-script></mjx-msub><mjx-msup><mjx-mrow><mjx-mo class="mjx-n"><mjx-c class="mjx-c2225"></mjx-c></mjx-mo><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D45E TEX-I"></mjx-c></mjx-mi><mjx-mo class="mjx-n" space="3"><mjx-c class="mjx-c2212"></mjx-c></mjx-mo><mjx-msub space="3"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D45E TEX-I"></mjx-c></mjx-mi><mjx-script style="vertical-align: -0.15em; margin-left: -0.014em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mn class="mjx-n"><mjx-c class="mjx-c30"></mjx-c></mjx-mn></mjx-TeXAtom></mjx-script></mjx-msub><mjx-mo class="mjx-n"><mjx-c class="mjx-c2225"></mjx-c></mjx-mo></mjx-mrow><mjx-script style="vertical-align: 0.477em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mn class="mjx-n"><mjx-c class="mjx-c32"></mjx-c></mjx-mn></mjx-TeXAtom></mjx-script></mjx-msup><mjx-mo class="mjx-n" space="3"><mjx-c class="mjx-c2B"></mjx-c></mjx-mo><mjx-msub space="3"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D706 TEX-I"></mjx-c></mjx-mi><mjx-script style="vertical-align: -0.15em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mn class="mjx-n"><mjx-c class="mjx-c32"></mjx-c></mjx-mn></mjx-TeXAtom></mjx-script></mjx-msub><mjx-munder space="2"><mjx-row><mjx-base><mjx-mo class="mjx-lop"><mjx-c class="mjx-c2211 TEX-S2"></mjx-c></mjx-mo></mjx-base></mjx-row><mjx-row><mjx-under style="padding-top: 0.167em; padding-left: 0.6em;"><mjx-mi class="mjx-i" size="s"><mjx-c class="mjx-c1D456 TEX-I"></mjx-c></mjx-mi></mjx-under></mjx-row></mjx-munder><mjx-mi class="mjx-i" space="2"><mjx-c class="mjx-c1D719 TEX-I"></mjx-c></mjx-mi><mjx-mo class="mjx-n"><mjx-c class="mjx-c28"></mjx-c></mjx-mo><mjx-msub><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D45E TEX-I"></mjx-c></mjx-mi><mjx-script style="vertical-align: -0.15em; margin-left: -0.014em;"><mjx-mi class="mjx-i" size="s"><mjx-c class="mjx-c1D456 TEX-I"></mjx-c></mjx-mi></mjx-script></mjx-msub><mjx-mo class="mjx-n"><mjx-c class="mjx-c29"></mjx-c></mjx-mo><mjx-mo class="mjx-n" space="3"><mjx-c class="mjx-c2B"></mjx-c></mjx-mo><mjx-msub space="3"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D706 TEX-I"></mjx-c></mjx-mi><mjx-script style="vertical-align: -0.15em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mn class="mjx-n"><mjx-c class="mjx-c33"></mjx-c></mjx-mn></mjx-TeXAtom></mjx-script></mjx-msub><mjx-msup><mjx-mrow><mjx-mo class="mjx-n"><mjx-c class="mjx-c2225"></mjx-c></mjx-mo><mjx-TeXAtom texclass="ORD"><mjx-mover><mjx-over style="padding-bottom: 0.105em; padding-left: 0.317em; margin-bottom: -0.554em;"><mjx-mo class="mjx-n" style="width: 0; margin-left: -0.25em;"><mjx-c class="mjx-cA8"></mjx-c></mjx-mo></mjx-over><mjx-base><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D45E TEX-I"></mjx-c></mjx-mi></mjx-base></mjx-mover></mjx-TeXAtom><mjx-mo class="mjx-n"><mjx-c class="mjx-c2225"></mjx-c></mjx-mo></mjx-mrow><mjx-script style="vertical-align: 0.489em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mn class="mjx-n"><mjx-c class="mjx-c32"></mjx-c></mjx-mn></mjx-TeXAtom></mjx-script></mjx-msup><mjx-mo class="mjx-n" space="3"><mjx-c class="mjx-c2B"></mjx-c></mjx-mo><mjx-msub space="3"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D706 TEX-I"></mjx-c></mjx-mi><mjx-script style="vertical-align: -0.15em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mn class="mjx-n"><mjx-c class="mjx-c34"></mjx-c></mjx-mn></mjx-TeXAtom></mjx-script></mjx-msub><mjx-mstyle><mjx-mspace style="width: 0.167em;"></mjx-mspace></mjx-mstyle><mjx-mi class="mjx-n"><mjx-c class="mjx-c3A8"></mjx-c></mjx-mi><mjx-mo class="mjx-n"><mjx-c class="mjx-c28"></mjx-c></mjx-mo><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D45E TEX-I"></mjx-c></mjx-mi><mjx-mo class="mjx-n"><mjx-c class="mjx-c29"></mjx-c></mjx-mo></mjx-math></mjx-container></div>
+<p>各项依次为：<strong>末端误差</strong>（让末端到达目标）、<strong>贴近参考姿态</strong>（‖q−q₀‖²，保持自然）、<strong>关节限位惩罚</strong>（φ(q_i) 在越界时急剧增大）、<strong>平滑项</strong>（‖q̈‖²，抑制抖动）、<strong>避障/姿态先验</strong>（Ψ(q)）。</p>
+<p><strong>约束</strong>：</p>
+<div class="eq"><mjx-container class="MathJax" jax="CHTML" display="true"><mjx-math display="true" style="margin-left: 0; margin-right: 0;" class=" MJX-TEX"><mjx-msub><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D45E TEX-I"></mjx-c></mjx-mi><mjx-script style="vertical-align: -0.15em; margin-left: -0.014em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c69"></mjx-c><mjx-c class="mjx-c6E"></mjx-c></mjx-mo></mjx-TeXAtom></mjx-script></mjx-msub><mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c2264"></mjx-c></mjx-mo><mjx-mi class="mjx-i" space="4"><mjx-c class="mjx-c1D45E TEX-I"></mjx-c></mjx-mi><mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c2264"></mjx-c></mjx-mo><mjx-msub space="4"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D45E TEX-I"></mjx-c></mjx-mi><mjx-script style="vertical-align: -0.15em; margin-left: -0.014em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mo class="mjx-n"><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c61"></mjx-c><mjx-c class="mjx-c78"></mjx-c></mjx-mo></mjx-TeXAtom></mjx-script></mjx-msub><mjx-mo class="mjx-n"><mjx-c class="mjx-c2C"></mjx-c></mjx-mo><mjx-mstyle><mjx-mspace style="width: 2em;"></mjx-mspace></mjx-mstyle><mjx-mtext class="mjx-n" space="2"><mjx-utext style="font-family: MJXZERO, serif;" variant="normal">碰</mjx-utext><mjx-utext style="font-family: MJXZERO, serif;" variant="normal">撞</mjx-utext><mjx-utext style="font-family: MJXZERO, serif;" variant="normal">（</mjx-utext><mjx-utext style="font-family: MJXZERO, serif;" variant="normal">自</mjx-utext><mjx-utext style="font-family: MJXZERO, serif;" variant="normal">碰</mjx-utext><mjx-utext style="font-family: MJXZERO, serif;" variant="normal">撞</mjx-utext><mjx-c class="mjx-c2F"></mjx-c><mjx-utext style="font-family: MJXZERO, serif;" variant="normal">环</mjx-utext><mjx-utext style="font-family: MJXZERO, serif;" variant="normal">境</mjx-utext><mjx-utext style="font-family: MJXZERO, serif;" variant="normal">）</mjx-utext><mjx-utext style="font-family: MJXZERO, serif;" variant="normal">约</mjx-utext><mjx-utext style="font-family: MJXZERO, serif;" variant="normal">束</mjx-utext></mjx-mtext><mjx-mo class="mjx-n"><mjx-c class="mjx-c2C"></mjx-c></mjx-mo><mjx-mstyle><mjx-mspace style="width: 2em;"></mjx-mspace></mjx-mstyle><mjx-mtext class="mjx-n" space="2"><mjx-utext style="font-family: MJXZERO, serif;" variant="normal">平</mjx-utext><mjx-utext style="font-family: MJXZERO, serif;" variant="normal">衡</mjx-utext><mjx-c class="mjx-c2F"></mjx-c><mjx-utext style="font-family: MJXZERO, serif;" variant="normal">支</mjx-utext><mjx-utext style="font-family: MJXZERO, serif;" variant="normal">撑</mjx-utext><mjx-utext style="font-family: MJXZERO, serif;" variant="normal">约</mjx-utext><mjx-utext style="font-family: MJXZERO, serif;" variant="normal">束</mjx-utext><mjx-utext style="font-family: MJXZERO, serif;" variant="normal">（</mjx-utext><mjx-utext style="font-family: MJXZERO, serif;" variant="normal">脚</mjx-utext><mjx-utext style="font-family: MJXZERO, serif;" variant="normal">不</mjx-utext><mjx-utext style="font-family: MJXZERO, serif;" variant="normal">滑</mjx-utext><mjx-utext style="font-family: MJXZERO, serif;" variant="normal">动</mjx-utext><mjx-utext style="font-family: MJXZERO, serif;" variant="normal">）</mjx-utext></mjx-mtext></mjx-math></mjx-container></div>
+<p><strong>求解</strong>：梯度下降、高斯–牛顿、Levenberg–Marquardt、序列二次规划（SQP）、内点法；实时场景常简化为"一次线性化 + 加权最小二乘"。</p>
+<p><strong>优点</strong>：可同时处理末端、限位、避障、平滑、风格等多个目标；结果自然可控；可加硬约束；可离线求全局解。
+<strong>缺点</strong>：<strong>慢</strong>（每帧多次迭代 + 约束求解）；权重难调（λ 之间冲突）；可能局部极小；不保证实时；对初值敏感。</p>
+<h2 id="78-基于样例的-ikexample-based">7.8 基于样例的 IK（example-based）</h2>
+<p><strong>思想</strong>：不实时求解方程，而是<strong>从已有的运动数据（动捕库、姿态库）中检索</strong>与当前目标最接近的样例，再插值/拼接出结果。</p>
+<p><strong>做法</strong>：</p>
+<ol>
+<li>建立姿态/动作数据库（每个样例含关节角 + 末端位置/特征）；</li>
+<li>给定目标，在库中找<strong>最近邻</strong>（k-d 树、PCA/降维、哈希）；</li>
+<li>对若干近邻做<strong>局部插值</strong>（散点插值、RBF、加权平均），或按相似性拼接片段；</li>
+<li>用少量 IK 修正残余误差。</li>
+</ol>
+<p><strong>优点</strong>：结果<strong>真实自然</strong>、保留表演细节与风格、无需精确物理模型、可实时（检索快）。
+<strong>缺点</strong>：<strong>依赖数据覆盖</strong>（库外动作无法生成）；数据采集成本高；检索与插值开销；需要处理连续性与足部接触；难以满足精确的末端约束。</p>
+<h2 id="79-基于深度学习的姿态恢复">7.9 基于深度学习的姿态恢复</h2>
+<p><strong>任务</strong>：从图像/视频/IMU 等输入直接回归 3D 人体姿态（关节位置/角度/参数化模型如 SMPL）。</p>
+<p><strong>优点</strong>：</p>
+<ul>
+<li><strong>成本低</strong>：单目相机/手机即可，无需动捕设备与标记；</li>
+<li><strong>实时</strong>：网络推理快，可实时驱动虚拟角色；</li>
+<li><strong>鲁棒</strong>：学习到人体结构先验，对遮挡、光照、服装变化有一定鲁棒性；</li>
+<li><strong>泛化</strong>：可处理自然场景、多人、非受控环境。</li>
+</ul>
+<p><strong>缺点</strong>：</p>
+<ul>
+<li><strong>依赖数据</strong>：需要大量带标注（3D/2D 关键点）的数据，标注昂贵；</li>
+<li><strong>泛化与域偏移</strong>：训练分布外（罕见姿态、特殊服装、极端视角）性能下降；</li>
+<li><strong>深度/尺度歧义</strong>：单目本质是病态问题，可能"看起来对但深度错"；</li>
+<li><strong>时间不一致</strong>：逐帧估计会抖动、跳变，需时序平滑；</li>
+<li><strong>物理不合理</strong>：可能穿地、关节反折、脚滑动，缺少物理约束；</li>
+<li><strong>可控性与可解释性差</strong>：难以精确指定某个关节角度，调试困难；</li>
+<li><strong>难以超越训练数据</strong>：不能生成数据中不存在的动作风格。</li>
+</ul>
+<h2 id="710-fk-与-ik-的优缺点对比">7.10 FK 与 IK 的优缺点对比</h2>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>正向运动学 FK</th>
+<th>逆向运动学 IK</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>输入/输出</td>
+<td>关节角 → 末端位姿</td>
+<td>末端位姿 → 关节角</td>
+</tr>
+<tr>
+<td>解的存在性</td>
+<td>总有唯一解</td>
+<td>可能无解/多解/无穷多解（冗余）</td>
+</tr>
+<tr>
+<td>计算</td>
+<td>快、稳定、O(n)</td>
+<td>慢、迭代、可能不收敛</td>
+</tr>
+<tr>
+<td>奇异</td>
+<td>无</td>
+<td>有（雅可比降秩）</td>
+</tr>
+<tr>
+<td>控制直观性</td>
+<td>差（试角度）</td>
+<td><strong>好</strong>（直接指定手/脚位置）</td>
+</tr>
+<tr>
+<td>约束/交互</td>
+<td>难满足末端约束</td>
+<td>易满足末端、接触、避障约束</td>
+</tr>
+<tr>
+<td>自然性</td>
+<td>关节角曲线由动画师控制，最自然</td>
+<td>需加次级目标/限位才自然</td>
+</tr>
+<tr>
+<td>典型用途</td>
+<td>播放动捕、关键帧、渲染计算骨骼矩阵</td>
+<td>交互式摆姿势、脚部固定、抓取、程序化动画</td>
+</tr>
+</tbody>
+</table>
+<p><strong>实践结论</strong>：<strong>FK 负责"表演"，IK 负责"约束"</strong>——两者结合（如腿部 IK 保证脚不滑、上身 FK 保留表演），并让 IK 结果再经关节空间平滑后输出。</p>
+<h2 id="711-数值求解-ik-的方法清单大纲要求必背">7.11 数值求解 IK 的方法清单（大纲要求，必背）</h2>
+<ol>
+<li><strong>逆雅可比方法</strong>（伪逆 / 阻尼最小二乘 DLS，含零空间次级任务）；</li>
+<li><strong>循环坐标下降法（CCD）</strong>；</li>
+<li><strong>基于优化的方法</strong>（目标函数 + 约束，LM/SQP）；</li>
+<li><strong>基于样例的方法</strong>（数据库检索 + 插值）；</li>
+<li><strong>FABRIK 法</strong>（前向/后向迭代，位置法）。</li>
+</ol>
+<p>（此外还有：解析/几何法、遗传算法/模拟退火、神经网络/学习法。）</p>
+<blockquote>
+<p><strong>考点</strong>：五个方法名称 + 一句话原理 + 各自优缺点；"IK 有哪几类方法"可答"解析法与数值法（数值法含上述五种）"。</p>
+</blockquote>
+    </div>
+    <p class="back"><a class="ef-btn" href="06_粒子群组.html">← 第七部分　粒子系统、元球与群组动画</a> <a class="ef-btn" href="08_运动捕获.html">第九部分　运动捕获、角色绑定与表情动画 →</a> <a class="ef-btn" href="../../index.html">返回本课</a></p>
+  </div>
+  <aside class="ef-margin toc-aside" aria-label="本页目录">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>本页目录</span><span>11 节</span></p>
+      <ol>
+      <li><a class="lvl2" href="#71-关节骨架与自由度">7.1 关节、骨架与自由度</a></li>
+      <li><a class="lvl2" href="#72-正向运动学forward-kinematics-fk">7.2 正向运动学（Forward Kinematics, FK）</a></li>
+      <li><a class="lvl2" href="#73-逆向运动学inverse-kinematics-ik">7.3 逆向运动学（Inverse Kinematics, IK）</a></li>
+      <li><a class="lvl2" href="#74-逆雅可比方法求解-ik-的原理">7.4 逆雅可比方法求解 IK 的原理</a></li>
+      <li><a class="lvl2" href="#75-循环坐标下降法ccd-cyclic-coordinate-descent">7.5 循环坐标下降法（CCD, Cyclic Coordinate Descent）</a></li>
+      <li><a class="lvl2" href="#76-fabrik-法的原理">7.6 FABRIK 法的原理</a></li>
+      <li><a class="lvl2" href="#77-基于优化的-ik-计算方法与目标函数">7.7 基于优化的 IK 计算方法与目标函数</a></li>
+      <li><a class="lvl2" href="#78-基于样例的-ikexample-based">7.8 基于样例的 IK（example-based）</a></li>
+      <li><a class="lvl2" href="#79-基于深度学习的姿态恢复">7.9 基于深度学习的姿态恢复</a></li>
+      <li><a class="lvl2" href="#710-fk-与-ik-的优缺点对比">7.10 FK 与 IK 的优缺点对比</a></li>
+      <li><a class="lvl2" href="#711-数值求解-ik-的方法清单大纲要求必背">7.11 数值求解 IK 的方法清单（大纲要求，必背）</a></li>
+      </ol>
+    </div>
+  </aside>
+</article>
+
+<footer class="foot">
+  <span class="ef-field">KYSIIN.ARCHIVE · 2026.11.15 · 由 Markdown 渲染</span>
+  <span>用 endfield-ui 渲染 · Saira（SIL OFL）自托管</span>
+</footer>
+<script type="module">
+  import { wireTheme } from '../../../../assets/fx.js'
+  wireTheme()
+</script>
+<script defer src="../../../../assets/search.js?v=202611150558"></script>
+<script>
+  /* 左栏：每个分组可独立展开/收起 */
+  (function () {
+    document.querySelectorAll('.tree-toggle').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var li = btn.closest('.tree-group');
+        var list = li ? li.querySelector('.tree-items') : null;
+        var open = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', String(!open));
+        if (list) list.hidden = open;
+        if (li) li.classList.toggle('is-open', !open);
+      });
+    });
+  })();
+</script>
+<script>
+  /* 右栏目录跟随滚动：读到哪一节就把那一行标出来 */
+  (function () {
+    var links = [].slice.call(document.querySelectorAll('.toc-aside a[href^="#"]'));
+    if (!links.length) return;
+    var items = links.map(function (a) {
+      var el = document.getElementById(a.getAttribute('href').slice(1));
+      return el ? { a: a, el: el } : null;
+    }).filter(Boolean);
+    if (!items.length) return;
+    var ticking = false;
+    function spy() {
+      ticking = false;
+      var line = window.scrollY + 140;
+      var best = null;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].el.getBoundingClientRect().top + window.scrollY <= line) best = items[i];
+      }
+      links.forEach(function (a) { a.removeAttribute('aria-current'); });
+      if (best) best.a.setAttribute('aria-current', 'true');
+    }
+    window.addEventListener('scroll', function () {
+      if (!ticking) { ticking = true; requestAnimationFrame(spy); }
+    }, { passive: true });
+    spy();
+  })();
+</script>
+</body>
+</html>

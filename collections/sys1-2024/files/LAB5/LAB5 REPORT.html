@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LAB5 REPORT · KYSIIN.ARCHIVE</title>
+<script src="../../../../assets/variant.js"></script>
+<link rel="stylesheet" href="../../../../assets/local-fonts.css" />
+<link rel="stylesheet" href="../../../../assets/endfield.css" />
+
+<style>
+  body { --tri-h: 3px; --topbar-h: 3.1rem; }
+  body > .ef-tri { position: sticky; top: 0; z-index: 61; }
+  .topbar { position:sticky; top:var(--tri-h); z-index:60;
+    display:flex; align-items:center; gap:1.5rem; padding:.85rem var(--ef-pad);
+    border-bottom:1px solid var(--ef-rule); background:var(--ef-panel); }
+  .topbar .brand { margin:0; font-family:var(--ef-font-ui); font-size:.95rem;
+    font-stretch:var(--ef-wider); font-weight:800; letter-spacing:.08em;
+    text-decoration:none; color:var(--ef-ink); }
+  .topbar nav { display:flex; align-items:center; gap:1.25rem; margin-left:auto; }
+  .topbar nav a { text-decoration:none; color:var(--ef-ink-2); }
+  .foot { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between;
+    gap:1rem; padding:1.5rem var(--ef-pad) 2.5rem; border-top:1px solid var(--ef-rule);
+    color:var(--ef-ink-2); font-size:.875rem; }
+  @media (max-width: 959px) { .ef-spread { grid-template-columns:minmax(0,1fr); }
+    .ef-sheet { border-right:0; border-bottom:1px solid var(--ef-rule); } }
+  @media (max-width:760px) { .topbar { flex-wrap:wrap; gap:.75rem; }
+    .topbar nav { order:3; width:100%; margin-left:0; } }
+
+  .title { margin:1.5rem 0 1rem; font-size:clamp(var(--ef-t-title),5vw,var(--ef-t-h1));
+    font-weight:700; line-height:1.3; }
+  .ef-prose { margin-top:1.75rem; }
+  .ef-prose img { max-width:100%; height:auto; border:1px solid var(--ef-rule); background:#fff; }
+  .ef-prose table { width:100%; border-collapse:collapse; font-size:.9rem; }
+  .ef-prose th, .ef-prose td { border-bottom:1px solid var(--ef-rule); padding:.45rem .6rem; text-align:left; }
+  .ef-prose th { font-family:var(--ef-font-ui); font-stretch:var(--ef-wide); font-size:.8rem; }
+  /* 代码块：整块一个背景；块内的 code 不再带行内边框/内边距 */
+  .ef-prose pre { overflow:auto; margin:1rem 0; padding:.9rem 1rem;
+    background:var(--ef-chip); border-left:3px solid var(--ef-rule);
+    font-size:.85rem; line-height:1.6; tab-size:4; }
+  .ef-prose pre code { display:block; padding:0; border:0; background:none;
+    font-family:var(--ef-font-mono); font-size:.85rem; line-height:1.6; white-space:pre; }
+  .ef-prose :not(pre) > code { font-family:var(--ef-font-mono); font-size:.88em;
+    padding:.1em .35em; border:1px solid var(--ef-rule); background:var(--ef-paper); }
+  .ef-prose blockquote { border-left:3px solid var(--ef-ink); margin:1rem 0; padding:.25rem 0 .25rem 1rem;
+    color:var(--ef-ink-2); }
+
+  /* —— 公式：绝不超出正文栏；行间公式可横向滚动 —— */
+  .ef-prose mjx-container { max-width:100%; }
+  .ef-prose mjx-container[display="true"] { display:block; text-align:center; margin:1.1em 0;
+    max-width:100%; overflow-x:auto; overflow-y:hidden; padding:2px 0; }
+  .ef-prose mjx-container[jax="CHTML"] { font-size:1.02em; }
+  .eq { overflow-x:auto; overflow-y:hidden; max-width:100%; padding:2px 0; }
+  .eq mjx-container[display="true"] { margin:.35em 0; }
+
+  .toc ol { margin:0; padding:0; list-style:none; border-left:1px solid var(--ef-rule); }
+  .toc a { display:block; margin-left:-1px; padding:.22rem 0 .22rem .7rem;
+    border-left:3px solid transparent; color:var(--ef-ink-2); font-size:.85rem;
+    overflow-wrap:anywhere; }
+  .toc a:hover { color:var(--ef-ink); border-left-color:var(--ef-trace); }
+  .toc .lvl3 { padding-left:1.3rem; font-size:.8rem; }
+  .back { margin:2rem 0 0; display:flex; flex-wrap:wrap; gap:.75rem; }
+
+  /* —— 三栏铺满：两侧栏贴边，中间正文吃掉所有剩余宽度 —— */
+  .ef-spread { max-width: none; margin: 0; }
+
+  @media (min-width: 1180px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(11rem, 12vw, 14rem) minmax(0, 1fr) clamp(13rem, 14vw, 17rem);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+  }
+  @media (min-width: 960px) and (max-width: 1179px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(10rem, 12vw, 12rem) minmax(0, 1fr);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+    .ef-spread.has-rail > .toc-aside { display: none; }
+  }
+  @media (min-width: 960px) {
+    .ef-spread > .ef-margin {
+      position: sticky;
+      top: calc(var(--tri-h) + var(--topbar-h));
+      align-self: start;
+      max-height: calc(100vh - var(--tri-h) - var(--topbar-h));
+      overflow-y: auto;
+      scrollbar-width: thin;
+      padding: clamp(1.5rem, 3vw, 2.5rem) 1rem;
+    }
+    /* 两侧栏往屏幕边缘靠，别在页边留空 */
+    .ef-spread > .rail-aside { padding-left: .75rem; padding-right: 1.25rem; }
+    .ef-spread > .toc-aside { padding-left: 1.25rem; padding-right: .75rem; }
+    /* 正文左右留呼吸，但不限制宽度 */
+    .ef-spread > .ef-sheet { padding-left: clamp(2rem, 3.5vw, 4rem); padding-right: clamp(2rem, 3.5vw, 4rem); }
+    /* 套件把正文限制在 40rem；中间栏变宽后这里放开，让文字铺满 */
+    .ef-sheet .ef-prose,
+    .ef-sheet .ef-lede,
+    .ef-sheet .title,
+    .ef-sheet .ef-read,
+    .ef-sheet .ef-facts,
+    .ef-sheet .ef-empty,
+    .ef-sheet .ef-notice { max-width: none; }
+  }
+  .ef-margin .toc a { font-size: .74rem; line-height: 1.5; }
+  .toc a[aria-current] { color: var(--ef-ink); border-left-color: var(--ef-trace); font-weight: 600; }
+  .rail-head { display: block; margin: 0 0 .5rem; padding-bottom: .35rem;
+    border-bottom: 1px solid var(--ef-rule); font-size: .68rem; line-height: 1.5; }
+  .rail-head span { display: inline; }
+  .rail-head span + span { display: block; color: var(--ef-ink-2); }
+  .rail-aside .toc a { padding-top: .3rem; padding-bottom: .3rem; }
+  .rail-tree { list-style:none; margin:0; padding:0; }
+  .rail-tree .tree-name { display:block; padding:.35rem .2rem .35rem .6rem;
+    border-left:3px solid transparent; font-size:.76rem; font-weight:600; color:var(--ef-ink); }
+  .rail-tree .tree-label { display:inline; }
+  .rail-tree .tree-name .ef-field { font-size:.68rem; color:var(--ef-ink-2); margin-left:.35rem;
+    white-space:nowrap; }
+  .rail-tree .tree-group.is-open > .tree-name { border-left-color:var(--ef-trace); }
+  .rail-tree .tree-items { list-style:none; margin:.1rem 0 .5rem; padding:0 0 0 .6rem;
+    border-left:1px solid var(--ef-rule); }
+  .rail-tree .tree-items a { padding-left:.6rem; font-size:.72rem; line-height:1.45; }
+  .tree-row { display:flex; align-items:stretch; gap:.15rem; }
+  .tree-row .tree-name { flex:1 1 auto; min-width:0; }
+  .tree-toggle { flex:none; width:1.55rem; min-height:1.9rem; display:grid; place-items:center;
+    padding:0; border:1px solid var(--ef-rule); background:var(--ef-panel); color:var(--ef-ink-2);
+    cursor:pointer; transition:color .12s var(--ef-ease), border-color .12s var(--ef-ease), background .12s var(--ef-ease); }
+  .tree-toggle:hover { color:var(--ef-ink); border-color:var(--ef-ink); background:var(--ef-chip); }
+  .tree-toggle svg { width:.7rem; height:.7rem; transition:transform .15s var(--ef-ease); }
+  .tree-toggle[aria-expanded="true"] svg { transform:rotate(90deg); }
+  .rail-tree .tree-items[hidden] { display:none; }
+  /* 滚动条统一样式在 assets/local-fonts.css 里定义（页面/侧栏/搜索共用） */
+
+  /* 窄屏：正文优先，两侧栏排到后面 */
+  @media (max-width: 959px) {
+    .ef-spread.has-rail > .ef-sheet { order: 1; }
+    .ef-spread.has-rail > .rail-aside { order: 2; border-top: 1px solid var(--ef-rule); }
+    .ef-spread.has-rail > .toc-aside { order: 3; }
+  }
+
+  /* —— 复习笔记：PDF 下载 —— */
+  .pdf-dl { display:flex; flex-wrap:wrap; align-items:center; gap:.75rem; margin:1.1rem 0 0; }
+  .pdf-dl .ef-btn { border-color:var(--ef-ink); }
+
+  /* —— 打印 / 导出 PDF：只留正文 —— */
+  @page { size:A4; margin:16mm 14mm 18mm; }
+  @media print {
+    html, body { background:#fff !important; }
+    .topbar, .foot, .ef-tri, .rail-aside, .toc-aside, .back, .pdf-dl,
+    .ef-crumb, .ef-eyebrow, .ef-facts, .ef-notice { display:none !important; }
+    .ef-spread, .ef-spread.has-rail { display:block !important; max-width:none !important; }
+    .ef-sheet { border:0 !important; padding:0 !important; background:#fff !important; }
+    .ef-sheet .ef-prose, .ef-sheet .ef-lede, .ef-sheet .title { max-width:none !important; }
+    .title { margin:0 0 1rem; }
+    /* 打印用系统字体：体积小、离线打开不依赖自托管字体 */
+    body, .ef-prose, .title, .ef-lede, .ef-facts,
+    h1, h2, h3, h4, h5, h6 { font-family:"Microsoft YaHei UI","Microsoft YaHei","PingFang SC",sans-serif !important; }
+    .ef-prose pre, .ef-prose code { font-family:Consolas,"Cascadia Mono",monospace !important; }
+    .ef-prose { margin-top:1rem; }
+    .ef-prose pre { white-space:pre-wrap; word-break:break-word; }
+    .ef-prose pre code { white-space:pre-wrap; }
+    .ef-prose img, .ef-prose svg, mjx-container { max-width:100% !important; }
+    a { color:inherit !important; text-decoration:none !important; }
+    .ef-prose h2, .ef-prose h3 { break-after:avoid; }
+    .ef-prose pre, .ef-prose table, .eq { break-inside:avoid; }
+  }
+
+</style>
+</head>
+<body class="ef ef-contours">
+<div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+<header class="topbar">
+  <a class="brand" href="../../../../index.html">KYSIIN.ARCHIVE</a>
+  <nav class="ef-field" aria-label="主导航">
+    <a href="../../../../index.html">首页</a>
+    <a href="../../index.html" aria-current="page">计算机系统Ⅰ</a>
+  </nav>
+  <span data-search-slot></span>
+  <button class="ef-btn small" type="button" data-theme-toggle>切换深浅</button>
+</header>
+
+<article class="ef-spread has-rail">
+  <aside class="ef-margin rail-aside" aria-label="本课程分区">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>计算机系统Ⅰ</span><span>1 区</span></p>
+      <ol class="rail-tree">
+        <li class="tree-group is-open">
+          <div class="tree-row">
+            <a class="tree-name" href="../../index.html#sec-%E5%AE%9E%E9%AA%8C"><span class="tree-label">实验</span><span class="ef-field">6</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="true" aria-label="收起 实验"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items">
+            <li><a href="../LAB0实验报告.html">LAB0实验报告</a></li>
+            <li><a href="../LAB1/LAB1 REPOERT/LAB1 REPORT.html">LAB1 REPORT</a></li>
+            <li><a href="../LAB2/LAB 2 REPORT.html">LAB 2 REPORT</a></li>
+            <li><a href="../LAB3/LAB3 REPORT.html">LAB3 REPORT</a></li>
+            <li><a href="LAB5 REPORT.html" aria-current="page">LAB5 REPORT</a></li>
+            <li><a href="../PROJECT/PROJECT REPORT.html">PROJECT REPORT</a></li>
+          </ol>
+        </li>
+      </ol>
+      <p class="ef-actions" style="margin:.9rem 0 0">
+        <a class="ef-btn small" href="../../index.html">返回课程</a>
+      </p>
+    </div>
+  </aside>
+  <div class="ef-sheet">
+    <p class="ef-eyebrow slash">Course / Article</p>
+    <p class="ef-crumb ef-field"><a href="../../../../index.html">首页</a><a href="../../index.html">计算机系统Ⅰ</a><span>实验</span><span>LAB5</span></p>
+    <ul class="ef-facts ef-field">
+      <li>实验</li>
+      <li>3,463 字</li>
+      <li>2026.11.15</li>
+      <li>8 个小节</li>
+    </ul>
+    <h1 class="title ef-read">LAB5 REPORT</h1>
+    <div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+    
+    
+    <div class="ef-prose">
+<h2 id="5-1">5-1</h2>
+<h3 id="42">4.2</h3>
+<h4 id="1-acc是如何获得函数参数的又是如何返回函数返回值的">1. <code>acc</code>是如何获得函数参数的，又是如何返回函数返回值的？</h4>
+<pre><code>sd      a0,-40(s0)   # 将第一个参数保存到栈帧中的位置 -40(s0)
+sd      a1,-48(s0)   # 将第二个参数保存到栈帧中的位置 -48(s0)
+</code></pre>
+<h4 id="2-acc函数中s0寄存器的作用是什么为什么在函数入口处需要执行sd-s0-40sp这条指令而在这条指令之后的addi-s0-sp-48这条指令的目的是什么">2. <code>acc</code>函数中<code>s0</code>寄存器的作用是什么，为什么在函数入口处需要执行<code>sd s0, 40(sp)</code>这条指令，而在这条指令之后的<code>addi s0, sp, 48</code>这条指令的目的是什么？</h4>
+<pre><code>sd      s0,40(sp)    # 将调用者的 s0 保存到栈中，以便函数结束时恢复
+addi    s0,sp,48     # 设置 s0 为当前栈帧的基地址（sp + 48）
+</code></pre>
+<p>在函数入口处保存 <code>s0</code> 寄存器的值，以便在函数返回时恢复。<code>addi s0, sp, 48</code> 设置 <code>s0</code> 为当前栈帧的基地址，方便栈帧内变量的访问。</p>
+<h4 id="3-acc函数的栈帧-stack-frame-的大小是多少">3. <code>acc</code>函数的栈帧 (stack frame) 的大小是多少？</h4>
+<pre><code>addi    sp,sp,-48
+</code></pre>
+<p>这条指令将栈指针 <code>sp</code> 向下移动 48 字节，因此栈帧的大小是 <strong>48 字节</strong>。</p>
+<h4 id="4-acc函数栈帧中存储的值有哪些它们分别存储在哪相对于sp或s0来说">4. <code>acc</code>函数栈帧中存储的值有哪些，它们分别存储在哪（相对于<code>sp</code>或<code>s0</code>来说）</h4>
+<ul>
+<li>调用者的 <code>s0</code> 寄存器：相对于 <code>sp</code> 的偏移量为 40 字节。</li>
+<li>第一个参数 (<code>a0</code>)：相对于 <code>s0</code> 的偏移量为 -40 字节。</li>
+<li>第二个参数 (<code>a1</code>)：相对于 <code>s0</code> 的偏移量为 -48 字节。</li>
+<li>局部变量 <code>sum</code>：相对于 <code>s0</code> 的偏移量为 -32 字节。</li>
+<li>循环计数器 <code>i</code>：相对于 <code>s0</code> 的偏移量为 -24 字节。</li>
+</ul>
+<h4 id="5-请简要解释acc函数中的-for-循环是如何在汇编代码中实现的">5. 请简要解释<code>acc</code>函数中的 for 循环是如何在汇编代码中实现的</h4>
+<pre><code>.L3:
+    ld      a4,-32(s0)  # 加载 res 到 a4
+    ld      a5,-24(s0)  # 加载 i 到 a5
+    add     a5,a4,a5    # res += i
+    sd      a5,-32(s0)  # 存储 sum
+    ld      a5,-24(s0)  # 加载 i
+    addi    a5,a5,1     # i++
+    sd      a5,-24(s0)  # 存储 i
+.L2:
+    ld      a4,-24(s0)  # 加载 i
+    ld      a5,-48(s0)  # 加载 n
+    ble     a4,a5,.L3   # 如果 i &lt;= b，跳转到 .L3
+</code></pre>
+<h4 id="请查阅资料简要描述编译选项-o0和-o2的区别">请查阅资料简要描述编译选项<code>-O0</code>和<code>-O2</code>的区别。</h4>
+<h4 id="-o0无优化"><code>-O0</code>（无优化）</h4>
+<ul>
+<li><strong>目的</strong>：该选项禁用大多数优化，主要用于开发和调试阶段。</li>
+<li>行为：</li>
+<li>生成直接且未优化的代码。</li>
+<li>尽可能保持代码结构接近源代码，有助于调试。</li>
+<li>编译速度较快，因为编译器不需要进行复杂的优化过程。</li>
+<li>生成的二进制文件较大，运行速度较慢</li>
+</ul>
+<h4 id="-o2高级优化"><code>-O2</code>（高级优化）</h4>
+<ul>
+<li><strong>目的</strong>：该选项启用高级别的优化，通常用于生产环境，以提高性能。</li>
+<li>行为：</li>
+<li>启用各种优化，包括提高执行速度和减小代码大小的优化。</li>
+<li>进行常量折叠、循环展开、函数内联和死代码消除等优化。</li>
+<li>由于代码结构发生显著变化，可能使调试变得更加困难。</li>
+<li>编译时间较长，但生成的可执行文件速度更快，体积更小</li>
+</ul>
+<h4 id="请简要讨论srclab5-1acc_opts与srclab5-1acc_plains的优劣">请简要讨论<code>src/lab5-1/acc_opt.s</code>与<code>src/lab5-1/acc_plain.s</code>的优劣。</h4>
+<h4 id="acc_opts-优化版本"><code>acc_opt.s</code> (优化版本)</h4>
+<p><strong>优点</strong>：</p>
+<ol>
+<li><strong>简洁高效</strong>：优化版本的代码行数明显减少，去除了不必要的栈操作和冗余的寄存器存取操作。</li>
+<li><strong>性能提升</strong>：减少了内存访问次数，大部分操作在寄存器中完成，提高了执行效率。</li>
+<li><strong>直接跳转</strong>：通过简单的条件分支判断 (<code>bgt</code> 和 <code>bne</code>)，直接控制循环流程，避免了多余的内存操作。</li>
+</ol>
+<p><strong>缺点</strong>：</p>
+<ol>
+<li><strong>可读性</strong>：由于代码更加简洁，可能会在某些情况下减少代码的可读性和调试的便利性。</li>
+<li><strong>可维护性</strong>：对于复杂的调试过程，优化版本的代码可能不容易跟踪和理解。</li>
+</ol>
+<h4 id="acc_plains-未优化版本"><code>acc_plain.s</code> (未优化版本)</h4>
+<p><strong>优点</strong>：</p>
+<ol>
+<li><strong>可读性强</strong>：未优化版本保留了完整的栈操作和寄存器存取步骤，代码结构与原始的 C 代码更接近，易于理解和调试。</li>
+<li><strong>调试方便</strong>：由于每一步操作都显式表示，使用调试工具时更容易跟踪每个变量的变化和函数的执行流程。</li>
+</ol>
+<p><strong>缺点</strong>：</p>
+<ol>
+<li><strong>性能较低</strong>：包含大量的内存访问和栈操作，增加了运行时间和资源消耗。</li>
+<li><strong>代码冗长</strong>：相对于优化版本，代码更为冗长，包含许多不必要的步骤。</li>
+</ol>
+<h3 id="43">4.3</h3>
+<h4 id="1-为什么srclab5-1factor_plains中factor函数的入口处需要执行sd-ra-24sp指令而srclab5-1acc_plains中的acc函数并没有执行该指令">1. 为什么<code>src/lab5-1/factor_plain.s</code>中<code>factor</code>函数的入口处需要执行<code>sd ra, 24(sp)</code>指令，而<code>src/lab5-1/acc_plain.s</code>中的<code>acc</code>函数并没有执行该指令？</h4>
+<p>在 <code>factor</code> 函数入口处执行 <code>sd ra, 24(sp)</code> 的原因是为了保存返回地址 (<code>ra</code> 寄存器)。这是因为 <code>factor</code> 是一个递归函数，每次递归调用都会覆盖 <code>ra</code> 寄存器中的值，必须将当前的返回地址保存到栈中，以便在递归调用完成后能正确返回到调用点。</p>
+<p>在 <code>acc</code> 函数中没有类似的保存返回地址的指令，因为 <code>acc</code> 函数中没有进行递归调用，返回地址在整个函数执行过程中不会被覆盖，所以不需要保存和恢复 <code>ra</code> 寄存器。</p>
+<h4 id="2-请解释在call-factor前的mv-a0-a5这条汇编指令的目的">2. 请解释在<code>call factor</code>前的<code>mv a0, a5</code>这条汇编指令的目的。</h4>
+<p>在 <code>call factor</code> 前执行 <code>mv a0, a5</code> 的目的是将递归调用的参数传递给 <code>factor</code> 函数。在 RISC-V 调用约定中，函数参数通过 <code>a0</code> 至 <code>a7</code> 寄存器传递。<code>a5</code> 寄存器中保存了 <code>n - 1</code> 的值，通过 <code>mv a0, a5</code>，将 <code>n - 1</code> 的值传递给递归调用的 <code>factor</code> 函数。</p>
+<h4 id="3-请简要描述调用factor10时栈的变化情况并回答栈最大内存占用是多少发生在什么时候">3. 请简要描述调用<code>factor(10)</code>时栈的变化情况；并回答栈最大内存占用是多少，发生在什么时候。</h4>
+<h4 id="栈变化情况">栈变化情况</h4>
+<ul>
+<li>初始调用</li>
+</ul>
+<p><code>factor(10)</code>：</p>
+<ul>
+<li><code>sp</code> 向下移动 32 字节。</li>
+<li>保存 <code>ra</code> 和 <code>s0</code>。</li>
+<li>
+<p>参数 <code>n = 10</code> 存储在 <code>sp</code> 的某个偏移位置。</p>
+</li>
+<li>
+<p>递归调用</p>
+</li>
+</ul>
+<p><code>factor(9)</code>：</p>
+<ul>
+<li><code>sp</code> 向下移动 32 字节。</li>
+<li>保存 <code>ra</code> 和 <code>s0</code>。</li>
+<li>
+<p>参数 <code>n = 9</code> 存储在新的 <code>sp</code> 偏移位置。</p>
+</li>
+<li>
+<p>依次类推，直到调用 <code>factor(0)</code>，此时不会再进行递归调用。</p>
+</li>
+</ul>
+<h4 id="最大内存占用">最大内存占用</h4>
+<ul>
+<li>每次调用占用 32 字节栈空间。</li>
+<li><code>factor(10)</code> 需要递归调用 11 次（从 <code>factor(10)</code> 到 <code>factor(0)</code>）。</li>
+<li>最大栈占用：32 字节 × 11 = 352 字节。</li>
+</ul>
+<p>最大内存占用发生在递归最深的点，即调用 <code>factor(0)</code> 时。</p>
+<h4 id="4-假设栈的大小为-4kb请问factorn的参数n最大是多少">4. 假设栈的大小为 4KB，请问<code>factor(n)</code>的参数<code>n</code>最大是多少？</h4>
+<p>每次调用 <code>factor(n)</code> 占用 32 字节栈空间。</p>
+<p>最大递归深度： 128</p>
+<h4 id="请简要描述srclab5-1factor_opts和srclab5-1factor_plains的区别">请简要描述<code>src/lab5-1/factor_opt.s</code>和<code>src/lab5-1/factor_plain.s</code>的区别</h4>
+<ol>
+<li><strong>递归 vs. 循环</strong>：
+   - <code>factor_plain.s</code> 使用递归调用，每次调用时将当前状态保存在栈上。
+   - <code>factor_opt.s</code> 使用循环结构，通过条件跳转和循环迭代来计算阶乘，无需递归调用。</li>
+<li><strong>指令数量和效率</strong>：
+   - <code>factor_opt.s</code> 更加简洁，没有保存和恢复寄存器的操作，直接在寄存器中进行计算。
+   - <code>factor_plain.s</code> 包含更多的指令来处理递归调用和栈操作，代码冗长且执行效率较低。</li>
+</ol>
+<h4 id="请从栈内存占用的角度比较srclab5-1factor_opts和srclab5-1factor_plains的优劣">请从栈内存占用的角度比较<code>src/lab5-1/factor_opt.s</code>和<code>src/lab5-1/factor_plain.s</code>的优劣</h4>
+<ol>
+<li><strong><code>factor_plain.s</code></strong>：
+   - 由于递归调用，每次调用都会在栈上分配空间用于保存返回地址 (<code>ra</code>) 和帧指针 (<code>s0</code>) 等信息。
+   - 每次调用占用 32 字节栈空间。
+   - 对于 <code>factor(n)</code>，栈的最大深度为 𝑛+1<em>n</em>+1，因此最大栈占用为 32×(𝑛+1)32×(<em>n</em>+1) 字节。</li>
+<li><strong><code>factor_opt.s</code></strong>：
+   - 使用循环结构，无需递归调用，因此不会额外占用栈空间。
+   - 栈内存占用几乎可以忽略不计，只有初始调用的基本函数开销。</li>
+</ol>
+<p>优劣比较</p>
+<ul>
+<li><strong><code>factor_opt.s</code></strong> 在栈内存占用方面具有明显的优势，因为它不使用递归调用，大幅减少了栈的使用。</li>
+<li><strong><code>factor_plain.s</code></strong> 因为使用递归调用，栈内存占用随递归深度线性增长，在计算较大阶乘时会导致大量的栈空间使用，甚至可能导致栈溢出。</li>
+</ul>
+<h4 id="请查阅尾递归优化的相关资料解释编译器在生成srclab5-1factor_opts时做了什么优化该优化的原理以及什么时候能进行该优化">请查阅<em>尾递归优化</em>的相关资料，解释编译器在生成<code>src/lab5-1/factor_opt.s</code>时做了什么优化，该优化的原理，以及什么时候能进行该优化</h4>
+<h4 id="优化的实现和原理">优化的实现和原理</h4>
+<p>尾递归优化（Tail Call Optimization, TCO）是一种编译器优化技术，将尾递归函数调用优化为迭代形式，从而避免递归调用带来的栈内存开销。尾递归指的是在一个函数的最后一步是调用自身（或另一个函数），并且该调用的返回值直接作为当前函数的返回值。</p>
+<p>编译器在生成 <code>factor_opt.s</code> 时进行了以下优化：</p>
+<ul>
+<li><strong>识别尾递归</strong>：编译器识别到原始的递归调用是在函数的最后一步，并且没有额外的操作需要在递归调用返回后进行。</li>
+<li><strong>转换为迭代</strong>：将递归调用转换为循环结构，通过条件跳转和循环控制来代替递归调用。</li>
+</ul>
+<h4 id="优化原理">优化原理</h4>
+<ul>
+<li><strong>节省栈空间</strong>：每次尾递归调用不需要在栈上分配新的帧，直接重用当前栈帧，从而显著减少栈内存占用。</li>
+<li><strong>提高效率</strong>：减少了函数调用和返回的开销，使得函数执行更高效。</li>
+</ul>
+<h4 id="适用条件">适用条件</h4>
+<p>尾递归优化可以在以下条件下进行：</p>
+<ul>
+<li>递归调用是函数中的最后一个操作。</li>
+<li>递归调用的返回值直接作为当前函数的返回值，不需要额外处理。</li>
+<li>编译器支持并启用了尾递归优化。</li>
+</ul>
+<h3 id="44">4.4</h3>
+<h4 id="1-请简述在srclab5-1switchs中是如何实现-switch-语句的">1. 请简述在<code>src/lab5-1/switch.s</code>中是如何实现 switch 语句的。</h4>
+<p>在 <code>switch.s</code> 中，<code>switch</code> 语句通过跳转表（jump table）实现，具体步骤如下：</p>
+<ol>
+<li><strong>计算索引</strong>：</li>
+</ol>
+<p><code>addi    a5,a0,-20</code></p>
+<p>通过 <code>x - 20</code> 计算跳转表的索引 <code>a5</code>。</p>
+<ol start="2">
+<li><strong>检查索引范围</strong>：</li>
+</ol>
+<p><code>li      a4,6
+   bgtu    a5,a4,.L8</code></p>
+<p>检查 <code>a5</code> 是否在有效范围内（0 到 6）。如果超出范围，跳转到 <code>.L8</code> 处理默认情况。</p>
+<ol start="3">
+<li><strong>跳转表基地址</strong>：</li>
+</ol>
+<p><code>lla     a4,.L4</code></p>
+<p>获取跳转表基地址 <code>.L4</code>。</p>
+<ol start="4">
+<li><strong>计算跳转地址</strong>：</li>
+</ol>
+<p><code>slli    a5,a5,2
+   add     a5,a5,a4
+   lw      a5,0(a5)
+   add     a5,a5,a4
+   jr      a5</code></p>
+<p>通过索引偏移计算跳转地址，并跳转到对应的代码段。</p>
+<h4 id="请简述用跳转表实现-switch-和用-if-else-实现-switch-的优劣在什么时候应该采用跳转表在什么时候应该采用-if-else">请简述用跳转表实现 switch 和用 if-else 实现 switch 的优劣，在什么时候应该采用跳转表，在什么时候应该采用 if-else。</h4>
+<h4 id="跳转表实现-switch-的优点和缺点">跳转表实现 <code>switch</code> 的优点和缺点</h4>
+<p><strong>优点</strong>：</p>
+<ul>
+<li><strong>速度快</strong>：跳转表实现具有 O(1) 时间复杂度，直接通过索引进行跳转，速度快。</li>
+<li><strong>代码简洁</strong>：避免了多层次的条件判断，代码较为简洁明了。</li>
+</ul>
+<p><strong>缺点</strong>：</p>
+<ul>
+<li><strong>空间占用</strong>：跳转表需要额外的存储空间，尤其当 <code>case</code> 分支稀疏时，会浪费大量空间。</li>
+<li><strong>范围限制</strong>：适用于 <code>case</code> 值连续或接近连续的情况，对于范围较大的 <code>case</code> 值可能不适用。</li>
+</ul>
+<h4 id="if-else-实现-switch-的优点和缺点">if-else 实现 <code>switch</code> 的优点和缺点</h4>
+<p><strong>优点</strong>：</p>
+<ul>
+<li><strong>灵活性高</strong>：可以处理任意分散的 <code>case</code> 值，灵活性高。</li>
+<li><strong>简单实现</strong>：无需额外的数据结构，代码简单直接。</li>
+</ul>
+<p><strong>缺点</strong>：</p>
+<ul>
+<li><strong>速度慢</strong>：if-else 结构具有 O(n) 时间复杂度，较多分支时性能较差。</li>
+<li><strong>代码冗长</strong>：多层次的条件判断会使代码冗长且不易维护。</li>
+</ul>
+<h3 id="选择跳转表还是-if-else">选择跳转表还是 if-else</h3>
+<ul>
+<li><strong>使用跳转表</strong>：</li>
+<li>当 <code>case</code> 值连续或接近连续，且分支数量较多时，选择跳转表以提高执行效率。</li>
+<li>当对性能要求较高且希望减少判断时间时，使用跳转表。</li>
+<li><strong>使用 if-else</strong>：</li>
+<li>当 <code>case</code> 值分散且不连续，或分支数量较少时，选择 if-else 实现。</li>
+<li>当存储空间有限，或实现简单逻辑判断时，使用 if-else。</li>
+</ul>
+<h3 id="bubble_sorts">bubble_sort.s</h3>
+<pre><code>.text
+.globl  bubble_sort
+
+bubble_sort:
+    # 保存返回地址
+    addi sp, sp, -8
+    sd ra, 0(sp)
+
+    # 加载参数
+    mv a4, a0  # 将数组地址加载到 a4
+    mv a5, a1  # 将长度加载到 a5
+    addi a5, a5, -1
+    slli a5, a5, 3  # 长度*8
+
+    # 外层循环：循环 (len - 1) 次
+    li t0, 0       # 初始化外层循环计数器
+outer_loop:
+    bge t0, a5, done_outer  # 当计数器 &gt;= len 时退出外层循环
+
+    # 内层循环：比较相邻元素并交换
+    li t1, 0       # 初始化内层循环计数器
+inner_loop:
+    add t2, a4, t1  # 计算 arr[t1] 的地址
+    ld t3, 0(t2)   # 将 arr[t1] 加载到 t3
+
+    ld t4, 8(t2)   # 将 arr[t1+1] 加载到 t4
+
+    bge t4, t3, skip_swap  # 如果 arr[t1] &lt;= arr[t1+1]，跳过交换
+
+    # 交换 arr[t1] 和 arr[t1+1]
+    sd t4, 0(t2)
+    sd t3, 8(t2)
+
+skip_swap:
+    addi t1, t1, 8  # 增加内层循环计数器
+    blt t1, a5, inner_loop  # 当计数器 &lt; len 时继续内层循环
+
+    addi t0, t0, 8  # 增加外层循环计数器
+    j outer_loop   # 继续外层循环
+
+done_outer:
+    # 函数尾部
+    ld ra, 0(sp)
+    addi sp, sp, 8
+    ret
+</code></pre>
+<h3 id="fibonaccis">fibonacci.s</h3>
+<pre><code>.text
+.globl fibonacci
+
+fibonacci:
+    # 保存返回地址和参数n
+    addi    sp,sp,-48
+    sd  ra,40(sp)
+    sd  s0,32(sp)
+    sd  s1,24(sp)
+    addi    s0,sp,48
+    sd  a0,-40(s0)
+    ld  a4,-40(s0)
+
+    # 检查n的值
+    ld t0, -40(s0)    # 加载参数n
+    li t1, 1        # 检查n是否小于等于1
+    ble t0, t1, fib_base_case
+
+    # 递归调用fibonacci(n-1)
+    ld  a5,-40(s0)
+    addi    a5,a5,-1
+    mv  a0,a5
+    call    fibonacci
+    mv  s1,a0
+    # 递归调用fibonacci(n-2)
+    ld  a5,-40(s0)
+    addi    a5,a5,-2
+    mv  a0,a5
+    call    fibonacci
+    mv  a5,a0
+    add a0,s1,a5
+    j done
+fib_base_case:
+    # 处理基本情况，返回1
+    li a0, 1
+
+done:
+    # 恢复栈和返回
+    ld  ra,40(sp)
+    ld  s0,32(sp)
+    ld  s1,24(sp)
+    addi    sp,sp,48
+    ret
+</code></pre>
+<h2 id="5-2">5-2</h2>
+<p>做不来QAQ</p>
+    </div>
+    <p class="back"><a class="ef-btn" href="../LAB3/LAB3 REPORT.html">← LAB3 REPORT</a> <a class="ef-btn" href="../PROJECT/PROJECT REPORT.html">PROJECT REPORT →</a> <a class="ef-btn" href="../../index.html">返回本课</a></p>
+  </div>
+  <aside class="ef-margin toc-aside" aria-label="本页目录">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>本页目录</span><span>8 节</span></p>
+      <ol>
+      <li><a class="lvl2" href="#5-1">5-1</a></li>
+      <li><a class="lvl3" href="#42">4.2</a></li>
+      <li><a class="lvl3" href="#43">4.3</a></li>
+      <li><a class="lvl3" href="#44">4.4</a></li>
+      <li><a class="lvl3" href="#选择跳转表还是-if-else">选择跳转表还是 if-else</a></li>
+      <li><a class="lvl3" href="#bubble_sorts">bubble_sort.s</a></li>
+      <li><a class="lvl3" href="#fibonaccis">fibonacci.s</a></li>
+      <li><a class="lvl2" href="#5-2">5-2</a></li>
+      </ol>
+    </div>
+  </aside>
+</article>
+
+<footer class="foot">
+  <span class="ef-field">KYSIIN.ARCHIVE · 2026.11.15 · 由 Markdown 渲染</span>
+  <span>用 endfield-ui 渲染 · Saira（SIL OFL）自托管</span>
+</footer>
+<script type="module">
+  import { wireTheme } from '../../../../assets/fx.js'
+  wireTheme()
+</script>
+<script defer src="../../../../assets/search.js?v=202611150558"></script>
+<script>
+  /* 左栏：每个分组可独立展开/收起 */
+  (function () {
+    document.querySelectorAll('.tree-toggle').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var li = btn.closest('.tree-group');
+        var list = li ? li.querySelector('.tree-items') : null;
+        var open = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', String(!open));
+        if (list) list.hidden = open;
+        if (li) li.classList.toggle('is-open', !open);
+      });
+    });
+  })();
+</script>
+<script>
+  /* 右栏目录跟随滚动：读到哪一节就把那一行标出来 */
+  (function () {
+    var links = [].slice.call(document.querySelectorAll('.toc-aside a[href^="#"]'));
+    if (!links.length) return;
+    var items = links.map(function (a) {
+      var el = document.getElementById(a.getAttribute('href').slice(1));
+      return el ? { a: a, el: el } : null;
+    }).filter(Boolean);
+    if (!items.length) return;
+    var ticking = false;
+    function spy() {
+      ticking = false;
+      var line = window.scrollY + 140;
+      var best = null;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].el.getBoundingClientRect().top + window.scrollY <= line) best = items[i];
+      }
+      links.forEach(function (a) { a.removeAttribute('aria-current'); });
+      if (best) best.a.setAttribute('aria-current', 'true');
+    }
+    window.addEventListener('scroll', function () {
+      if (!ticking) { ticking = true; requestAnimationFrame(spy); }
+    }, { passive: true });
+    spy();
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>计算机动画 · KYSIIN.ARCHIVE</title>
+<meta name="description" content="计算机动画：16 部分期末复习讲义（章节 + 判断题 / 问答 / 附录），以及 ClothLab 布料模拟实验的源码与产出。" />
+<script src="../../assets/variant.js"></script>
+<link rel="stylesheet" href="../../assets/local-fonts.css" />
+<link rel="stylesheet" href="../../assets/endfield.css" />
+<style>
+  body { --tri-h: 3px; --topbar-h: 3.1rem; }
+  body > .ef-tri { position: sticky; top: 0; z-index: 61; }
+  .topbar { position:sticky; top:var(--tri-h); z-index:60;
+    display:flex; align-items:center; gap:1.5rem; padding:.85rem var(--ef-pad);
+    border-bottom:1px solid var(--ef-rule); background:var(--ef-panel); }
+  .topbar .brand { margin:0; font-family:var(--ef-font-ui); font-size:.95rem;
+    font-stretch:var(--ef-wider); font-weight:800; letter-spacing:.08em;
+    text-decoration:none; color:var(--ef-ink); }
+  .topbar nav { display:flex; align-items:center; gap:1.25rem; margin-left:auto; }
+  .topbar nav a { text-decoration:none; color:var(--ef-ink-2);
+    padding-bottom:2px; border-bottom:2px solid transparent; }
+  .topbar nav a[aria-current='page'] { color:var(--ef-ink); border-bottom-color:var(--ef-trace); }
+  /* 点顶栏跳分区时，别让粘性顶栏盖住那一段的标题 */
+  #all, #stats { scroll-margin-top: calc(var(--tri-h) + var(--topbar-h) + .6rem); }
+  .title { margin:1.5rem 0 1rem; font-size:clamp(var(--ef-t-title),5.5vw,var(--ef-t-h1));
+    font-weight:700; line-height:1.25; }
+  .ids { display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; margin:0 0 .75rem; }
+  .foot { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between;
+    gap:1rem; padding:1.5rem var(--ef-pad) 2.5rem; border-top:1px solid var(--ef-rule);
+    color:var(--ef-ink-2); font-size:.875rem; }
+  .back { margin:1.5rem 0 0; }
+  @media (min-width: 960px) {
+    .ef-spread > .ef-margin {
+      position: sticky; top: calc(var(--tri-h) + var(--topbar-h)); align-self: start;
+      max-height: calc(100vh - var(--tri-h) - var(--topbar-h)); overflow-y: auto; scrollbar-width: thin;
+    }
+  }
+
+  /* 铺满：正文吃掉剩余宽度，右栏贴边 */
+  @media (min-width: 960px) {
+    .ef-spread {
+      grid-template-columns: minmax(0, 1fr) clamp(14rem, 16vw, 19rem);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+      max-width: none;
+      margin: 0;
+    }
+    .ef-spread > .ef-margin {
+      padding: clamp(1.5rem, 3vw, 2.5rem) .75rem clamp(1.5rem, 3vw, 2.5rem) 1.25rem;
+    }
+    .ef-spread > .ef-sheet {
+      padding-left: clamp(2rem, 3.5vw, 4rem);
+      padding-right: clamp(2rem, 3.5vw, 4rem);
+    }
+    /* 正文不再被 40rem 卡住 */
+    .ef-sheet .ef-prose,
+    .ef-sheet .ef-lede,
+    .ef-sheet .ef-read,
+    .ef-sheet .ef-facts,
+    .ef-sheet .ef-empty,
+    .ef-sheet .ef-notice { max-width: none; }
+  }
+  .ef-margin .ef-ledger li,
+  .ef-margin .toc a { font-size: .82rem; }
+
+  /* 滚动条统一样式在 assets/local-fonts.css 里定义（页面/侧栏/搜索共用） */
+
+
+  .band { display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between;
+    gap:1.5rem; padding:clamp(1.5rem,3vw,2.5rem) var(--ef-pad) clamp(1.25rem,2.5vw,2rem);
+    border-bottom:1px solid var(--ef-rule); background:var(--ef-panel); }
+  .band-title { margin:.2rem 0 .8rem; font-family:var(--ef-font-ui); font-stretch:var(--ef-wider);
+    font-weight:800; line-height:.95; letter-spacing:-.01em; font-size:clamp(2rem,4vw,3.4rem); }
+  .band-title .hollow { color:transparent; -webkit-text-stroke:1.5px var(--ef-ink); }
+  .band-note { max-width:32rem; margin:0; color:var(--ef-ink-2); }
+  .filters { padding:1rem var(--ef-pad); border-bottom:1px solid var(--ef-rule); }
+  .chip-row { display:flex; flex-wrap:wrap; align-items:center; gap:.4rem; margin-bottom:.5rem; }
+  .chip-row .ef-field { width:3rem; flex:none; }
+  .chip { font:inherit; font-size:.78rem; line-height:1.6; padding:.15em .7em; cursor:pointer;
+    border:1px solid var(--ef-rule); background:var(--ef-panel); color:var(--ef-ink-2); }
+  .chip:hover { color:var(--ef-ink); border-color:var(--ef-ink); }
+  .chip.is-on { background:var(--ef-signal); border-color:var(--ef-signal); color:var(--ef-on-signal); font-weight:600; }
+  .cols { display:grid; grid-template-columns:repeat(auto-fill,minmax(17rem,1fr));
+    gap:0; border-top:1px solid var(--ef-rule); }
+  /* 每格自己画右边框：网格的竖线不再依赖"后一张卡片"，末行不满也照常收边，
+     筛选隐藏卡片后也不会错位 */
+  .col-card { display:flex; flex-direction:column; gap:.35rem; padding:1.1rem var(--ef-pad);
+    border-right:1px solid var(--ef-rule); border-bottom:1px solid var(--ef-rule);
+    text-decoration:none; color:var(--ef-ink);
+    transition:background .15s var(--ef-ease); }
+  .col-card:hover { background:var(--ef-chip); }
+  .col-card .card-name { font-size:1.02rem; font-weight:700; line-height:1.4; }
+  .col-card .card-meta { color:var(--ef-ink-2); }
+  .col-card[hidden] { display:none; }
+  .recent { padding:clamp(1.5rem,3vw,2.5rem) var(--ef-pad) 1rem; }
+  .recent .ef-bar-title { margin-bottom:1rem; }
+  .hero { --mx:0; --my:0; display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,40%);
+    grid-template-rows:auto 1fr auto auto;
+    column-gap:clamp(1.5rem,4vw,3.5rem);
+    min-height:min(41rem,calc(100dvh - 3px)); padding-top:1.25rem;
+    border-bottom:1px solid var(--ef-rule); overflow:hidden; }
+  .hero > .meta { grid-column:1; margin:0; padding-inline:var(--ef-pad); }
+  .hero > .meta > * + *::before { content:'/'; margin-inline:.75em; color:var(--ef-rule); }
+  .hero .ef-wordmark { grid-column:1; align-self:end; margin-top:2rem; padding-left:var(--ef-pad); }
+  .hero .copy { grid-column:1; padding:1.75rem var(--ef-pad) 2.25rem; }
+  .hero .copy p { margin:0; }
+  .hero .claim { font-size:clamp(1.1rem,2.1vw,1.5rem); }
+  .hero .bio { max-width:33rem; margin-top:.9rem !important; color:var(--ef-ink-2); }
+  .hero .ef-actions { margin-top:1.5rem; }
+  .hero .ef-frame { grid-column:2; grid-row:1 / 4; margin:0 var(--ef-pad) 2.25rem 0; }
+  .hero .ef-frame::before { transform:translate(calc(var(--mx) * 12px),calc(var(--my) * 10px)); }
+  .hero .ef-frame svg { width:100%; height:100%;
+    transform:translate(calc(var(--mx) * -14px),calc(var(--my) * -8px));
+    transition:transform .4s var(--ef-ease); }
+  .hero .ef-ticker { grid-column:1 / -1; }
+  @media (max-width:899px) {
+    .hero { grid-template-columns:minmax(0,1fr); grid-template-rows:none; min-height:0; }
+    .hero .ef-frame { grid-column:1; grid-row:auto; height:18rem;
+      margin:0 calc(var(--ef-pad) + 1rem) 2.25rem var(--ef-pad); }
+  }
+  @media (max-width:760px) { .topbar { flex-wrap:wrap; gap:.75rem; }
+    .topbar nav { order:3; width:100%; margin-left:0; } }
+</style>
+</head>
+<body class="ef ef-contours">
+<div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+<header class="topbar">
+  <a class="brand" href="../../index.html">KYSIIN.ARCHIVE</a>
+  <nav class="ef-field" aria-label="主导航">
+    <a href="../../index.html">首页</a>
+    <a href="../../index.html#all" aria-current="page">资料库</a>
+    <a href="../../index.html#stats">统计</a>
+  </nav>
+  <span data-search-slot></span>
+  <button class="ef-btn small" type="button" data-theme-toggle>切换深浅</button>
+</header>
+
+<article class="ef-spread">
+  <div class="ef-sheet">
+    <p class="ef-eyebrow slash">Course / Index</p>
+    <p class="ef-crumb ef-field"><a href="../../index.html">首页</a><span>计算机拓展</span><span>计算机动画</span></p>
+    <ul class="ef-facts ef-field">
+      <li>18 篇文章</li>
+      <li>61 文件</li>
+      <li>11.5 MB</li>
+      <li>最近 2026.11.15</li>
+    </ul>
+    <h1 class="title ef-read">计算机动画</h1>
+    <div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+    <p class="ef-lede ef-read">计算机动画：16 部分期末复习讲义（章节 + 判断题 / 问答 / 附录），以及 ClothLab 布料模拟实验的源码与产出。</p>
+    <p class="ef-notice" data-flag="未收录">有 67 个产出文件体积较大，暂未放入仓库，只在文件表里登记；需要时另行提供。</p>
+    <h2 class="ef-group-head ef-read" id="sec-章节"><span>章节</span><span class="ef-field">13 篇</span></h2>
+      <ol class="ef-records">
+          <li><a class="ef-record" href="files/content/01_%E5%9F%BA%E7%A1%80.html"><span class="ef-tag">MD</span><span class="ef-field">复习资料 · 3,666 字</span><span class="name ef-read">第一部分　考试概况与复习方法</span><span class="ef-field">2026.11.15</span></a></li>
+          <li><a class="ef-record" href="files/content/02_%E5%8E%9F%E5%88%99.html"><span class="ef-tag">MD</span><span class="ef-field">复习资料 · 3,145 字</span><span class="name ef-read">第三部分　动画的12条基本原则</span><span class="ef-field">2026.11.15</span></a></li>
+          <li><a class="ef-record" href="files/content/03_%E6%9C%9D%E5%90%91.html"><span class="ef-tag">MD</span><span class="ef-field">复习资料 · 2,698 字</span><span class="name ef-read">第四部分　物体朝向的表示与四元数</span><span class="ef-field">2026.11.15</span></a></li>
+          <li><a class="ef-record" href="files/content/04_%E4%BA%8C%E7%BB%B4%E6%B8%90%E5%8F%98.html"><span class="ef-tag">MD</span><span class="ef-field">复习资料 · 3,118 字</span><span class="name ef-read">第五部分　二维形状渐变与图像 Morphing</span><span class="ef-field">2026.11.15</span></a></li>
+          <li><a class="ef-record" href="files/content/05_%E4%B8%89%E7%BB%B4%E6%B8%90%E5%8F%98.html"><span class="ef-tag">MD</span><span class="ef-field">复习资料 · 1,930 字</span><span class="name ef-read">第六部分　三维形状渐变（3D Morphing）</span><span class="ef-field">2026.11.15</span></a></li>
+          <li><a class="ef-record" href="files/content/06_%E7%B2%92%E5%AD%90%E7%BE%A4%E7%BB%84.html"><span class="ef-tag">MD</span><span class="ef-field">复习资料 · 5,487 字</span><span class="name ef-read">第七部分　粒子系统、元球与群组动画</span><span class="ef-field">2026.11.15</span></a></li>
+          <li><a class="ef-record" href="files/content/07_%E5%85%B3%E8%8A%82%E5%8A%A8%E7%94%BB.html"><span class="ef-tag">MD</span><span class="ef-field">复习资料 · 3,164 字</span><span class="name ef-read">第八部分　关节动画：正向运动学与逆向运动学</span><span class="ef-field">2026.11.15</span></a></li>
+          <li><a class="ef-record" href="files/content/08_%E8%BF%90%E5%8A%A8%E6%8D%95%E8%8E%B7.html"><span class="ef-tag">MD</span><span class="ef-field">复习资料 · 3,070 字</span><span class="name ef-read">第九部分　运动捕获、角色绑定与表情动画</span><span class="ef-field">2026.11.15</span></a></li>
+          <li><a class="ef-record" href="files/content/09_%E5%8F%98%E5%BD%A2.html"><span class="ef-tag">MD</span><span class="ef-field">复习资料 · 3,137 字</span><span class="name ef-read">第十部分　变形（Deformation）</span><span class="ef-field">2026.11.15</span></a></li>
+          <li><a class="ef-record" href="files/content/10_%E5%B8%83%E6%96%99.html"><span class="ef-tag">MD</span><span class="ef-field">复习资料 · 1,764 字</span><span class="name ef-read">第十一部分　布料动画</span><span class="ef-field">2026.11.15</span></a></li>
+          <li><a class="ef-record" href="files/content/11_%E9%9A%90%E5%BC%8F%E6%9B%B2%E9%9D%A2.html"><span class="ef-tag">MD</span><span class="ef-field">复习资料 · 1,429 字</span><span class="name ef-read">第十二部分　隐式曲面与元球自动拟合</span><span class="ef-field">2026.11.15</span></a></li>
+          <li><a class="ef-record" href="files/content/12_%E7%A2%B0%E6%92%9E.html"><span class="ef-tag">MD</span><span class="ef-field">复习资料 · 3,436 字</span><span class="name ef-read">第十三部分　碰撞检测与碰撞响应</span><span class="ef-field">2026.11.15</span></a></li>
+          <li><a class="ef-record" href="files/content/13_%E6%95%B0%E5%80%BC%E7%A7%AF%E5%88%86.html"><span class="ef-tag">MD</span><span class="ef-field">复习资料 · 1,181 字</span><span class="name ef-read">第十四部分　数值积分与物理动画基础</span><span class="ef-field">2026.11.15</span></a></li>
+      </ol>
+    <h2 class="ef-group-head ef-read" id="sec-专题"><span>专题</span><span class="ef-field">3 篇</span></h2>
+      <ol class="ef-records">
+          <li><a class="ef-record" href="files/content/14_%E5%88%A4%E6%96%AD%E9%A2%98.html"><span class="ef-tag">MD</span><span class="ef-field">复习资料 · 3,670 字</span><span class="name ef-read">第十五部分　判断题易错点（123 条自查）</span><span class="ef-field">2026.11.15</span></a></li>
+          <li><a class="ef-record" href="files/content/15_%E9%97%AE%E7%AD%94.html"><span class="ef-tag">MD</span><span class="ef-field">复习资料 · 3,318 字</span><span class="name ef-read">第十六部分　问答题预测与答题模板</span><span class="ef-field">2026.11.15</span></a></li>
+          <li><a class="ef-record" href="files/content/16_%E9%99%84%E5%BD%95.html"><span class="ef-tag">MD</span><span class="ef-field">复习资料 · 2,188 字</span><span class="name ef-read">第十七部分　附录</span><span class="ef-field">2026.11.15</span></a></li>
+      </ol>
+    <h2 class="ef-group-head ef-read" id="sec-实验"><span>实验</span><span class="ef-field">2 篇</span></h2>
+      <ol class="ef-records">
+          <li><a class="ef-record" href="../clothlab-src/files/README.html"><span class="ef-tag">MD</span><span class="ef-field">ClothLab 源码 · 969 字</span><span class="name ef-read">ClothLab — 基于质点-弹簧模型的布料动画与碰撞响应</span><span class="ef-field">2026.11.05</span></a></li>
+          <li><a class="ef-record" href="../clothlab-src/files/%E9%80%89%E9%A2%98%E4%B8%8E%E8%A7%84%E5%88%92.html"><span class="ef-tag">MD</span><span class="ef-field">ClothLab 源码 · 3,771 字</span><span class="name ef-read">计算机动画课程设计 · 选题与实施规划</span><span class="ef-field">2026.11.15</span></a></li>
+      </ol>
+    <h2 class="ef-group-head ef-read"><span>其他文件</span><span class="ef-field">110 项</span></h2>
+    <div class="ef-table-wrap">
+      <table class="ef-table">
+        <thead><tr><th class="num">#</th><th>文件</th><th>类型</th><th class="num">大小</th><th class="num">修改</th></tr></thead>
+        <tbody>
+<tr><td class="num">1</td><td><a href="files/content/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%8A%A8%E7%94%BB-%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86%20%E8%80%83%E8%AF%95%E6%A6%82%E5%86%B5%E4%B8%8E%E5%A4%8D%E4%B9%A0%E6%96%B9%E6%B3%95.pdf">计算机动画-第一部分 考试概况与复习方法.pdf</a> <span class="ef-field">复习资料 / content</span></td><td>PDF</td><td class="num">684 KB</td><td class="num">2026.11.15</td></tr>
+<tr><td class="num">2</td><td><a href="files/content/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%8A%A8%E7%94%BB-%E7%AC%AC%E4%B8%83%E9%83%A8%E5%88%86%20%E7%B2%92%E5%AD%90%E7%B3%BB%E7%BB%9F%E3%80%81%E5%85%83%E7%90%83%E4%B8%8E%E7%BE%A4%E7%BB%84%E5%8A%A8%E7%94%BB.pdf">计算机动画-第七部分 粒子系统、元球与群组动画.pdf</a> <span class="ef-field">复习资料 / content</span></td><td>PDF</td><td class="num">851 KB</td><td class="num">2026.11.15</td></tr>
+<tr><td class="num">3</td><td><a href="files/content/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%8A%A8%E7%94%BB-%E7%AC%AC%E4%B8%89%E9%83%A8%E5%88%86%20%E5%8A%A8%E7%94%BB%E7%9A%8412%E6%9D%A1%E5%9F%BA%E6%9C%AC%E5%8E%9F%E5%88%99.pdf">计算机动画-第三部分 动画的12条基本原则.pdf</a> <span class="ef-field">复习资料 / content</span></td><td>PDF</td><td class="num">576 KB</td><td class="num">2026.11.15</td></tr>
+<tr><td class="num">4</td><td><a href="files/content/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%8A%A8%E7%94%BB-%E7%AC%AC%E4%B9%9D%E9%83%A8%E5%88%86%20%E8%BF%90%E5%8A%A8%E6%8D%95%E8%8E%B7%E3%80%81%E8%A7%92%E8%89%B2%E7%BB%91%E5%AE%9A%E4%B8%8E%E8%A1%A8%E6%83%85%E5%8A%A8%E7%94%BB.pdf">计算机动画-第九部分 运动捕获、角色绑定与表情动画.pdf</a> <span class="ef-field">复习资料 / content</span></td><td>PDF</td><td class="num">618 KB</td><td class="num">2026.11.15</td></tr>
+<tr><td class="num">5</td><td><a href="files/content/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%8A%A8%E7%94%BB-%E7%AC%AC%E4%BA%94%E9%83%A8%E5%88%86%20%E4%BA%8C%E7%BB%B4%E5%BD%A2%E7%8A%B6%E6%B8%90%E5%8F%98%E4%B8%8E%E5%9B%BE%E5%83%8F%20Morphing.pdf">计算机动画-第五部分 二维形状渐变与图像 Morphing.pdf</a> <span class="ef-field">复习资料 / content</span></td><td>PDF</td><td class="num">664 KB</td><td class="num">2026.11.15</td></tr>
+<tr><td class="num">6</td><td><a href="files/content/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%8A%A8%E7%94%BB-%E7%AC%AC%E5%85%AB%E9%83%A8%E5%88%86%20%E5%85%B3%E8%8A%82%E5%8A%A8%E7%94%BB%EF%BC%9A%E6%AD%A3%E5%90%91%E8%BF%90%E5%8A%A8%E5%AD%A6%E4%B8%8E%E9%80%86%E5%90%91%E8%BF%90%E5%8A%A8%E5%AD%A6.pdf">计算机动画-第八部分 关节动画：正向运动学与逆向运动学.pdf</a> <span class="ef-field">复习资料 / content</span></td><td>PDF</td><td class="num">678 KB</td><td class="num">2026.11.15</td></tr>
+<tr><td class="num">7</td><td><a href="files/content/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%8A%A8%E7%94%BB-%E7%AC%AC%E5%85%AD%E9%83%A8%E5%88%86%20%E4%B8%89%E7%BB%B4%E5%BD%A2%E7%8A%B6%E6%B8%90%E5%8F%98%EF%BC%883D%20Morphing%EF%BC%89.pdf">计算机动画-第六部分 三维形状渐变（3D Morphing）.pdf</a> <span class="ef-field">复习资料 / content</span></td><td>PDF</td><td class="num">418 KB</td><td class="num">2026.11.15</td></tr>
+<tr><td class="num">8</td><td><a href="files/content/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%8A%A8%E7%94%BB-%E7%AC%AC%E5%8D%81%E4%B8%80%E9%83%A8%E5%88%86%20%E5%B8%83%E6%96%99%E5%8A%A8%E7%94%BB.pdf">计算机动画-第十一部分 布料动画.pdf</a> <span class="ef-field">复习资料 / content</span></td><td>PDF</td><td class="num">484 KB</td><td class="num">2026.11.15</td></tr>
+<tr><td class="num">9</td><td><a href="files/content/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%8A%A8%E7%94%BB-%E7%AC%AC%E5%8D%81%E4%B8%83%E9%83%A8%E5%88%86%20%E9%99%84%E5%BD%95.pdf">计算机动画-第十七部分 附录.pdf</a> <span class="ef-field">复习资料 / content</span></td><td>PDF</td><td class="num">530 KB</td><td class="num">2026.11.15</td></tr>
+<tr><td class="num">10</td><td><a href="files/content/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%8A%A8%E7%94%BB-%E7%AC%AC%E5%8D%81%E4%B8%89%E9%83%A8%E5%88%86%20%E7%A2%B0%E6%92%9E%E6%A3%80%E6%B5%8B%E4%B8%8E%E7%A2%B0%E6%92%9E%E5%93%8D%E5%BA%94.pdf">计算机动画-第十三部分 碰撞检测与碰撞响应.pdf</a> <span class="ef-field">复习资料 / content</span></td><td>PDF</td><td class="num">616 KB</td><td class="num">2026.11.15</td></tr>
+<tr><td class="num">11</td><td><a href="files/content/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%8A%A8%E7%94%BB-%E7%AC%AC%E5%8D%81%E4%BA%8C%E9%83%A8%E5%88%86%20%E9%9A%90%E5%BC%8F%E6%9B%B2%E9%9D%A2%E4%B8%8E%E5%85%83%E7%90%83%E8%87%AA%E5%8A%A8%E6%8B%9F%E5%90%88.pdf">计算机动画-第十二部分 隐式曲面与元球自动拟合.pdf</a> <span class="ef-field">复习资料 / content</span></td><td>PDF</td><td class="num">502 KB</td><td class="num">2026.11.15</td></tr>
+<tr><td class="num">12</td><td><a href="files/content/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%8A%A8%E7%94%BB-%E7%AC%AC%E5%8D%81%E4%BA%94%E9%83%A8%E5%88%86%20%E5%88%A4%E6%96%AD%E9%A2%98%E6%98%93%E9%94%99%E7%82%B9%EF%BC%88123%20%E6%9D%A1%E8%87%AA%E6%9F%A5%EF%BC%89.pdf">计算机动画-第十五部分 判断题易错点（123 条自查）.pdf</a> <span class="ef-field">复习资料 / content</span></td><td>PDF</td><td class="num">468 KB</td><td class="num">2026.11.15</td></tr>
+<tr><td class="num">13</td><td><a href="files/content/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%8A%A8%E7%94%BB-%E7%AC%AC%E5%8D%81%E5%85%AD%E9%83%A8%E5%88%86%20%E9%97%AE%E7%AD%94%E9%A2%98%E9%A2%84%E6%B5%8B%E4%B8%8E%E7%AD%94%E9%A2%98%E6%A8%A1%E6%9D%BF.pdf">计算机动画-第十六部分 问答题预测与答题模板.pdf</a> <span class="ef-field">复习资料 / content</span></td><td>PDF</td><td class="num">504 KB</td><td class="num">2026.11.15</td></tr>
+<tr><td class="num">14</td><td><a href="files/content/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%8A%A8%E7%94%BB-%E7%AC%AC%E5%8D%81%E5%9B%9B%E9%83%A8%E5%88%86%20%E6%95%B0%E5%80%BC%E7%A7%AF%E5%88%86%E4%B8%8E%E7%89%A9%E7%90%86%E5%8A%A8%E7%94%BB%E5%9F%BA%E7%A1%80.pdf">计算机动画-第十四部分 数值积分与物理动画基础.pdf</a> <span class="ef-field">复习资料 / content</span></td><td>PDF</td><td class="num">360 KB</td><td class="num">2026.11.15</td></tr>
+<tr><td class="num">15</td><td><a href="files/content/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%8A%A8%E7%94%BB-%E7%AC%AC%E5%8D%81%E9%83%A8%E5%88%86%20%E5%8F%98%E5%BD%A2%EF%BC%88Deformation%EF%BC%89.pdf">计算机动画-第十部分 变形（Deformation）.pdf</a> <span class="ef-field">复习资料 / content</span></td><td>PDF</td><td class="num">567 KB</td><td class="num">2026.11.15</td></tr>
+<tr><td class="num">16</td><td><a href="files/content/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%8A%A8%E7%94%BB-%E7%AC%AC%E5%9B%9B%E9%83%A8%E5%88%86%20%E7%89%A9%E4%BD%93%E6%9C%9D%E5%90%91%E7%9A%84%E8%A1%A8%E7%A4%BA%E4%B8%8E%E5%9B%9B%E5%85%83%E6%95%B0.pdf">计算机动画-第四部分 物体朝向的表示与四元数.pdf</a> <span class="ef-field">复习资料 / content</span></td><td>PDF</td><td class="num">516 KB</td><td class="num">2026.11.15</td></tr>
+<tr><td class="num">17</td><td><a href="files/figs/intrinsic.png">intrinsic.png</a> <span class="ef-field">复习资料 / figs</span></td><td>PNG</td><td class="num">45 KB</td><td class="num">2026.11.15</td></tr>
+<tr><td class="num">18</td><td><a href="files/figs/slowinout.png">slowinout.png</a> <span class="ef-field">复习资料 / figs</span></td><td>PNG</td><td class="num">51 KB</td><td class="num">2026.11.15</td></tr>
+<tr><td class="num">19</td><td><a href="files/figs/uncanny.png">uncanny.png</a> <span class="ef-field">复习资料 / figs</span></td><td>PNG</td><td class="num">56 KB</td><td class="num">2026.11.15</td></tr>
+<tr><td class="num">20</td><td><a href="files/figs/wyvill.png">wyvill.png</a> <span class="ef-field">复习资料 / figs</span></td><td>PNG</td><td class="num">55 KB</td><td class="num">2026.11.15</td></tr>
+<tr><td class="num">21</td><td><a href="files/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%8A%A8%E7%94%BB-%E6%9C%9F%E6%9C%AB%E5%A4%8D%E4%B9%A0%E8%B5%84%E6%96%99.pdf">计算机动画-期末复习资料.pdf</a> <span class="ef-field">复习资料</span></td><td>PDF</td><td class="num">1.7 MB</td><td class="num">2026.11.15</td></tr>
+<tr><td class="num">22</td><td><a href="files/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%8A%A8%E7%94%BB%E6%9C%9F%E6%9C%AB%E5%A4%8D%E4%B9%A0%E8%B5%84%E6%96%99.docx">计算机动画期末复习资料.docx</a> <span class="ef-field">复习资料</span></td><td>DOCX</td><td class="num">382 KB</td><td class="num">2026.11.15</td></tr>
+<tr><td class="num">23</td><td><a href="../clothlab-src/files/build.bat">build.bat</a> <span class="ef-field">ClothLab 源码</span></td><td>BAT</td><td class="num">545 B</td><td class="num">2026.11.05</td></tr>
+<tr><td class="num">24</td><td><a href="../clothlab-src/files/src/bench.cpp">bench.cpp</a> <span class="ef-field">ClothLab 源码 / src</span></td><td>C++</td><td class="num">6 KB</td><td class="num">2026.11.05</td></tr>
+<tr><td class="num">25</td><td><a href="../clothlab-src/files/src/bench.h">bench.h</a> <span class="ef-field">ClothLab 源码 / src</span></td><td>C++</td><td class="num">231 B</td><td class="num">2026.11.05</td></tr>
+<tr><td class="num">26</td><td><a href="../clothlab-src/files/src/capture.cpp">capture.cpp</a> <span class="ef-field">ClothLab 源码 / src</span></td><td>C++</td><td class="num">1 KB</td><td class="num">2026.11.05</td></tr>
+<tr><td class="num">27</td><td><a href="../clothlab-src/files/src/capture.h">capture.h</a> <span class="ef-field">ClothLab 源码 / src</span></td><td>C++</td><td class="num">214 B</td><td class="num">2026.11.05</td></tr>
+<tr><td class="num">28</td><td><a href="../clothlab-src/files/src/cloth.cpp">cloth.cpp</a> <span class="ef-field">ClothLab 源码 / src</span></td><td>C++</td><td class="num">11 KB</td><td class="num">2026.11.05</td></tr>
+<tr><td class="num">29</td><td><a href="../clothlab-src/files/src/cloth.h">cloth.h</a> <span class="ef-field">ClothLab 源码 / src</span></td><td>C++</td><td class="num">3 KB</td><td class="num">2026.11.05</td></tr>
+<tr><td class="num">30</td><td><a href="../clothlab-src/files/src/collision.h">collision.h</a> <span class="ef-field">ClothLab 源码 / src</span></td><td>C++</td><td class="num">3 KB</td><td class="num">2026.11.05</td></tr>
+<tr><td class="num">31</td><td><a href="../clothlab-src/files/src/hud.cpp">hud.cpp</a> <span class="ef-field">ClothLab 源码 / src</span></td><td>C++</td><td class="num">6 KB</td><td class="num">2026.11.05</td></tr>
+<tr><td class="num">32</td><td><a href="../clothlab-src/files/src/hud.h">hud.h</a> <span class="ef-field">ClothLab 源码 / src</span></td><td>C++</td><td class="num">837 B</td><td class="num">2026.11.05</td></tr>
+<tr><td class="num">33</td><td><a href="../clothlab-src/files/src/main.cpp">main.cpp</a> <span class="ef-field">ClothLab 源码 / src</span></td><td>C++</td><td class="num">15 KB</td><td class="num">2026.11.05</td></tr>
+<tr><td class="num">34</td><td><a href="../clothlab-src/files/src/math3d.h">math3d.h</a> <span class="ef-field">ClothLab 源码 / src</span></td><td>C++</td><td class="num">3 KB</td><td class="num">2026.11.05</td></tr>
+<tr><td class="num">35</td><td><a href="../clothlab-src/files/src/renderer.cpp">renderer.cpp</a> <span class="ef-field">ClothLab 源码 / src</span></td><td>C++</td><td class="num">13 KB</td><td class="num">2026.11.05</td></tr>
+<tr><td class="num">36</td><td><a href="../clothlab-src/files/src/renderer.h">renderer.h</a> <span class="ef-field">ClothLab 源码 / src</span></td><td>C++</td><td class="num">1 KB</td><td class="num">2026.11.05</td></tr>
+<tr><td class="num">37</td><td><a href="../clothlab-src/files/src/scene.cpp">scene.cpp</a> <span class="ef-field">ClothLab 源码 / src</span></td><td>C++</td><td class="num">3 KB</td><td class="num">2026.11.05</td></tr>
+<tr><td class="num">38</td><td><a href="../clothlab-src/files/src/scene.h">scene.h</a> <span class="ef-field">ClothLab 源码 / src</span></td><td>C++</td><td class="num">479 B</td><td class="num">2026.11.05</td></tr>
+<tr><td class="num">39</td><td><a href="../clothlab-src/files/tools/make_figs.py">make_figs.py</a> <span class="ef-field">ClothLab 源码 / tools</span></td><td>PY</td><td class="num">4 KB</td><td class="num">2026.11.05</td></tr>
+<tr><td class="num">40</td><td><a href="../clothlab-src/files/tools/make_gif.py">make_gif.py</a> <span class="ef-field">ClothLab 源码 / tools</span></td><td>PY</td><td class="num">2 KB</td><td class="num">2026.11.05</td></tr>
+<tr><td class="num">41</td><td><a href="../clothlab-src/files/tools/make_report.py">make_report.py</a> <span class="ef-field">ClothLab 源码 / tools</span></td><td>PY</td><td class="num">40 KB</td><td class="num">2026.11.05</td></tr>
+<tr><td class="num">42</td><td><a href="../clothlab-src/files/tools/make_strip.py">make_strip.py</a> <span class="ef-field">ClothLab 源码 / tools</span></td><td>PY</td><td class="num">2 KB</td><td class="num">2026.11.05</td></tr>
+<tr><td class="num">43</td><td><a href="../clothlab-src/files/tools/plots.py">plots.py</a> <span class="ef-field">ClothLab 源码 / tools</span></td><td>PY</td><td class="num">9 KB</td><td class="num">2026.11.05</td></tr>
+<tr><td class="num">44</td><td>bin/ClothLab.exe <span class="ef-field">未入库</span></td><td>EXE</td><td class="num">680 KB</td><td class="num">—</td></tr>
+<tr><td class="num">45</td><td>bin/frames/frame_00000.tga <span class="ef-field">未入库</span></td><td>TGA</td><td class="num">2.9 MB</td><td class="num">—</td></tr>
+<tr><td class="num">46</td><td>bin/frames/frame_00001.tga <span class="ef-field">未入库</span></td><td>TGA</td><td class="num">2.9 MB</td><td class="num">—</td></tr>
+<tr><td class="num">47</td><td>bin/frames/frame_00002.tga <span class="ef-field">未入库</span></td><td>TGA</td><td class="num">2.9 MB</td><td class="num">—</td></tr>
+<tr><td class="num">48</td><td>bin/frames/frame_00003.tga <span class="ef-field">未入库</span></td><td>TGA</td><td class="num">2.9 MB</td><td class="num">—</td></tr>
+<tr><td class="num">49</td><td>bin/frames/frame_00004.tga <span class="ef-field">未入库</span></td><td>TGA</td><td class="num">2.9 MB</td><td class="num">—</td></tr>
+<tr><td class="num">50</td><td>bin/frames/frame_00005.tga <span class="ef-field">未入库</span></td><td>TGA</td><td class="num">2.9 MB</td><td class="num">—</td></tr>
+<tr><td class="num">51</td><td>bin/frames/frame_00006.tga <span class="ef-field">未入库</span></td><td>TGA</td><td class="num">2.9 MB</td><td class="num">—</td></tr>
+<tr><td class="num">52</td><td>bin/frames/frame_00007.tga <span class="ef-field">未入库</span></td><td>TGA</td><td class="num">2.9 MB</td><td class="num">—</td></tr>
+<tr><td class="num">53</td><td>bin/frames/frame_00008.tga <span class="ef-field">未入库</span></td><td>TGA</td><td class="num">2.9 MB</td><td class="num">—</td></tr>
+<tr><td class="num">54</td><td>bin/frames/frame_00009.tga <span class="ef-field">未入库</span></td><td>TGA</td><td class="num">2.9 MB</td><td class="num">—</td></tr>
+<tr><td class="num">55</td><td>bin/frames/frame_00010.tga <span class="ef-field">未入库</span></td><td>TGA</td><td class="num">2.9 MB</td><td class="num">—</td></tr>
+<tr><td class="num">56</td><td>bin/frames/frame_00011.tga <span class="ef-field">未入库</span></td><td>TGA</td><td class="num">2.9 MB</td><td class="num">—</td></tr>
+<tr><td class="num">57</td><td>bin/frames/frame_00012.tga <span class="ef-field">未入库</span></td><td>TGA</td><td class="num">2.9 MB</td><td class="num">—</td></tr>
+<tr><td class="num">58</td><td>bin/frames/frame_00013.tga <span class="ef-field">未入库</span></td><td>TGA</td><td class="num">2.9 MB</td><td class="num">—</td></tr>
+<tr><td class="num">59</td><td>bin/frames/frame_00014.tga <span class="ef-field">未入库</span></td><td>TGA</td><td class="num">2.9 MB</td><td class="num">—</td></tr>
+<tr><td class="num">60</td><td>bin/frames/frame_00015.tga <span class="ef-field">未入库</span></td><td>TGA</td><td class="num">2.9 MB</td><td class="num">—</td></tr>
+<tr><td class="num">61</td><td>bin/frames/frame_00016.tga <span class="ef-field">未入库</span></td><td>TGA</td><td class="num">2.9 MB</td><td class="num">—</td></tr>
+<tr><td class="num">62</td><td>bin/frames/frame_00017.tga <span class="ef-field">未入库</span></td><td>TGA</td><td class="num">2.9 MB</td><td class="num">—</td></tr>
+<tr><td class="num">63</td><td>bin/frames/frame_00018.tga <span class="ef-field">未入库</span></td><td>TGA</td><td class="num">2.9 MB</td><td class="num">—</td></tr>
+<tr><td class="num">64</td><td>bin/frames/frame_00019.tga <span class="ef-field">未入库</span></td><td>TGA</td><td class="num">2.9 MB</td><td class="num">—</td></tr>
+<tr><td class="num">65</td><td>bin/frames/frame_00020.tga <span class="ef-field">未入库</span></td><td>TGA</td><td class="num">2.9 MB</td><td class="num">—</td></tr>
+<tr><td class="num">66</td><td>bin/frames/frame_00021.tga <span class="ef-field">未入库</span></td><td>TGA</td><td class="num">2.9 MB</td><td class="num">—</td></tr>
+<tr><td class="num">67</td><td>bin/frames/frame_00022.tga <span class="ef-field">未入库</span></td><td>TGA</td><td class="num">2.9 MB</td><td class="num">—</td></tr>
+<tr><td class="num">68</td><td>bin/frames/frame_00023.tga <span class="ef-field">未入库</span></td><td>TGA</td><td class="num">2.9 MB</td><td class="num">—</td></tr>
+<tr><td class="num">69</td><td>bin/frames/frame_00024.tga <span class="ef-field">未入库</span></td><td>TGA</td><td class="num">2.9 MB</td><td class="num">—</td></tr>
+<tr><td class="num">70</td><td>bin/frames/frame_00025.tga <span class="ef-field">未入库</span></td><td>TGA</td><td class="num">2.9 MB</td><td class="num">—</td></tr>
+<tr><td class="num">71</td><td>ClothLab_提交包.zip <span class="ef-field">未入库</span></td><td>ZIP</td><td class="num">19.1 MB</td><td class="num">—</td></tr>
+<tr><td class="num">72</td><td>data/bench.csv <span class="ef-field">未入库</span></td><td>CSV</td><td class="num">5 KB</td><td class="num">—</td></tr>
+<tr><td class="num">73</td><td>data/seq/drape_15.png <span class="ef-field">未入库</span></td><td>PNG</td><td class="num">105 KB</td><td class="num">—</td></tr>
+<tr><td class="num">74</td><td>data/seq/drape_150.png <span class="ef-field">未入库</span></td><td>PNG</td><td class="num">122 KB</td><td class="num">—</td></tr>
+<tr><td class="num">75</td><td>data/seq/drape_45.png <span class="ef-field">未入库</span></td><td>PNG</td><td class="num">121 KB</td><td class="num">—</td></tr>
+<tr><td class="num">76</td><td>data/seq/drape_90.png <span class="ef-field">未入库</span></td><td>PNG</td><td class="num">123 KB</td><td class="num">—</td></tr>
+<tr><td class="num">77</td><td>data/seq/flag_130.png <span class="ef-field">未入库</span></td><td>PNG</td><td class="num">105 KB</td><td class="num">—</td></tr>
+<tr><td class="num">78</td><td>data/seq/flag_180.png <span class="ef-field">未入库</span></td><td>PNG</td><td class="num">106 KB</td><td class="num">—</td></tr>
+<tr><td class="num">79</td><td>data/seq/flag_30.png <span class="ef-field">未入库</span></td><td>PNG</td><td class="num">111 KB</td><td class="num">—</td></tr>
+<tr><td class="num">80</td><td>data/seq/flag_80.png <span class="ef-field">未入库</span></td><td>PNG</td><td class="num">113 KB</td><td class="num">—</td></tr>
+<tr><td class="num">81</td><td>data/seq/tear_10.png <span class="ef-field">未入库</span></td><td>PNG</td><td class="num">116 KB</td><td class="num">—</td></tr>
+<tr><td class="num">82</td><td>data/seq/tear_100.png <span class="ef-field">未入库</span></td><td>PNG</td><td class="num">130 KB</td><td class="num">—</td></tr>
+<tr><td class="num">83</td><td>data/seq/tear_130.png <span class="ef-field">未入库</span></td><td>PNG</td><td class="num">121 KB</td><td class="num">—</td></tr>
+<tr><td class="num">84</td><td>data/seq/tear_40.png <span class="ef-field">未入库</span></td><td>PNG</td><td class="num">126 KB</td><td class="num">—</td></tr>
+<tr><td class="num">85</td><td>data/seq/tear_70.png <span class="ef-field">未入库</span></td><td>PNG</td><td class="num">133 KB</td><td class="num">—</td></tr>
+<tr><td class="num">86</td><td>data/seq/tear_80.png <span class="ef-field">未入库</span></td><td>PNG</td><td class="num">128 KB</td><td class="num">—</td></tr>
+<tr><td class="num">87</td><td>report/figures/drape.gif <span class="ef-field">未入库</span></td><td>GIF</td><td class="num">4.3 MB</td><td class="num">—</td></tr>
+<tr><td class="num">88</td><td>report/figures/fig_e1_stability.png <span class="ef-field">未入库</span></td><td>PNG</td><td class="num">51 KB</td><td class="num">—</td></tr>
+<tr><td class="num">89</td><td>report/figures/fig_e2a_iterations.png <span class="ef-field">未入库</span></td><td>PNG</td><td class="num">35 KB</td><td class="num">—</td></tr>
+<tr><td class="num">90</td><td>report/figures/fig_e2b_iter_time.png <span class="ef-field">未入库</span></td><td>PNG</td><td class="num">32 KB</td><td class="num">—</td></tr>
+<tr><td class="num">91</td><td>report/figures/fig_e3_penetration.png <span class="ef-field">未入库</span></td><td>PNG</td><td class="num">37 KB</td><td class="num">—</td></tr>
+<tr><td class="num">92</td><td>report/figures/fig_e4_friction.png <span class="ef-field">未入库</span></td><td>PNG</td><td class="num">36 KB</td><td class="num">—</td></tr>
+<tr><td class="num">93</td><td>report/figures/fig_e5_resolution.png <span class="ef-field">未入库</span></td><td>PNG</td><td class="num">33 KB</td><td class="num">—</td></tr>
+<tr><td class="num">94</td><td>report/figures/fig_e6_scenes.png <span class="ef-field">未入库</span></td><td>PNG</td><td class="num">32 KB</td><td class="num">—</td></tr>
+<tr><td class="num">95</td><td>report/figures/flag.gif <span class="ef-field">未入库</span></td><td>GIF</td><td class="num">4.5 MB</td><td class="num">—</td></tr>
+<tr><td class="num">96</td><td>report/figures/seq_drape.png <span class="ef-field">未入库</span></td><td>PNG</td><td class="num">202 KB</td><td class="num">—</td></tr>
+<tr><td class="num">97</td><td>report/figures/seq_flag.png <span class="ef-field">未入库</span></td><td>PNG</td><td class="num">246 KB</td><td class="num">—</td></tr>
+<tr><td class="num">98</td><td>report/figures/seq_tear.png <span class="ef-field">未入库</span></td><td>PNG</td><td class="num">190 KB</td><td class="num">—</td></tr>
+<tr><td class="num">99</td><td>report/figures/shot_drape.png <span class="ef-field">未入库</span></td><td>PNG</td><td class="num">301 KB</td><td class="num">—</td></tr>
+<tr><td class="num">100</td><td>report/figures/shot_flag.png <span class="ef-field">未入库</span></td><td>PNG</td><td class="num">297 KB</td><td class="num">—</td></tr>
+<tr><td class="num">101</td><td>report/figures/shot_flag_hud.png <span class="ef-field">未入库</span></td><td>PNG</td><td class="num">334 KB</td><td class="num">—</td></tr>
+<tr><td class="num">102</td><td>report/figures/shot_slope.png <span class="ef-field">未入库</span></td><td>PNG</td><td class="num">222 KB</td><td class="num">—</td></tr>
+<tr><td class="num">103</td><td>report/figures/shot_spheres.png <span class="ef-field">未入库</span></td><td>PNG</td><td class="num">310 KB</td><td class="num">—</td></tr>
+<tr><td class="num">104</td><td>report/figures/shot_table.png <span class="ef-field">未入库</span></td><td>PNG</td><td class="num">279 KB</td><td class="num">—</td></tr>
+<tr><td class="num">105</td><td>report/figures/shot_tear.png <span class="ef-field">未入库</span></td><td>PNG</td><td class="num">313 KB</td><td class="num">—</td></tr>
+<tr><td class="num">106</td><td>report/figures/shot_wire.png <span class="ef-field">未入库</span></td><td>PNG</td><td class="num">282 KB</td><td class="num">—</td></tr>
+<tr><td class="num">107</td><td>report/figures/tear.gif <span class="ef-field">未入库</span></td><td>GIF</td><td class="num">4.1 MB</td><td class="num">—</td></tr>
+<tr><td class="num">108</td><td>report/布料动画实验报告.docx <span class="ef-field">未入库</span></td><td>DOCX</td><td class="num">2.3 MB</td><td class="num">—</td></tr>
+<tr><td class="num">109</td><td>report/布料动画实验报告.pdf <span class="ef-field">未入库</span></td><td>PDF</td><td class="num">804 KB</td><td class="num">—</td></tr>
+<tr><td class="num">110</td><td>sample.doc <span class="ef-field">未入库</span></td><td>DOC</td><td class="num">639 KB</td><td class="num">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="ef-actions back"><a class="ef-btn" href="../physics-review/index.html">大学物理乙2 →</a> <a class="ef-btn" href="../../index.html#all">返回资料库</a></p>
+  </div>
+  <aside class="ef-margin" aria-label="分区与类型">
+    <h2 class="ef-field" style="margin:0 0 .75rem">按分区</h2>
+    <ul class="ef-ledger">
+        <li><span>章节</span><span class="ef-field">13 篇</span></li>
+        <li><span>专题</span><span class="ef-field">3 篇</span></li>
+        <li><span>实验</span><span class="ef-field">2 篇</span></li>
+    </ul>
+    <h2 class="ef-field" style="margin:1.25rem 0 .75rem">按类型</h2>
+    <ul class="ef-ledger">
+        <li><span>MD</span><span class="ef-field">18</span></li>
+        <li><span>PDF</span><span class="ef-field">17</span></li>
+        <li><span>C++</span><span class="ef-field">15</span></li>
+        <li><span>PY</span><span class="ef-field">5</span></li>
+        <li><span>PNG</span><span class="ef-field">4</span></li>
+        <li><span>DOCX</span><span class="ef-field">1</span></li>
+        <li><span>BAT</span><span class="ef-field">1</span></li>
+    </ul>
+  </aside>
+</article>
+
+<footer class="foot">
+  <span class="ef-field">KYSIIN.ARCHIVE · 2026.11.15 · 自动生成</span>
+  <span>用 endfield-ui 渲染 · Saira（SIL OFL）自托管</span>
+</footer>
+<script type="module">
+  import { wireTheme } from './../../assets/fx.js'
+  wireTheme()
+</script>
+<script defer src="../../assets/search.js?v=202611150558"></script>
+<script>
+  /* 首页筛选：三个维度各自单选，组合生效 */
+  (function () {
+    var state = { area: '', term: '' };
+    var cards = [].slice.call(document.querySelectorAll('.col-card'));
+    var count = document.getElementById('filter-count');
+    function apply() {
+      var shown = 0;
+      cards.forEach(function (c) {
+        var ok = (!state.area || c.dataset.area === state.area)
+              && (!state.term || c.dataset.term === state.term);
+        c.hidden = !ok;
+        if (ok) shown++;
+      });
+      if (count) count.textContent = shown + ' 门课';
+    }
+    document.querySelectorAll('.chip').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var dim = b.dataset.dim;
+        state[dim] = b.dataset.val;
+        document.querySelectorAll('.chip[data-dim="' + dim + '"]').forEach(function (x) {
+          x.classList.toggle('is-on', x === b);
+        });
+        apply();
+      });
+    });
+  })();
+</script>
+<script>
+  /* 顶栏高亮：首页有「资料库 / 统计」两个锚点分区，滚到哪一块就点亮哪一项。
+     课程页 / 文章页没有这些锚点，保持静态的「资料库」不变。 */
+  (function () {
+    var nav = document.querySelector('.topbar nav');
+    if (!nav) return;
+    var links = [].slice.call(nav.querySelectorAll('a'));
+    function target(a) {
+      var h = a.getAttribute('href') || '';
+      var i = h.indexOf('#');
+      return i < 0 ? null : document.getElementById(h.slice(i + 1));
+    }
+    var items = links.map(function (a) { return { a: a, el: target(a) }; });
+    if (!items.some(function (t) { return t.el; })) return;
+    var home = items.filter(function (t) { return !t.el; })[0];
+    function setActive(a) {
+      links.forEach(function (x) { x.removeAttribute('aria-current'); });
+      if (a) a.setAttribute('aria-current', 'page');
+    }
+    var ticking = false;
+    function spy() {
+      ticking = false;
+      var line = window.scrollY + 140;
+      var current = home ? home.a : null;
+      items.forEach(function (t) {
+        if (t.el && t.el.getBoundingClientRect().top + window.scrollY <= line) current = t.a;
+      });
+      /* 页面滚到底时最后一块到不了阈值（它下面没有内容了），直接点亮最后一项；
+         但整页本来就装得下时不算"滚到底"，仍按位置判断 */
+      var doc = document.documentElement;
+      if (window.innerHeight + window.scrollY >= doc.scrollHeight - 4
+          && doc.scrollHeight > window.innerHeight + 40) {
+        current = items[items.length - 1].a;
+      }
+      setActive(current);
+    }
+    window.addEventListener('scroll', function () {
+      if (!ticking) { ticking = true; requestAnimationFrame(spy); }
+    }, { passive: true });
+    window.addEventListener('resize', spy);
+    /* 点了某个分区（页面装得下、不发生滚动的情况）：立刻点亮被点的那一项 */
+    window.addEventListener('hashchange', function () {
+      var h = location.hash.slice(1);
+      var hit = items.filter(function (t) { return t.el && t.el.id === h; })[0];
+      if (hit) setActive(hit.a); else spy();
+    });
+    spy();
+  })();
+</script>
+</body>
+</html>

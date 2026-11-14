@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>数据库系统 E-R 图画法规则总结 · KYSIIN.ARCHIVE</title>
+<script src="../../../../assets/variant.js"></script>
+<link rel="stylesheet" href="../../../../assets/local-fonts.css" />
+<link rel="stylesheet" href="../../../../assets/endfield.css" />
+
+<style>
+  body { --tri-h: 3px; --topbar-h: 3.1rem; }
+  body > .ef-tri { position: sticky; top: 0; z-index: 61; }
+  .topbar { position:sticky; top:var(--tri-h); z-index:60;
+    display:flex; align-items:center; gap:1.5rem; padding:.85rem var(--ef-pad);
+    border-bottom:1px solid var(--ef-rule); background:var(--ef-panel); }
+  .topbar .brand { margin:0; font-family:var(--ef-font-ui); font-size:.95rem;
+    font-stretch:var(--ef-wider); font-weight:800; letter-spacing:.08em;
+    text-decoration:none; color:var(--ef-ink); }
+  .topbar nav { display:flex; align-items:center; gap:1.25rem; margin-left:auto; }
+  .topbar nav a { text-decoration:none; color:var(--ef-ink-2); }
+  .foot { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between;
+    gap:1rem; padding:1.5rem var(--ef-pad) 2.5rem; border-top:1px solid var(--ef-rule);
+    color:var(--ef-ink-2); font-size:.875rem; }
+  @media (max-width: 959px) { .ef-spread { grid-template-columns:minmax(0,1fr); }
+    .ef-sheet { border-right:0; border-bottom:1px solid var(--ef-rule); } }
+  @media (max-width:760px) { .topbar { flex-wrap:wrap; gap:.75rem; }
+    .topbar nav { order:3; width:100%; margin-left:0; } }
+
+  .title { margin:1.5rem 0 1rem; font-size:clamp(var(--ef-t-title),5vw,var(--ef-t-h1));
+    font-weight:700; line-height:1.3; }
+  .ef-prose { margin-top:1.75rem; }
+  .ef-prose img { max-width:100%; height:auto; border:1px solid var(--ef-rule); background:#fff; }
+  .ef-prose table { width:100%; border-collapse:collapse; font-size:.9rem; }
+  .ef-prose th, .ef-prose td { border-bottom:1px solid var(--ef-rule); padding:.45rem .6rem; text-align:left; }
+  .ef-prose th { font-family:var(--ef-font-ui); font-stretch:var(--ef-wide); font-size:.8rem; }
+  /* 代码块：整块一个背景；块内的 code 不再带行内边框/内边距 */
+  .ef-prose pre { overflow:auto; margin:1rem 0; padding:.9rem 1rem;
+    background:var(--ef-chip); border-left:3px solid var(--ef-rule);
+    font-size:.85rem; line-height:1.6; tab-size:4; }
+  .ef-prose pre code { display:block; padding:0; border:0; background:none;
+    font-family:var(--ef-font-mono); font-size:.85rem; line-height:1.6; white-space:pre; }
+  .ef-prose :not(pre) > code { font-family:var(--ef-font-mono); font-size:.88em;
+    padding:.1em .35em; border:1px solid var(--ef-rule); background:var(--ef-paper); }
+  .ef-prose blockquote { border-left:3px solid var(--ef-ink); margin:1rem 0; padding:.25rem 0 .25rem 1rem;
+    color:var(--ef-ink-2); }
+
+  /* —— 公式：绝不超出正文栏；行间公式可横向滚动 —— */
+  .ef-prose mjx-container { max-width:100%; }
+  .ef-prose mjx-container[display="true"] { display:block; text-align:center; margin:1.1em 0;
+    max-width:100%; overflow-x:auto; overflow-y:hidden; padding:2px 0; }
+  .ef-prose mjx-container[jax="CHTML"] { font-size:1.02em; }
+  .eq { overflow-x:auto; overflow-y:hidden; max-width:100%; padding:2px 0; }
+  .eq mjx-container[display="true"] { margin:.35em 0; }
+
+  .toc ol { margin:0; padding:0; list-style:none; border-left:1px solid var(--ef-rule); }
+  .toc a { display:block; margin-left:-1px; padding:.22rem 0 .22rem .7rem;
+    border-left:3px solid transparent; color:var(--ef-ink-2); font-size:.85rem;
+    overflow-wrap:anywhere; }
+  .toc a:hover { color:var(--ef-ink); border-left-color:var(--ef-trace); }
+  .toc .lvl3 { padding-left:1.3rem; font-size:.8rem; }
+  .back { margin:2rem 0 0; display:flex; flex-wrap:wrap; gap:.75rem; }
+
+  /* —— 三栏铺满：两侧栏贴边，中间正文吃掉所有剩余宽度 —— */
+  .ef-spread { max-width: none; margin: 0; }
+
+  @media (min-width: 1180px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(11rem, 12vw, 14rem) minmax(0, 1fr) clamp(13rem, 14vw, 17rem);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+  }
+  @media (min-width: 960px) and (max-width: 1179px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(10rem, 12vw, 12rem) minmax(0, 1fr);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+    .ef-spread.has-rail > .toc-aside { display: none; }
+  }
+  @media (min-width: 960px) {
+    .ef-spread > .ef-margin {
+      position: sticky;
+      top: calc(var(--tri-h) + var(--topbar-h));
+      align-self: start;
+      max-height: calc(100vh - var(--tri-h) - var(--topbar-h));
+      overflow-y: auto;
+      scrollbar-width: thin;
+      padding: clamp(1.5rem, 3vw, 2.5rem) 1rem;
+    }
+    /* 两侧栏往屏幕边缘靠，别在页边留空 */
+    .ef-spread > .rail-aside { padding-left: .75rem; padding-right: 1.25rem; }
+    .ef-spread > .toc-aside { padding-left: 1.25rem; padding-right: .75rem; }
+    /* 正文左右留呼吸，但不限制宽度 */
+    .ef-spread > .ef-sheet { padding-left: clamp(2rem, 3.5vw, 4rem); padding-right: clamp(2rem, 3.5vw, 4rem); }
+    /* 套件把正文限制在 40rem；中间栏变宽后这里放开，让文字铺满 */
+    .ef-sheet .ef-prose,
+    .ef-sheet .ef-lede,
+    .ef-sheet .title,
+    .ef-sheet .ef-read,
+    .ef-sheet .ef-facts,
+    .ef-sheet .ef-empty,
+    .ef-sheet .ef-notice { max-width: none; }
+  }
+  .ef-margin .toc a { font-size: .74rem; line-height: 1.5; }
+  .toc a[aria-current] { color: var(--ef-ink); border-left-color: var(--ef-trace); font-weight: 600; }
+  .rail-head { display: block; margin: 0 0 .5rem; padding-bottom: .35rem;
+    border-bottom: 1px solid var(--ef-rule); font-size: .68rem; line-height: 1.5; }
+  .rail-head span { display: inline; }
+  .rail-head span + span { display: block; color: var(--ef-ink-2); }
+  .rail-aside .toc a { padding-top: .3rem; padding-bottom: .3rem; }
+  .rail-tree { list-style:none; margin:0; padding:0; }
+  .rail-tree .tree-name { display:block; padding:.35rem .2rem .35rem .6rem;
+    border-left:3px solid transparent; font-size:.76rem; font-weight:600; color:var(--ef-ink); }
+  .rail-tree .tree-label { display:inline; }
+  .rail-tree .tree-name .ef-field { font-size:.68rem; color:var(--ef-ink-2); margin-left:.35rem;
+    white-space:nowrap; }
+  .rail-tree .tree-group.is-open > .tree-name { border-left-color:var(--ef-trace); }
+  .rail-tree .tree-items { list-style:none; margin:.1rem 0 .5rem; padding:0 0 0 .6rem;
+    border-left:1px solid var(--ef-rule); }
+  .rail-tree .tree-items a { padding-left:.6rem; font-size:.72rem; line-height:1.45; }
+  .tree-row { display:flex; align-items:stretch; gap:.15rem; }
+  .tree-row .tree-name { flex:1 1 auto; min-width:0; }
+  .tree-toggle { flex:none; width:1.55rem; min-height:1.9rem; display:grid; place-items:center;
+    padding:0; border:1px solid var(--ef-rule); background:var(--ef-panel); color:var(--ef-ink-2);
+    cursor:pointer; transition:color .12s var(--ef-ease), border-color .12s var(--ef-ease), background .12s var(--ef-ease); }
+  .tree-toggle:hover { color:var(--ef-ink); border-color:var(--ef-ink); background:var(--ef-chip); }
+  .tree-toggle svg { width:.7rem; height:.7rem; transition:transform .15s var(--ef-ease); }
+  .tree-toggle[aria-expanded="true"] svg { transform:rotate(90deg); }
+  .rail-tree .tree-items[hidden] { display:none; }
+  /* 滚动条统一样式在 assets/local-fonts.css 里定义（页面/侧栏/搜索共用） */
+
+  /* 窄屏：正文优先，两侧栏排到后面 */
+  @media (max-width: 959px) {
+    .ef-spread.has-rail > .ef-sheet { order: 1; }
+    .ef-spread.has-rail > .rail-aside { order: 2; border-top: 1px solid var(--ef-rule); }
+    .ef-spread.has-rail > .toc-aside { order: 3; }
+  }
+
+  /* —— 复习笔记：PDF 下载 —— */
+  .pdf-dl { display:flex; flex-wrap:wrap; align-items:center; gap:.75rem; margin:1.1rem 0 0; }
+  .pdf-dl .ef-btn { border-color:var(--ef-ink); }
+
+  /* —— 打印 / 导出 PDF：只留正文 —— */
+  @page { size:A4; margin:16mm 14mm 18mm; }
+  @media print {
+    html, body { background:#fff !important; }
+    .topbar, .foot, .ef-tri, .rail-aside, .toc-aside, .back, .pdf-dl,
+    .ef-crumb, .ef-eyebrow, .ef-facts, .ef-notice { display:none !important; }
+    .ef-spread, .ef-spread.has-rail { display:block !important; max-width:none !important; }
+    .ef-sheet { border:0 !important; padding:0 !important; background:#fff !important; }
+    .ef-sheet .ef-prose, .ef-sheet .ef-lede, .ef-sheet .title { max-width:none !important; }
+    .title { margin:0 0 1rem; }
+    /* 打印用系统字体：体积小、离线打开不依赖自托管字体 */
+    body, .ef-prose, .title, .ef-lede, .ef-facts,
+    h1, h2, h3, h4, h5, h6 { font-family:"Microsoft YaHei UI","Microsoft YaHei","PingFang SC",sans-serif !important; }
+    .ef-prose pre, .ef-prose code { font-family:Consolas,"Cascadia Mono",monospace !important; }
+    .ef-prose { margin-top:1rem; }
+    .ef-prose pre { white-space:pre-wrap; word-break:break-word; }
+    .ef-prose pre code { white-space:pre-wrap; }
+    .ef-prose img, .ef-prose svg, mjx-container { max-width:100% !important; }
+    a { color:inherit !important; text-decoration:none !important; }
+    .ef-prose h2, .ef-prose h3 { break-after:avoid; }
+    .ef-prose pre, .ef-prose table, .eq { break-inside:avoid; }
+  }
+
+</style>
+</head>
+<body class="ef ef-contours">
+<div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+<header class="topbar">
+  <a class="brand" href="../../../../index.html">KYSIIN.ARCHIVE</a>
+  <nav class="ef-field" aria-label="主导航">
+    <a href="../../../../index.html">首页</a>
+    <a href="../../index.html" aria-current="page">数据库系统</a>
+  </nav>
+  <span data-search-slot></span>
+  <button class="ef-btn small" type="button" data-theme-toggle>切换深浅</button>
+</header>
+
+<article class="ef-spread has-rail">
+  <aside class="ef-margin rail-aside" aria-label="本课程分区">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>数据库系统</span><span>2 区</span></p>
+      <ol class="rail-tree">
+        <li class="tree-group is-open">
+          <div class="tree-row">
+            <a class="tree-name" href="../../index.html#sec-%E4%B8%93%E9%A2%98"><span class="tree-label">专题</span><span class="ef-field">5</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="true" aria-label="收起 专题"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items">
+            <li><a href="数据库系统-ER图画法规则总结.html" aria-current="page">数据库系统 E-R 图画法规则总结</a></li>
+            <li><a href="数据库系统-SQL语句用法总结.html">数据库系统 SQL 语句用法总结</a></li>
+            <li><a href="数据库系统-判断选择题概念总结.html">数据库系统判断/选择题概念总结</a></li>
+            <li><a href="数据库系统-查询优化规则总结.html">数据库系统查询优化规则总结</a></li>
+            <li><a href="数据库系统-计算公式总结.html">数据库系统计算公式总结</a></li>
+          </ol>
+        </li>
+        <li class="tree-group">
+          <div class="tree-row">
+            <a class="tree-name" href="../../index.html#sec-%E5%AE%9E%E9%AA%8C"><span class="tree-label">实验</span><span class="ef-field">9</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="false" aria-label="展开 实验"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items" hidden>
+            <li><a href="../HW/hw6_answers.html">HW6</a></li>
+            <li><a href="../LAB1/LAB1.html">LAB1</a></li>
+            <li><a href="../LAB2/LAB2.html">LAB2</a></li>
+            <li><a href="../LAB3/LAB3.html">LAB3</a></li>
+            <li><a href="../LAB4/LAB4.html">LAB4</a></li>
+            <li><a href="../LAB5/实验报告.html">图书管理系统实验报告</a></li>
+            <li><a href="../大作业/proj/docs/AI辅助开发方法.html">MiniSQL —— AI 辅助开发方法说明</a></li>
+            <li><a href="../大作业/proj/docs/实验报告.html">MiniSQL 实验报告</a></li>
+            <li><a href="../大作业/proj/README.html">MiniSQL —— 精简型单用户 SQL 引擎（C++）</a></li>
+          </ol>
+        </li>
+      </ol>
+      <p class="ef-actions" style="margin:.9rem 0 0">
+        <a class="ef-btn small" href="../../index.html">返回课程</a>
+      </p>
+    </div>
+  </aside>
+  <div class="ef-sheet">
+    <p class="ef-eyebrow slash">Course / Article</p>
+    <p class="ef-crumb ef-field"><a href="../../../../index.html">首页</a><a href="../../index.html">数据库系统</a><span>专题</span><span>final</span></p>
+    <ul class="ef-facts ef-field">
+      <li>专题</li>
+      <li>1,320 字</li>
+      <li>2026.11.15</li>
+      <li>17 个小节</li>
+    </ul>
+    <h1 class="title ef-read">数据库系统 E-R 图画法规则总结</h1>
+    <div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+    <p class="ef-actions pdf-dl"><a class="ef-btn" href="%E6%95%B0%E6%8D%AE%E5%BA%93%E7%B3%BB%E7%BB%9F%20E-R%20%E5%9B%BE%E7%94%BB%E6%B3%95%E8%A7%84%E5%88%99%E6%80%BB%E7%BB%93.pdf" download>下载 PDF</a><span class="ef-field">离线 / 打印版</span></p>
+    
+    <div class="ef-prose">
+<p>说明：本文件基于 <code>6.md</code>，总结 E-R 图中各种图形符号分别表示什么，适合考试前快速背诵。</p>
+<h2 id="1-基本图形">1. 基本图形</h2>
+<ul>
+<li><strong>实体集</strong>：用<strong>矩形</strong>表示。</li>
+<li>矩形上半部分写实体集名称。</li>
+<li>
+<p>下半部分写属性名。</p>
+</li>
+<li>
+<p><strong>联系集</strong>：用<strong>菱形</strong>表示。</p>
+</li>
+<li>
+<p>用线把菱形和参与该联系的实体集连接起来。</p>
+</li>
+<li>
+<p><strong>属性</strong>：在这套笔记的画法里，通常直接写在实体集矩形内部。</p>
+</li>
+<li>对于联系的描述属性，会单独画出来并用虚线连到菱形。</li>
+</ul>
+<h2 id="2-实体集与联系集的特殊表示">2. 实体集与联系集的特殊表示</h2>
+<ul>
+<li>
+<p><strong>弱实体集</strong>：用<strong>双层矩形</strong>表示。</p>
+</li>
+<li>
+<p><strong>识别联系</strong>（弱实体集和识别实体集之间的 identifying relationship）：用<strong>双层菱形</strong>表示。</p>
+</li>
+<li>
+<p><strong>强实体集</strong>：就是普通实体集，因此仍然用<strong>单层矩形</strong>表示。</p>
+</li>
+</ul>
+<h2 id="3-线条与箭头">3. 线条与箭头</h2>
+<ul>
+<li>
+<p><strong>普通参与连接</strong>：用<strong>单线</strong>连接实体集和联系集。</p>
+</li>
+<li>
+<p><strong>完全参与</strong>（total participation）：用<strong>双线</strong>连接实体集和联系集。</p>
+</li>
+<li>
+<p>含义：该实体集中的每个实体都必须至少参加该联系中的一个联系实例。</p>
+</li>
+<li>
+<p><strong>部分参与</strong>（partial participation）：用<strong>单线</strong>连接。</p>
+</li>
+<li>
+<p>这是默认情况。</p>
+</li>
+<li>
+<p><strong>箭头</strong>：表示该侧的最大基数是 <code>1</code>。</p>
+</li>
+<li>
+<p><strong>无箭头</strong>：表示该侧的最大基数是 <code>*</code>（多）。</p>
+</li>
+</ul>
+<h2 id="4-映射基数怎么画">4. 映射基数怎么画</h2>
+<p>设实体集 <code>A</code> 和 <code>B</code> 之间有联系集 <code>R</code>：</p>
+<ul>
+<li><strong>一对一</strong>（one-to-one）：</li>
+<li>
+<p>从菱形出发，连向两个实体集的线都带箭头。</p>
+</li>
+<li>
+<p><strong>一对多 / 多对一</strong>（one-to-many / many-to-one）：</p>
+</li>
+<li>从菱形出发，指向“1”的那一侧画箭头。</li>
+<li>
+<p>指向“多”的那一侧不画箭头。</p>
+</li>
+<li>
+<p><strong>多对多</strong>（many-to-many）：</p>
+</li>
+<li>两边都不画箭头。</li>
+</ul>
+<h2 id="5-单线双线-箭头的含义">5. 单线/双线 + 箭头的含义</h2>
+<p>这份笔记给了一个非常适合直接背的表：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">线条类型</th>
+<th style="text-align: left;">单线</th>
+<th style="text-align: left;">双线</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">箭头</td>
+<td style="text-align: left;"><code>0..1</code></td>
+<td style="text-align: left;"><code>1..1</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">无箭头</td>
+<td style="text-align: left;"><code>0..*</code></td>
+<td style="text-align: left;"><code>1..*</code></td>
+</tr>
+</tbody>
+</table>
+<p>可直接理解为：</p>
+<ul>
+<li>箭头控制“最大值是不是 1”</li>
+<li>双线控制“最小值是不是 1”</li>
+</ul>
+<h2 id="6-lh-标注">6. <code>l..h</code> 标注</h2>
+<ul>
+<li>也可以直接在线条旁边标注 <code>l..h</code>。</li>
+<li>其中：</li>
+<li><code>l</code> 表示最小基数</li>
+<li><code>h</code> 表示最大基数</li>
+</ul>
+<p>常见含义：</p>
+<ul>
+<li><code>0..1</code>：可不参加，最多参加 1 次</li>
+<li><code>1..1</code>：必须参加，且最多参加 1 次</li>
+<li><code>0..*</code>：可不参加，可参加多次</li>
+<li><code>1..*</code>：至少参加 1 次，可参加多次</li>
+</ul>
+<p>特殊情况：</p>
+<ul>
+<li><code>h = *</code>：表示没有最大限制</li>
+<li><code>l = h = 1</code>：表示严格一对一</li>
+</ul>
+<h2 id="7-递归联系与角色名">7. 递归联系与角色名</h2>
+<ul>
+<li>当一个联系集里出现<strong>同一个实体集多次</strong>时，这叫<strong>递归联系</strong>（recursive relationship）。</li>
+<li>这时要在连接菱形和矩形的线旁边标<strong>角色名</strong>（role）。</li>
+<li>角色名的作用：区分“同一个实体集在同一个联系中扮演的不同身份”。</li>
+</ul>
+<h2 id="8-属性类型的画法">8. 属性类型的画法</h2>
+<h3 id="81-复合属性">8.1 复合属性</h3>
+<ul>
+<li><strong>复合属性</strong>（composite attribute）可以拆成多个子属性。</li>
+<li>在图上表现为：</li>
+<li>组件属性紧放在复合属性的下方</li>
+<li>并带有缩进</li>
+<li>可以形成层级结构</li>
+</ul>
+<h3 id="82-多值属性">8.2 多值属性</h3>
+<ul>
+<li><strong>多值属性</strong>（multivalued attribute）在图中用<strong>花括号包裹</strong>。</li>
+</ul>
+<h3 id="83-派生属性">8.3 派生属性</h3>
+<ul>
+<li><strong>派生属性</strong>（derived attribute）在图中<strong>末尾加圆括号</strong>表示。</li>
+</ul>
+<h3 id="84-简单属性">8.4 简单属性</h3>
+<ul>
+<li><strong>简单属性</strong>（simple attribute）就是普通属性，没有额外图形修饰。</li>
+</ul>
+<h2 id="9-主键与判别属性的标识">9. 主键与判别属性的标识</h2>
+<ul>
+<li><strong>主键属性</strong>：通常用<strong>下划线</strong>标识。</li>
+<li>
+<p>实体集的主键要能唯一标识实体。</p>
+</li>
+<li>
+<p><strong>弱实体集的判别属性</strong>（discriminator attributes）：用<strong>虚线下划线</strong>标识。</p>
+</li>
+<li>判别属性不能单独唯一标识弱实体，必须结合识别实体集的主键一起使用。</li>
+</ul>
+<h2 id="10-弱实体相关规则">10. 弱实体相关规则</h2>
+<ul>
+<li>弱实体集用双层矩形。</li>
+<li>识别联系用双层菱形。</li>
+<li>弱实体集到识别联系通常是<strong>双线</strong>：</li>
+<li>因为弱实体集必须完全参与识别联系。</li>
+<li>识别联系到识别实体集一侧通常带<strong>箭头</strong>：</li>
+<li>因为这是一个多对一联系，箭头指向“一”的一侧，也就是识别实体集。</li>
+</ul>
+<h2 id="11-特化泛化isa-相关画法">11. 特化、泛化、ISA 相关画法</h2>
+<ul>
+<li><strong>特化</strong>（specialization）/ <strong>ISA</strong> 关系：</li>
+<li>
+<p>用一个从高层实体集指向低层实体集的<strong>空心箭头</strong>表示。</p>
+</li>
+<li>
+<p><strong>泛化</strong>（generalization）：</p>
+</li>
+<li>
+<p>本质上是特化的逆过程，但图上仍按 ISA/层级结构理解。</p>
+</li>
+<li>
+<p><strong>重叠特化</strong>（overlapping specialization）：</p>
+</li>
+<li>
+<p>图中用<strong>分开的多个箭头</strong>表示。</p>
+</li>
+<li>
+<p><strong>互斥特化</strong>（disjoint specialization）：</p>
+</li>
+<li>图中用<strong>合并的一个箭头</strong>表示。</li>
+</ul>
+<h2 id="12-聚合的画法理解">12. 聚合的画法理解</h2>
+<ul>
+<li><strong>聚合</strong>（aggregation）就是“把一个联系当成一个更高层的对象”。</li>
+<li>记忆上可理解为：</li>
+<li>原本的“联系 + 它参与的实体”一起被看成一个更大的实体块，</li>
+<li>然后再去和别的实体或联系发生关系。</li>
+</ul>
+<h2 id="13-最容易考的速记版">13. 最容易考的速记版</h2>
+<ul>
+<li>实体集：矩形</li>
+<li>弱实体集：双层矩形</li>
+<li>联系集：菱形</li>
+<li>识别联系：双层菱形</li>
+<li>完全参与：双线</li>
+<li>部分参与：单线</li>
+<li>一的一侧：箭头指向它</li>
+<li>多的一侧：无箭头</li>
+<li>角色名：标在线上</li>
+<li>多值属性：花括号</li>
+<li>派生属性：末尾圆括号</li>
+<li>主键：下划线</li>
+<li>弱实体判别属性：虚线下划线</li>
+<li>ISA / 特化：空心箭头</li>
+<li>重叠特化：多个分开的箭头</li>
+<li>互斥特化：合并的一个箭头</li>
+</ul>
+    </div>
+    <p class="back"><a class="ef-btn" href="数据库系统-SQL语句用法总结.html">数据库系统 SQL 语句用法总结 →</a> <a class="ef-btn" href="../../index.html">返回本课</a></p>
+  </div>
+  <aside class="ef-margin toc-aside" aria-label="本页目录">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>本页目录</span><span>17 节</span></p>
+      <ol>
+      <li><a class="lvl2" href="#1-基本图形">1. 基本图形</a></li>
+      <li><a class="lvl2" href="#2-实体集与联系集的特殊表示">2. 实体集与联系集的特殊表示</a></li>
+      <li><a class="lvl2" href="#3-线条与箭头">3. 线条与箭头</a></li>
+      <li><a class="lvl2" href="#4-映射基数怎么画">4. 映射基数怎么画</a></li>
+      <li><a class="lvl2" href="#5-单线双线-箭头的含义">5. 单线/双线 + 箭头的含义</a></li>
+      <li><a class="lvl2" href="#6-lh-标注">6. l..h 标注</a></li>
+      <li><a class="lvl2" href="#7-递归联系与角色名">7. 递归联系与角色名</a></li>
+      <li><a class="lvl2" href="#8-属性类型的画法">8. 属性类型的画法</a></li>
+      <li><a class="lvl3" href="#81-复合属性">8.1 复合属性</a></li>
+      <li><a class="lvl3" href="#82-多值属性">8.2 多值属性</a></li>
+      <li><a class="lvl3" href="#83-派生属性">8.3 派生属性</a></li>
+      <li><a class="lvl3" href="#84-简单属性">8.4 简单属性</a></li>
+      <li><a class="lvl2" href="#9-主键与判别属性的标识">9. 主键与判别属性的标识</a></li>
+      <li><a class="lvl2" href="#10-弱实体相关规则">10. 弱实体相关规则</a></li>
+      <li><a class="lvl2" href="#11-特化泛化isa-相关画法">11. 特化、泛化、ISA 相关画法</a></li>
+      <li><a class="lvl2" href="#12-聚合的画法理解">12. 聚合的画法理解</a></li>
+      <li><a class="lvl2" href="#13-最容易考的速记版">13. 最容易考的速记版</a></li>
+      </ol>
+    </div>
+  </aside>
+</article>
+
+<footer class="foot">
+  <span class="ef-field">KYSIIN.ARCHIVE · 2026.11.15 · 由 Markdown 渲染</span>
+  <span>用 endfield-ui 渲染 · Saira（SIL OFL）自托管</span>
+</footer>
+<script type="module">
+  import { wireTheme } from '../../../../assets/fx.js'
+  wireTheme()
+</script>
+<script defer src="../../../../assets/search.js?v=202611150558"></script>
+<script>
+  /* 左栏：每个分组可独立展开/收起 */
+  (function () {
+    document.querySelectorAll('.tree-toggle').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var li = btn.closest('.tree-group');
+        var list = li ? li.querySelector('.tree-items') : null;
+        var open = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', String(!open));
+        if (list) list.hidden = open;
+        if (li) li.classList.toggle('is-open', !open);
+      });
+    });
+  })();
+</script>
+<script>
+  /* 右栏目录跟随滚动：读到哪一节就把那一行标出来 */
+  (function () {
+    var links = [].slice.call(document.querySelectorAll('.toc-aside a[href^="#"]'));
+    if (!links.length) return;
+    var items = links.map(function (a) {
+      var el = document.getElementById(a.getAttribute('href').slice(1));
+      return el ? { a: a, el: el } : null;
+    }).filter(Boolean);
+    if (!items.length) return;
+    var ticking = false;
+    function spy() {
+      ticking = false;
+      var line = window.scrollY + 140;
+      var best = null;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].el.getBoundingClientRect().top + window.scrollY <= line) best = items[i];
+      }
+      links.forEach(function (a) { a.removeAttribute('aria-current'); });
+      if (best) best.a.setAttribute('aria-current', 'true');
+    }
+    window.addEventListener('scroll', function () {
+      if (!ticking) { ticking = true; requestAnimationFrame(spy); }
+    }, { passive: true });
+    spy();
+  })();
+</script>
+</body>
+</html>

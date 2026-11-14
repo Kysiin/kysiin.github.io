@@ -1,0 +1,30 @@
+{
+  "_note": "分组元数据：area=方向，term=学期。归属（章节/专题/实验）不再是分组属性，改为每篇文章在 sections.json 里登记；一门课由哪些分组组成写在 build_site.py 的 COLLECTIONS（course 字段）。",
+  "areas": [
+    "信息安全",
+    "计算机基础",
+    "数理基础",
+    "计算机拓展"
+  ],
+  "collections": [
+    { "slug": "animation-review", "area": "计算机拓展", "term": "2026秋" },
+    { "slug": "physics-review", "area": "数理基础", "term": "2026秋" },
+    { "slug": "sfs", "area": "信息安全", "term": "2026秋" },
+    { "slug": "signal", "area": "信息安全", "term": "2026秋" },
+    { "slug": "wireless", "area": "信息安全", "term": "2026春" },
+    { "slug": "oop", "area": "计算机基础", "term": "2026春" },
+    { "slug": "sys2", "area": "计算机基础", "term": "2026秋" },
+    { "slug": "netlab", "area": "计算机基础", "term": "2026秋" },
+    { "slug": "phy-notes", "area": "数理基础", "term": "2026秋" },
+    { "slug": "clothlab-src", "area": "计算机拓展", "term": "2026秋" },
+    { "slug": "clothlab-out", "area": "计算机拓展", "term": "2026秋" },
+    { "slug": "db-2026", "area": "计算机基础", "term": "2026春" },
+    { "slug": "sys1-2024", "area": "计算机基础", "term": "2024春" },
+    { "slug": "sysintro-2023", "area": "计算机基础", "term": "2023秋" },
+    { "slug": "netsec-2026", "area": "信息安全", "term": "2026春" },
+    { "slug": "crypto-2026", "area": "信息安全", "term": "2026春" },
+    { "slug": "ads-2024", "area": "计算机基础", "term": "2024春" },
+    { "slug": "iot-2026", "area": "计算机拓展", "term": "2026春" },
+    { "slug": "compiler-2026", "area": "计算机基础", "term": "2026春" }
+  ]
+}

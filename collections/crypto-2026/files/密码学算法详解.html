@@ -1,0 +1,1094 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>密码学算法详解文档 · KYSIIN.ARCHIVE</title>
+<script src="../../../assets/variant.js"></script>
+<link rel="stylesheet" href="../../../assets/local-fonts.css" />
+<link rel="stylesheet" href="../../../assets/endfield.css" />
+
+<style>
+  body { --tri-h: 3px; --topbar-h: 3.1rem; }
+  body > .ef-tri { position: sticky; top: 0; z-index: 61; }
+  .topbar { position:sticky; top:var(--tri-h); z-index:60;
+    display:flex; align-items:center; gap:1.5rem; padding:.85rem var(--ef-pad);
+    border-bottom:1px solid var(--ef-rule); background:var(--ef-panel); }
+  .topbar .brand { margin:0; font-family:var(--ef-font-ui); font-size:.95rem;
+    font-stretch:var(--ef-wider); font-weight:800; letter-spacing:.08em;
+    text-decoration:none; color:var(--ef-ink); }
+  .topbar nav { display:flex; align-items:center; gap:1.25rem; margin-left:auto; }
+  .topbar nav a { text-decoration:none; color:var(--ef-ink-2); }
+  .foot { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between;
+    gap:1rem; padding:1.5rem var(--ef-pad) 2.5rem; border-top:1px solid var(--ef-rule);
+    color:var(--ef-ink-2); font-size:.875rem; }
+  @media (max-width: 959px) { .ef-spread { grid-template-columns:minmax(0,1fr); }
+    .ef-sheet { border-right:0; border-bottom:1px solid var(--ef-rule); } }
+  @media (max-width:760px) { .topbar { flex-wrap:wrap; gap:.75rem; }
+    .topbar nav { order:3; width:100%; margin-left:0; } }
+
+  .title { margin:1.5rem 0 1rem; font-size:clamp(var(--ef-t-title),5vw,var(--ef-t-h1));
+    font-weight:700; line-height:1.3; }
+  .ef-prose { margin-top:1.75rem; }
+  .ef-prose img { max-width:100%; height:auto; border:1px solid var(--ef-rule); background:#fff; }
+  .ef-prose table { width:100%; border-collapse:collapse; font-size:.9rem; }
+  .ef-prose th, .ef-prose td { border-bottom:1px solid var(--ef-rule); padding:.45rem .6rem; text-align:left; }
+  .ef-prose th { font-family:var(--ef-font-ui); font-stretch:var(--ef-wide); font-size:.8rem; }
+  /* 代码块：整块一个背景；块内的 code 不再带行内边框/内边距 */
+  .ef-prose pre { overflow:auto; margin:1rem 0; padding:.9rem 1rem;
+    background:var(--ef-chip); border-left:3px solid var(--ef-rule);
+    font-size:.85rem; line-height:1.6; tab-size:4; }
+  .ef-prose pre code { display:block; padding:0; border:0; background:none;
+    font-family:var(--ef-font-mono); font-size:.85rem; line-height:1.6; white-space:pre; }
+  .ef-prose :not(pre) > code { font-family:var(--ef-font-mono); font-size:.88em;
+    padding:.1em .35em; border:1px solid var(--ef-rule); background:var(--ef-paper); }
+  .ef-prose blockquote { border-left:3px solid var(--ef-ink); margin:1rem 0; padding:.25rem 0 .25rem 1rem;
+    color:var(--ef-ink-2); }
+
+  /* —— 公式：绝不超出正文栏；行间公式可横向滚动 —— */
+  .ef-prose mjx-container { max-width:100%; }
+  .ef-prose mjx-container[display="true"] { display:block; text-align:center; margin:1.1em 0;
+    max-width:100%; overflow-x:auto; overflow-y:hidden; padding:2px 0; }
+  .ef-prose mjx-container[jax="CHTML"] { font-size:1.02em; }
+  .eq { overflow-x:auto; overflow-y:hidden; max-width:100%; padding:2px 0; }
+  .eq mjx-container[display="true"] { margin:.35em 0; }
+
+  .toc ol { margin:0; padding:0; list-style:none; border-left:1px solid var(--ef-rule); }
+  .toc a { display:block; margin-left:-1px; padding:.22rem 0 .22rem .7rem;
+    border-left:3px solid transparent; color:var(--ef-ink-2); font-size:.85rem;
+    overflow-wrap:anywhere; }
+  .toc a:hover { color:var(--ef-ink); border-left-color:var(--ef-trace); }
+  .toc .lvl3 { padding-left:1.3rem; font-size:.8rem; }
+  .back { margin:2rem 0 0; display:flex; flex-wrap:wrap; gap:.75rem; }
+
+  /* —— 三栏铺满：两侧栏贴边，中间正文吃掉所有剩余宽度 —— */
+  .ef-spread { max-width: none; margin: 0; }
+
+  @media (min-width: 1180px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(11rem, 12vw, 14rem) minmax(0, 1fr) clamp(13rem, 14vw, 17rem);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+  }
+  @media (min-width: 960px) and (max-width: 1179px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(10rem, 12vw, 12rem) minmax(0, 1fr);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+    .ef-spread.has-rail > .toc-aside { display: none; }
+  }
+  @media (min-width: 960px) {
+    .ef-spread > .ef-margin {
+      position: sticky;
+      top: calc(var(--tri-h) + var(--topbar-h));
+      align-self: start;
+      max-height: calc(100vh - var(--tri-h) - var(--topbar-h));
+      overflow-y: auto;
+      scrollbar-width: thin;
+      padding: clamp(1.5rem, 3vw, 2.5rem) 1rem;
+    }
+    /* 两侧栏往屏幕边缘靠，别在页边留空 */
+    .ef-spread > .rail-aside { padding-left: .75rem; padding-right: 1.25rem; }
+    .ef-spread > .toc-aside { padding-left: 1.25rem; padding-right: .75rem; }
+    /* 正文左右留呼吸，但不限制宽度 */
+    .ef-spread > .ef-sheet { padding-left: clamp(2rem, 3.5vw, 4rem); padding-right: clamp(2rem, 3.5vw, 4rem); }
+    /* 套件把正文限制在 40rem；中间栏变宽后这里放开，让文字铺满 */
+    .ef-sheet .ef-prose,
+    .ef-sheet .ef-lede,
+    .ef-sheet .title,
+    .ef-sheet .ef-read,
+    .ef-sheet .ef-facts,
+    .ef-sheet .ef-empty,
+    .ef-sheet .ef-notice { max-width: none; }
+  }
+  .ef-margin .toc a { font-size: .74rem; line-height: 1.5; }
+  .toc a[aria-current] { color: var(--ef-ink); border-left-color: var(--ef-trace); font-weight: 600; }
+  .rail-head { display: block; margin: 0 0 .5rem; padding-bottom: .35rem;
+    border-bottom: 1px solid var(--ef-rule); font-size: .68rem; line-height: 1.5; }
+  .rail-head span { display: inline; }
+  .rail-head span + span { display: block; color: var(--ef-ink-2); }
+  .rail-aside .toc a { padding-top: .3rem; padding-bottom: .3rem; }
+  .rail-tree { list-style:none; margin:0; padding:0; }
+  .rail-tree .tree-name { display:block; padding:.35rem .2rem .35rem .6rem;
+    border-left:3px solid transparent; font-size:.76rem; font-weight:600; color:var(--ef-ink); }
+  .rail-tree .tree-label { display:inline; }
+  .rail-tree .tree-name .ef-field { font-size:.68rem; color:var(--ef-ink-2); margin-left:.35rem;
+    white-space:nowrap; }
+  .rail-tree .tree-group.is-open > .tree-name { border-left-color:var(--ef-trace); }
+  .rail-tree .tree-items { list-style:none; margin:.1rem 0 .5rem; padding:0 0 0 .6rem;
+    border-left:1px solid var(--ef-rule); }
+  .rail-tree .tree-items a { padding-left:.6rem; font-size:.72rem; line-height:1.45; }
+  .tree-row { display:flex; align-items:stretch; gap:.15rem; }
+  .tree-row .tree-name { flex:1 1 auto; min-width:0; }
+  .tree-toggle { flex:none; width:1.55rem; min-height:1.9rem; display:grid; place-items:center;
+    padding:0; border:1px solid var(--ef-rule); background:var(--ef-panel); color:var(--ef-ink-2);
+    cursor:pointer; transition:color .12s var(--ef-ease), border-color .12s var(--ef-ease), background .12s var(--ef-ease); }
+  .tree-toggle:hover { color:var(--ef-ink); border-color:var(--ef-ink); background:var(--ef-chip); }
+  .tree-toggle svg { width:.7rem; height:.7rem; transition:transform .15s var(--ef-ease); }
+  .tree-toggle[aria-expanded="true"] svg { transform:rotate(90deg); }
+  .rail-tree .tree-items[hidden] { display:none; }
+  /* 滚动条统一样式在 assets/local-fonts.css 里定义（页面/侧栏/搜索共用） */
+
+  /* 窄屏：正文优先，两侧栏排到后面 */
+  @media (max-width: 959px) {
+    .ef-spread.has-rail > .ef-sheet { order: 1; }
+    .ef-spread.has-rail > .rail-aside { order: 2; border-top: 1px solid var(--ef-rule); }
+    .ef-spread.has-rail > .toc-aside { order: 3; }
+  }
+
+  /* —— 复习笔记：PDF 下载 —— */
+  .pdf-dl { display:flex; flex-wrap:wrap; align-items:center; gap:.75rem; margin:1.1rem 0 0; }
+  .pdf-dl .ef-btn { border-color:var(--ef-ink); }
+
+  /* —— 打印 / 导出 PDF：只留正文 —— */
+  @page { size:A4; margin:16mm 14mm 18mm; }
+  @media print {
+    html, body { background:#fff !important; }
+    .topbar, .foot, .ef-tri, .rail-aside, .toc-aside, .back, .pdf-dl,
+    .ef-crumb, .ef-eyebrow, .ef-facts, .ef-notice { display:none !important; }
+    .ef-spread, .ef-spread.has-rail { display:block !important; max-width:none !important; }
+    .ef-sheet { border:0 !important; padding:0 !important; background:#fff !important; }
+    .ef-sheet .ef-prose, .ef-sheet .ef-lede, .ef-sheet .title { max-width:none !important; }
+    .title { margin:0 0 1rem; }
+    /* 打印用系统字体：体积小、离线打开不依赖自托管字体 */
+    body, .ef-prose, .title, .ef-lede, .ef-facts,
+    h1, h2, h3, h4, h5, h6 { font-family:"Microsoft YaHei UI","Microsoft YaHei","PingFang SC",sans-serif !important; }
+    .ef-prose pre, .ef-prose code { font-family:Consolas,"Cascadia Mono",monospace !important; }
+    .ef-prose { margin-top:1rem; }
+    .ef-prose pre { white-space:pre-wrap; word-break:break-word; }
+    .ef-prose pre code { white-space:pre-wrap; }
+    .ef-prose img, .ef-prose svg, mjx-container { max-width:100% !important; }
+    a { color:inherit !important; text-decoration:none !important; }
+    .ef-prose h2, .ef-prose h3 { break-after:avoid; }
+    .ef-prose pre, .ef-prose table, .eq { break-inside:avoid; }
+  }
+
+</style>
+</head>
+<body class="ef ef-contours">
+<div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+<header class="topbar">
+  <a class="brand" href="../../../index.html">KYSIIN.ARCHIVE</a>
+  <nav class="ef-field" aria-label="主导航">
+    <a href="../../../index.html">首页</a>
+    <a href="../index.html" aria-current="page">密码学</a>
+  </nav>
+  <span data-search-slot></span>
+  <button class="ef-btn small" type="button" data-theme-toggle>切换深浅</button>
+</header>
+
+<article class="ef-spread has-rail">
+  <aside class="ef-margin rail-aside" aria-label="本课程分区">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>密码学</span><span>2 区</span></p>
+      <ol class="rail-tree">
+        <li class="tree-group is-open">
+          <div class="tree-row">
+            <a class="tree-name" href="../index.html#sec-%E7%AB%A0%E8%8A%82"><span class="tree-label">章节</span><span class="ef-field">1</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="true" aria-label="收起 章节"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items">
+            <li><a href="密码学算法详解.html" aria-current="page">密码学算法详解文档</a></li>
+          </ol>
+        </li>
+        <li class="tree-group">
+          <div class="tree-row">
+            <a class="tree-name" href="../index.html#sec-%E5%AE%9E%E9%AA%8C"><span class="tree-label">实验</span><span class="ef-field">3</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="false" aria-label="展开 实验"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items" hidden>
+            <li><a href="crack_enigma/crack_enigma_代码详解.html">`crack_enigma.c` 代码详解</a></li>
+            <li><a href="enigma(easy)/解答说明.html">Enigma 破解题解答说明</a></li>
+            <li><a href="myaes/解析.html">MyAes 实验解析</a></li>
+          </ol>
+        </li>
+      </ol>
+      <p class="ef-actions" style="margin:.9rem 0 0">
+        <a class="ef-btn small" href="../index.html">返回课程</a>
+      </p>
+    </div>
+  </aside>
+  <div class="ef-sheet">
+    <p class="ef-eyebrow slash">Course / Article</p>
+    <p class="ef-crumb ef-field"><a href="../../../index.html">首页</a><a href="../index.html">密码学</a><span>章节</span><span>根目录</span></p>
+    <ul class="ef-facts ef-field">
+      <li>章节</li>
+      <li>6,198 字</li>
+      <li>2026.11.15</li>
+      <li>49 个小节</li>
+    </ul>
+    <h1 class="title ef-read">密码学算法详解文档</h1>
+    <div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+    
+    
+    <div class="ef-prose">
+<blockquote>
+<p>本文档涵盖古典密码、哈希算法、对称加密（DES、AES）与非对称加密（RSA）。
+每个算法包含 <strong>原理</strong>、<strong>加密/解密代码</strong>、<strong>解析</strong> 三部分。
+代码以 Python 为主（部分依赖 <code>pycryptodome</code>、<code>hashlib</code>）。</p>
+</blockquote>
+<hr />
+<h2 id="目录">目录</h2>
+<ul>
+<li><a href="#一古典密码">一、古典密码</a></li>
+<li><a href="#1-加法密码凯撒密码">1. 加法密码（凯撒密码）</a></li>
+<li><a href="#2-乘法密码">2. 乘法密码</a></li>
+<li><a href="#3-仿射密码">3. 仿射密码</a></li>
+<li><a href="#4-多表密码维吉尼亚">4. 多表密码（维吉尼亚）</a></li>
+<li><a href="#5-enigma-机">5. Enigma 机</a></li>
+<li><a href="#二哈希与口令破解">二、哈希与口令破解</a></li>
+<li><a href="#6-md5">6. MD5</a></li>
+<li><a href="#7-彩虹表">7. 彩虹表</a></li>
+<li><a href="#三对称加密">三、对称加密</a></li>
+<li><a href="#8-des">8. DES</a></li>
+<li><a href="#9-aes">9. AES</a></li>
+<li><a href="#四非对称加密">四、非对称加密</a></li>
+<li><a href="#10-rsa">10. RSA</a></li>
+<li><a href="#附录环境与安全提示">附录：环境与安全提示</a></li>
+</ul>
+<hr />
+<h2 id="一古典密码">一、古典密码</h2>
+<p>古典密码大多基于 <strong>替换（substitution）</strong> 与 <strong>置换（permutation）</strong>，安全性依赖算法保密或密钥空间，现已不具备实际安全性，仅用于教学。</p>
+<p>下面古典密码统一只处理 26 个英文字母（A–Z），其余字符原样保留。</p>
+<hr />
+<h2 id="1-加法密码凯撒密码">1. 加法密码（凯撒密码）</h2>
+<h3 id="原理">原理</h3>
+<p>加法密码是最简单的单表替换密码。把每个字母看作 <code>0..25</code> 的数字，加上密钥 <code>k</code> 后对 26 取模：</p>
+<pre><code>加密： E(x) = (x + k) mod 26
+解密： D(y) = (y - k) mod 26
+</code></pre>
+<p>凯撒密码是 <code>k = 3</code> 的特例。密钥空间只有 25 种（k=0 无效），可被暴力穷举瞬间破解。</p>
+<h3 id="代码">代码</h3>
+<pre><code class="language-python">def caesar_encrypt(text: str, k: int) -&gt; str:
+    result = []
+    for ch in text:
+        if ch.isupper():
+            result.append(chr((ord(ch) - ord('A') + k) % 26 + ord('A')))
+        elif ch.islower():
+            result.append(chr((ord(ch) - ord('a') + k) % 26 + ord('a')))
+        else:
+            result.append(ch)  # 非字母原样保留
+    return ''.join(result)
+
+def caesar_decrypt(text: str, k: int) -&gt; str:
+    return caesar_encrypt(text, -k)  # 解密即加 -k
+
+def caesar_bruteforce(cipher: str):
+    &quot;&quot;&quot;暴力破解：打印所有 25 种可能&quot;&quot;&quot;
+    for k in range(1, 26):
+        print(f&quot;k={k:2d}: {caesar_decrypt(cipher, k)}&quot;)
+
+if __name__ == &quot;__main__&quot;:
+    msg = &quot;Hello, World!&quot;
+    enc = caesar_encrypt(msg, 3)
+    print(&quot;加密:&quot;, enc)              # Khoor, Zruog!
+    print(&quot;解密:&quot;, caesar_decrypt(enc, 3))
+    print(&quot;---- 暴力破解 ----&quot;)
+    caesar_bruteforce(enc)
+</code></pre>
+<h3 id="解析">解析</h3>
+<ul>
+<li><strong>优点</strong>：实现极简，是理解模运算替换的入门。</li>
+<li><strong>弱点</strong>：密钥空间仅 25，暴力破解（brute force）一瞬完成；即使不暴力，单表替换保留了字母频率特征，<strong>频率分析</strong> 也能轻易破解（英文中 <code>e</code>、<code>t</code>、<code>a</code> 最常见）。</li>
+<li><code>caesar_decrypt</code> 复用加密函数取负密钥，体现了加法群的对称性。</li>
+</ul>
+<hr />
+<h2 id="2-乘法密码">2. 乘法密码</h2>
+<h3 id="原理_1">原理</h3>
+<p>把加法换成乘法：</p>
+<pre><code>加密： E(x) = (x * k) mod 26
+解密： D(y) = (y * k⁻¹) mod 26
+</code></pre>
+<p>其中 <code>k⁻¹</code> 是 <code>k</code> 在模 26 下的 <strong>乘法逆元</strong>。
+要使加密可逆（双射），密钥 <code>k</code> 必须与 26 <strong>互素</strong>，即 <code>gcd(k, 26) = 1</code>。
+合法密钥只有 12 个：<code>{1,3,5,7,9,11,15,17,19,21,23,25}</code>。</p>
+<h3 id="代码_1">代码</h3>
+<pre><code class="language-python">from math import gcd
+
+def extended_gcd(a: int, b: int):
+    &quot;&quot;&quot;返回 (gcd, x)，满足 a*x + b*y = gcd&quot;&quot;&quot;
+    old_r, r = a, b
+    old_s, s = 1, 0
+    while r != 0:
+        q = old_r // r
+        old_r, r = r, old_r - q * r
+        old_s, s = s, old_s - q * s
+    return old_r, old_s  # old_s 即 x
+
+def mod_inverse(a: int, m: int) -&gt; int:
+    &quot;&quot;&quot;求 a 在模 m 下的乘法逆元（扩展欧几里得）&quot;&quot;&quot;
+    g, x = extended_gcd(a, m)
+    if g != 1:
+        raise ValueError(f&quot;{a} 与 {m} 不互素，无逆元&quot;)
+    return x % m
+
+def mult_encrypt(text: str, k: int) -&gt; str:
+    if gcd(k, 26) != 1:
+        raise ValueError(&quot;密钥必须与 26 互素&quot;)
+    out = []
+    for ch in text:
+        if ch.isalpha():
+            base = ord('A') if ch.isupper() else ord('a')
+            out.append(chr((ord(ch) - base) * k % 26 + base))
+        else:
+            out.append(ch)
+    return ''.join(out)
+
+def mult_decrypt(text: str, k: int) -&gt; str:
+    k_inv = mod_inverse(k, 26)
+    return mult_encrypt(text, k_inv)
+
+if __name__ == &quot;__main__&quot;:
+    enc = mult_encrypt(&quot;HELLO&quot;, 7)
+    print(&quot;加密:&quot;, enc)                 # XCZZU
+    print(&quot;解密:&quot;, mult_decrypt(enc, 7)) # HELLO
+</code></pre>
+<h3 id="解析_1">解析</h3>
+<ul>
+<li><strong>关键约束</strong>：<code>gcd(k,26)=1</code>。若 <code>k</code> 与 26 有公因子（如 2 或 13），多个明文会映射到同一密文，无法解密。</li>
+<li><strong>乘法逆元</strong> 用扩展欧几里得算法求得，例如 <code>7⁻¹ mod 26 = 15</code>（因为 <code>7*15 = 105 = 4*26 + 1</code>）。</li>
+<li>字母 <code>A</code>（=0）乘任何数仍为 0，即 <code>A</code> 永远加密为 <code>A</code>，这是乘法密码的固有缺陷。密钥空间更小（仅 12），安全性比加法密码还弱。</li>
+</ul>
+<hr />
+<h2 id="3-仿射密码">3. 仿射密码</h2>
+<h3 id="原理_2">原理</h3>
+<p>仿射（Affine）密码结合加法与乘法，是两者的推广：</p>
+<pre><code>加密： E(x) = (a*x + b) mod 26
+解密： D(y) = a⁻¹ * (y - b) mod 26
+</code></pre>
+<p>密钥为 <code>(a, b)</code>，要求 <code>gcd(a, 26) = 1</code>。
+密钥空间 = <code>12（a 的取值） × 26（b 的取值） = 312</code>，仍可暴力破解。</p>
+<h3 id="代码_2">代码</h3>
+<pre><code class="language-python">from math import gcd
+
+def extended_gcd(a, b):
+    old_r, r, old_s, s = a, b, 1, 0
+    while r:
+        q = old_r // r
+        old_r, r = r, old_r - q * r
+        old_s, s = s, old_s - q * s
+    return old_r, old_s
+
+def mod_inverse(a, m):
+    g, x = extended_gcd(a, m)
+    if g != 1:
+        raise ValueError(&quot;无逆元&quot;)
+    return x % m
+
+def affine_encrypt(text: str, a: int, b: int) -&gt; str:
+    if gcd(a, 26) != 1:
+        raise ValueError(&quot;a 必须与 26 互素&quot;)
+    out = []
+    for ch in text:
+        if ch.isalpha():
+            base = ord('A') if ch.isupper() else ord('a')
+            x = ord(ch) - base
+            out.append(chr((a * x + b) % 26 + base))
+        else:
+            out.append(ch)
+    return ''.join(out)
+
+def affine_decrypt(text: str, a: int, b: int) -&gt; str:
+    a_inv = mod_inverse(a, 26)
+    out = []
+    for ch in text:
+        if ch.isalpha():
+            base = ord('A') if ch.isupper() else ord('a')
+            y = ord(ch) - base
+            out.append(chr(a_inv * (y - b) % 26 + base))
+        else:
+            out.append(ch)
+    return ''.join(out)
+
+if __name__ == &quot;__main__&quot;:
+    enc = affine_encrypt(&quot;AFFINE CIPHER&quot;, 5, 8)
+    print(&quot;加密:&quot;, enc)                       # IHHWVC SWFRCP
+    print(&quot;解密:&quot;, affine_decrypt(enc, 5, 8)) # AFFINE CIPHER
+</code></pre>
+<h3 id="解析_2">解析</h3>
+<ul>
+<li>当 <code>a=1</code> 时退化为加法密码；当 <code>b=0</code> 时退化为乘法密码。仿射密码是它们的统一框架。</li>
+<li>解密公式来源：由 <code>y = a*x + b</code>，移项得 <code>x = a⁻¹*(y - b)</code>，全部在模 26 下进行。</li>
+<li>仍是单表替换，<strong>频率分析</strong> 有效：只要确定两个明密文字母对应关系，即可解出 <code>(a, b)</code> 的二元一次同余方程组。</li>
+</ul>
+<hr />
+<h2 id="4-多表密码维吉尼亚">4. 多表密码（维吉尼亚）</h2>
+<h3 id="原理_3">原理</h3>
+<p>多表（polyalphabetic）密码用 <strong>多个替换表</strong> 轮流加密，破坏单表的频率特征。最著名的是 <strong>维吉尼亚（Vigenère）密码</strong>：</p>
+<p>用一个密钥词（如 <code>KEY</code>）循环对齐明文，每个明文字母按对应密钥字母做加法移位：</p>
+<pre><code>加密： Cᵢ = (Pᵢ + Kᵢ mod len) mod 26
+解密： Pᵢ = (Cᵢ - Kᵢ mod len) mod 26
+</code></pre>
+<p>不同位置使用不同移位量，同一明文字母可加密成不同密文，掩盖了频率分布。</p>
+<h3 id="代码_3">代码</h3>
+<pre><code class="language-python">def vigenere_encrypt(text: str, key: str) -&gt; str:
+    key = key.upper()
+    out, ki = [], 0
+    for ch in text:
+        if ch.isalpha():
+            base = ord('A') if ch.isupper() else ord('a')
+            shift = ord(key[ki % len(key)]) - ord('A')
+            out.append(chr((ord(ch) - base + shift) % 26 + base))
+            ki += 1  # 只在字母上推进密钥指针
+        else:
+            out.append(ch)
+    return ''.join(out)
+
+def vigenere_decrypt(text: str, key: str) -&gt; str:
+    key = key.upper()
+    out, ki = [], 0
+    for ch in text:
+        if ch.isalpha():
+            base = ord('A') if ch.isupper() else ord('a')
+            shift = ord(key[ki % len(key)]) - ord('A')
+            out.append(chr((ord(ch) - base - shift) % 26 + base))
+            ki += 1
+        else:
+            out.append(ch)
+    return ''.join(out)
+
+if __name__ == &quot;__main__&quot;:
+    enc = vigenere_encrypt(&quot;ATTACK AT DAWN&quot;, &quot;LEMON&quot;)
+    print(&quot;加密:&quot;, enc)                          # LXFOPV EF RNHR
+    print(&quot;解密:&quot;, vigenere_decrypt(enc, &quot;LEMON&quot;))
+</code></pre>
+<h3 id="解析_3">解析</h3>
+<ul>
+<li><strong>抗频率分析</strong>：同一字母 <code>A</code> 在不同位置因密钥不同而映射为不同密文，曾被称为"不可破译的密码"（le chiffre indéchiffrable）。</li>
+<li><strong>破解方法</strong>：</li>
+<li><strong>Kasiski 检验</strong>：寻找密文中重复出现的片段，其间距往往是密钥长度的倍数，从而推测密钥长度。</li>
+<li><strong>Friedman 检验 / 重合指数（IC）</strong>：估算密钥长度。</li>
+<li>确定密钥长度 <code>m</code> 后，把密文按 <code>m</code> 分组，每组就退化为单表凯撒密码，逐组频率分析即可破解。</li>
+<li>注意代码中 <strong>密钥指针只在字母上推进</strong>，遇到空格/标点不消耗密钥，保证对齐正确。</li>
+</ul>
+<hr />
+<h2 id="5-enigma-机">5. Enigma 机</h2>
+<h3 id="原理_4">原理</h3>
+<p>Enigma 是二战德军使用的机电式转子密码机，本质是 <strong>动态变化的多表替换</strong>：</p>
+<p>组成部件：
+1. <strong>转子（Rotors）</strong>：每个转子是一个字母置换。每加密一个字母，最右转子转动一格，转满一圈带动下一个转子（类似里程表），使替换表不断变化。
+2. <strong>反射器（Reflector）</strong>：把信号反射回来再次穿过转子。它保证了 <strong>加解密对称</strong>（同样设置下，加密和解密是同一操作），但也带来致命弱点：<strong>任何字母都不会被加密成它自己</strong>。
+3. <strong>接线板（Plugboard）</strong>：加密前后对字母两两交换，大幅增加密钥空间。</p>
+<p>信号路径：<code>键入 → 接线板 → 转子组(正向) → 反射器 → 转子组(反向) → 接线板 → 灯亮</code>。</p>
+<h3 id="代码_4">代码</h3>
+<p>下面是一个简化但可运行的 Enigma 实现（含 3 转子、反射器、接线板、转子步进）。</p>
+<pre><code class="language-python">import string
+
+ALPHA = string.ascii_uppercase
+
+# 历史上真实的转子接线（Enigma I）
+ROTORS = {
+    'I':   ('EKMFLGDQVZNTOWYHXUSPAIBRCJ', 'Q'),
+    'II':  ('AJDKSIRUXBLHWTMCQGZNPYFVOE', 'E'),
+    'III': ('BDFHJLCPRTXVZNYEIWGAKMUSQO', 'V'),
+}
+REFLECTOR_B = 'YRUHQSLDPXNGOKMIEBFZCWVJAT'
+
+class Rotor:
+    def __init__(self, wiring, notch, pos=0):
+        self.wiring = wiring
+        self.notch = notch      # 触发下一转子步进的位置
+        self.pos = pos          # 当前转动位置
+    def forward(self, c):       # 正向穿过（入-&gt;出）
+        idx = (c + self.pos) % 26
+        out = ord(self.wiring[idx]) - ord('A')
+        return (out - self.pos) % 26
+    def backward(self, c):      # 反向穿过（出-&gt;入）
+        shifted = (c + self.pos) % 26
+        idx = self.wiring.index(chr(shifted + ord('A')))
+        return (idx - self.pos) % 26
+    def at_notch(self):
+        return self.wiring[self.pos] == self.notch  # 简化的步进判断
+    def step(self):
+        self.pos = (self.pos + 1) % 26
+
+class Plugboard:
+    def __init__(self, pairs):
+        self.map = {c: c for c in ALPHA}
+        for a, b in pairs:
+            self.map[a], self.map[b] = b, a
+    def swap(self, ch):
+        return self.map[ch]
+
+class Enigma:
+    def __init__(self, rotor_names, positions, plug_pairs):
+        self.rotors = [Rotor(ROTORS[n][0], ROTORS[n][1], pos=p)
+                       for n, p in zip(rotor_names, positions)]
+        self.reflector = REFLECTOR_B
+        self.plugboard = Plugboard(plug_pairs)
+
+    def _step_rotors(self):
+        # 右转子总是步进；中转子到 notch 时带动（含 double-step 简化）
+        right, middle, left = self.rotors[2], self.rotors[1], self.rotors[0]
+        if middle.at_notch():
+            middle.step(); left.step()
+        elif right.at_notch():
+            middle.step()
+        right.step()
+
+    def encrypt_char(self, ch):
+        if ch not in ALPHA:
+            return ch
+        self._step_rotors()
+        c = ord(self.plugboard.swap(ch)) - ord('A')
+        for r in reversed(self.rotors):   # 右-&gt;左 正向
+            c = r.forward(c)
+        c = ord(self.reflector[c]) - ord('A')  # 反射
+        for r in self.rotors:             # 左-&gt;右 反向
+            c = r.backward(c)
+        return self.plugboard.swap(chr(c + ord('A')))
+
+    def process(self, text):
+        return ''.join(self.encrypt_char(ch) for ch in text.upper())
+
+if __name__ == &quot;__main__&quot;:
+    cfg = dict(rotor_names=['I', 'II', 'III'],
+               positions=[0, 0, 0],
+               plug_pairs=[('A', 'B'), ('C', 'D')])
+    e1 = Enigma(**cfg)
+    cipher = e1.process(&quot;HELLOENIGMA&quot;)
+    print(&quot;加密:&quot;, cipher)
+
+    e2 = Enigma(**cfg)                    # 相同初始设置
+    print(&quot;解密:&quot;, e2.process(cipher))    # 还原为 HELLOENIGMA
+</code></pre>
+<blockquote>
+<p>注：真实 Enigma 的转子步进（尤其 double-stepping）和 ring setting 更复杂，上面为教学简化版，但已体现核心思想——<strong>加解密对称</strong>。</p>
+</blockquote>
+<h3 id="解析_4">解析</h3>
+<ul>
+<li><strong>加解密对称</strong>来自反射器：信号往返路径互逆，因此用相同设置再输入一次密文即可还原明文。</li>
+<li><strong>核心弱点</strong>：
+  1. 字母绝不会加密成自身（反射器决定），这给了盟军 <strong>已知明文攻击（crib）</strong> 的突破口。
+  2. 接线板和转子虽然密钥空间巨大（约 10²³），但操作规程缺陷 + 已知明文，使得图灵团队用 <strong>Bombe</strong> 机器可大幅缩小搜索范围。</li>
+<li>Enigma 的破译（波兰密码局 + 英国布莱切利园）是密码分析史上的里程碑，直接推动了现代计算机的诞生。</li>
+</ul>
+<hr />
+<h2 id="二哈希与口令破解">二、哈希与口令破解</h2>
+<p>哈希（Hash）是 <strong>单向函数</strong>：易于正向计算 <code>h = H(m)</code>，难以由 <code>h</code> 反推 <code>m</code>。用于完整性校验、口令存储、数字签名等。</p>
+<hr />
+<h2 id="6-md5">6. MD5</h2>
+<h3 id="原理_5">原理</h3>
+<p>MD5（Message-Digest Algorithm 5）由 Rivest 于 1991 年设计，输出 <strong>128 位（32 个十六进制字符）</strong> 摘要。</p>
+<p>流程概览：
+1. <strong>填充</strong>：消息后补 <code>1</code> 个 <code>1</code> 比特和若干 <code>0</code>，使长度 ≡ 448 (mod 512)，再附加 64 位原始长度。
+2. <strong>分块</strong>：每 512 位为一组。
+3. <strong>压缩</strong>：以 4 个 32 位寄存器 <code>A,B,C,D</code> 为状态，每组经 64 步运算（4 轮，每轮 16 步），使用非线性函数 F/G/H/I、循环左移和加法常数。
+4. <strong>输出</strong>：所有块处理完，拼接 <code>A,B,C,D</code> 得到 128 位摘要。</p>
+<h3 id="代码_5">代码</h3>
+<p>实际开发 <strong>直接调用标准库</strong>，不要手写：</p>
+<pre><code class="language-python">import hashlib
+
+def md5_hex(data: str) -&gt; str:
+    return hashlib.md5(data.encode('utf-8')).hexdigest()
+
+if __name__ == &quot;__main__&quot;:
+    print(md5_hex(&quot;hello&quot;))   # 5d41402abc4b2a76b9719d911017c592
+    print(md5_hex(&quot;hello!&quot;))  # 雪崩效应：与上面完全不同
+
+    # 文件哈希（大文件分块读取，避免一次性载入内存）
+    def md5_file(path):
+        h = hashlib.md5()
+        with open(path, 'rb') as f:
+            for chunk in iter(lambda: f.read(8192), b''):
+                h.update(chunk)
+        return h.hexdigest()
+</code></pre>
+<p>口令存储的 <strong>正确做法</strong>（MD5 不应用于口令，此处示意"加盐+慢哈希"思想）：</p>
+<pre><code class="language-python">import hashlib, os
+
+def hash_password(password: str):
+    salt = os.urandom(16)
+    # PBKDF2 慢哈希，迭代多次抵抗暴力破解
+    dk = hashlib.pbkdf2_hmac('sha256', password.encode(), salt, 200_000)
+    return salt.hex() + ':' + dk.hex()
+
+def verify_password(password: str, stored: str) -&gt; bool:
+    salt_hex, dk_hex = stored.split(':')
+    salt = bytes.fromhex(salt_hex)
+    dk = hashlib.pbkdf2_hmac('sha256', password.encode(), salt, 200_000)
+    return dk.hex() == dk_hex
+</code></pre>
+<h3 id="解析_5">解析</h3>
+<ul>
+<li><strong>雪崩效应</strong>：输入改 1 比特，输出约一半比特翻转。</li>
+<li><strong>MD5 已被攻破，禁止用于安全场景</strong>：</li>
+<li><strong>碰撞攻击</strong>：王小云等人 2004 年给出快速碰撞算法，可构造两条不同消息有相同 MD5（如恶意/正常文件同哈希）。</li>
+<li>不可用于数字签名、证书、防篡改。</li>
+<li><strong>口令存储不要用裸 MD5/SHA</strong>：哈希太快，配合彩虹表/GPU 可秒破。应使用 <strong>加盐 + 慢哈希</strong>（PBKDF2、bcrypt、scrypt、Argon2）。</li>
+<li>MD5 现仅适合 <strong>非安全的完整性校验</strong>（如校验下载文件是否传输出错）。</li>
+</ul>
+<hr />
+<h2 id="7-彩虹表">7. 彩虹表</h2>
+<h3 id="原理_6">原理</h3>
+<p>彩虹表（Rainbow Table）是一种 <strong>以空间换时间</strong> 的哈希逆向技术，用于从哈希值反查原始口令。</p>
+<p>朴素方法对比：
+- <strong>暴力</strong>：每次破解都重算所有候选哈希——慢、不复用。
+- <strong>完整查找表</strong>：预存所有 <code>(明文, 哈希)</code>——存储爆炸。
+- <strong>彩虹表</strong>：折中。用 <strong>归约函数（reduction）</strong> 把哈希映射回明文空间，交替执行 <code>哈希→归约→哈希→归约…</code> 形成长链，<strong>只存每条链的首尾</strong>。破解时重建链尾比对，命中后回放该链即可找到明文。</p>
+<p>关键概念：
+- <strong>链（chain）</strong>：<code>P0 →H→ h0 →R→ P1 →H→ h1 →R→ … →Pk</code>
+- 用 <strong>多个不同的归约函数</strong>（每列一个）降低链合并（collision/merge）概率，这是"彩虹"得名的由来。</p>
+<h3 id="代码_6">代码</h3>
+<p>下面是一个 <strong>教学版</strong> 彩虹表（针对短数字口令），演示构造与查询：</p>
+<pre><code class="language-python">import hashlib
+
+CHARSET = &quot;0123456789&quot;
+PWD_LEN = 4                 # 破解 4 位数字口令 0000-9999
+CHAIN_LEN = 100             # 每条链长度
+NUM_CHAINS = 2000
+
+def H(pwd: str) -&gt; str:
+    return hashlib.md5(pwd.encode()).hexdigest()
+
+def reduce(h: str, col: int) -&gt; str:
+    &quot;&quot;&quot;归约函数：把哈希映射回 PWD_LEN 位明文，col 使每列不同&quot;&quot;&quot;
+    num = (int(h, 16) + col) % (len(CHARSET) ** PWD_LEN)
+    out = []
+    for _ in range(PWD_LEN):
+        out.append(CHARSET[num % len(CHARSET)])
+        num //= len(CHARSET)
+    return ''.join(out)
+
+def build_table():
+    &quot;&quot;&quot;构造彩虹表：{链尾明文: 链首明文}&quot;&quot;&quot;
+    table = {}
+    for i in range(NUM_CHAINS):
+        start = str(i).zfill(PWD_LEN)
+        pwd = start
+        for col in range(CHAIN_LEN):
+            pwd = reduce(H(pwd), col)
+        table[pwd] = start      # 只存首尾
+    return table
+
+def crack(target_hash: str, table: dict):
+    &quot;&quot;&quot;用彩虹表反查明文&quot;&quot;&quot;
+    # 从每一列起点尝试重建链尾
+    for start_col in range(CHAIN_LEN - 1, -1, -1):
+        pwd = reduce(target_hash, start_col)
+        for col in range(start_col + 1, CHAIN_LEN):
+            pwd = reduce(H(pwd), col)
+        if pwd in table:                       # 可能命中某条链
+            candidate = table[pwd]             # 回放该链
+            for col in range(CHAIN_LEN):
+                if H(candidate) == target_hash:
+                    return candidate
+                candidate = reduce(H(candidate), col)
+    return None
+
+if __name__ == &quot;__main__&quot;:
+    table = build_table()
+    secret = &quot;1337&quot;
+    target = H(secret)
+    print(&quot;目标哈希:&quot;, target)
+    print(&quot;破解结果:&quot;, crack(target, table))  # 可能为 1337（取决于覆盖率）
+</code></pre>
+<h3 id="解析_6">解析</h3>
+<ul>
+<li><strong>时间-空间权衡</strong>：彩虹表大幅减少存储（只存首尾），但查询需重建链，比直接查表慢。链越长越省空间但越慢，且链合并使覆盖率下降。</li>
+<li><strong>教学版局限</strong>：上面实现命中率受 <code>NUM_CHAINS</code>、<code>CHAIN_LEN</code>、归约函数质量影响，不保证 100% 覆盖；真实彩虹表覆盖完整字符空间需精心设计。</li>
+<li><strong>彩虹表的克星 —— 加盐（salt）</strong>：</li>
+<li>存储口令时为每个用户加 <strong>随机盐</strong>：<code>H(salt || password)</code>。</li>
+<li>盐使预计算的彩虹表完全失效（每个盐都要重建一张表），这是为什么现代口令存储 <strong>必须加盐</strong>。</li>
+<li>实战工具：<code>rainbowcrack</code>、<code>ophcrack</code>（破 Windows LM/NTLM 哈希）。防御核心：加盐 + 慢哈希（Argon2/bcrypt）。</li>
+</ul>
+<hr />
+<h2 id="三对称加密">三、对称加密</h2>
+<p>对称加密：加密和解密使用 <strong>同一密钥</strong>。速度快，适合加密大量数据，但存在 <strong>密钥分发</strong> 问题。</p>
+<hr />
+<h2 id="8-des">8. DES</h2>
+<h3 id="原理_7">原理</h3>
+<p>DES（Data Encryption Standard）是 1977 年的对称分组密码：
+- <strong>分组长度</strong>：64 位
+- <strong>密钥长度</strong>：64 位（其中 8 位为校验位，<strong>有效 56 位</strong>）
+- <strong>结构</strong>：16 轮 <strong>Feistel 网络</strong></p>
+<p>Feistel 结构核心：把分组分成左右两半 <code>L、R</code>，每轮：</p>
+<pre><code>Lᵢ = Rᵢ₋₁
+Rᵢ = Lᵢ₋₁ XOR F(Rᵢ₋₁, Kᵢ)
+</code></pre>
+<p>其中 <code>F</code> 含 <strong>扩展置换、与轮密钥异或、S 盒替换、P 盒置换</strong>。Feistel 的妙处：解密只需把轮密钥逆序使用，加解密结构相同。</p>
+<h3 id="代码_7">代码</h3>
+<p>实际请用 <code>pycryptodome</code>（<code>pip install pycryptodome</code>）：</p>
+<pre><code class="language-python">from Crypto.Cipher import DES
+from Crypto.Util.Padding import pad, unpad
+from Crypto.Random import get_random_bytes
+
+def des_encrypt(plaintext: bytes, key: bytes) -&gt; bytes:
+    cipher = DES.new(key, DES.MODE_CBC)          # CBC 模式
+    ct = cipher.encrypt(pad(plaintext, DES.block_size))
+    return cipher.iv + ct                         # 把 IV 前置便于解密
+
+def des_decrypt(data: bytes, key: bytes) -&gt; bytes:
+    iv, ct = data[:DES.block_size], data[DES.block_size:]
+    cipher = DES.new(key, DES.MODE_CBC, iv)
+    return unpad(cipher.decrypt(ct), DES.block_size)
+
+if __name__ == &quot;__main__&quot;:
+    key = get_random_bytes(8)                     # DES 密钥固定 8 字节
+    msg = b&quot;Secret Message!&quot;
+    enc = des_encrypt(msg, key)
+    print(&quot;密文(hex):&quot;, enc.hex())
+    print(&quot;解密:&quot;, des_decrypt(enc, key))
+</code></pre>
+<p>3DES（增强版，兼容旧系统时偶尔使用）：</p>
+<pre><code class="language-python">from Crypto.Cipher import DES3
+from Crypto.Random import get_random_bytes
+
+key = DES3.adjust_key_parity(get_random_bytes(24))  # 16 或 24 字节
+cipher = DES3.new(key, DES3.MODE_CBC)
+</code></pre>
+<h3 id="解析_7">解析</h3>
+<ul>
+<li><strong>致命弱点：密钥太短</strong>。56 位密钥空间 <code>2⁵⁶</code>，1998 年 EFF 的 "Deep Crack" 机器几天即可暴力破解，今天专用硬件/云计算几小时内搞定。<strong>DES 已不安全，禁止用于新系统</strong>。</li>
+<li><strong>3DES（Triple DES）</strong>：<code>C = E(K3, D(K2, E(K1, P)))</code>，有效密钥 112/168 位，曾作为过渡方案，但分组仅 64 位、速度慢，NIST 已于 2023 年起逐步弃用。</li>
+<li><strong>S 盒</strong> 是 DES 安全性的核心，提供非线性（抗差分/线性分析）；其设计当年保密，后证明能抵抗差分密码分析。</li>
+<li><strong>新系统一律用 AES</strong>。</li>
+</ul>
+<hr />
+<h2 id="9-aes">9. AES</h2>
+<h3 id="原理_8">原理</h3>
+<p>AES（Advanced Encryption Standard）2001 年取代 DES，基于 <strong>Rijndael</strong> 算法：
+- <strong>分组长度</strong>：固定 128 位
+- <strong>密钥长度</strong>：128 / 192 / 256 位，对应 <strong>10 / 12 / 14 轮</strong>
+- <strong>结构</strong>：SPN（代换-置换网络），非 Feistel</p>
+<p>每轮 4 个操作（最后一轮无 MixColumns）：
+1. <strong>SubBytes</strong>：通过 S 盒做字节非线性替换。
+2. <strong>ShiftRows</strong>：行循环移位。
+3. <strong>MixColumns</strong>：列混淆（在 GF(2⁸) 上做矩阵乘法），提供扩散。
+4. <strong>AddRoundKey</strong>：与轮密钥异或。</p>
+<h3 id="代码_8">代码</h3>
+<p><strong>推荐使用带认证的 GCM 模式</strong>（同时保证机密性与完整性）：</p>
+<pre><code class="language-python">from Crypto.Cipher import AES
+from Crypto.Random import get_random_bytes
+
+def aes_gcm_encrypt(plaintext: bytes, key: bytes):
+    nonce = get_random_bytes(12)                  # GCM 推荐 12 字节 nonce
+    cipher = AES.new(key, AES.MODE_GCM, nonce=nonce)
+    ct, tag = cipher.encrypt_and_digest(plaintext)
+    return nonce + tag + ct                        # 打包传输
+
+def aes_gcm_decrypt(data: bytes, key: bytes) -&gt; bytes:
+    nonce, tag, ct = data[:12], data[12:28], data[28:]
+    cipher = AES.new(key, AES.MODE_GCM, nonce=nonce)
+    return cipher.decrypt_and_verify(ct, tag)      # 验证失败会抛异常
+
+if __name__ == &quot;__main__&quot;:
+    key = get_random_bytes(32)                     # AES-256
+    msg = b&quot;Top Secret Data 2026&quot;
+    enc = aes_gcm_encrypt(msg, key)
+    print(&quot;密文(hex):&quot;, enc.hex())
+    print(&quot;解密:&quot;, aes_gcm_decrypt(enc, key))
+
+    # 篡改检测演示
+    tampered = bytearray(enc); tampered[-1] ^= 0x01
+    try:
+        aes_gcm_decrypt(bytes(tampered), key)
+    except ValueError:
+        print(&quot;检测到篡改！(MAC 校验失败)&quot;)
+</code></pre>
+<p>CBC 模式（仍常见，但需自行加 HMAC 防篡改）：</p>
+<pre><code class="language-python">from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad, unpad
+from Crypto.Random import get_random_bytes
+
+key = get_random_bytes(16)               # AES-128
+iv = get_random_bytes(16)
+cipher = AES.new(key, AES.MODE_CBC, iv)
+ct = cipher.encrypt(pad(b&quot;hello world&quot;, AES.block_size))
+# 解密
+dec = unpad(AES.new(key, AES.MODE_CBC, iv).decrypt(ct), AES.block_size)
+</code></pre>
+<h3 id="解析_8">解析</h3>
+<ul>
+<li><strong>安全现状</strong>：AES 至今无实际可行的破解方法，AES-256 被广泛认为可抵御可预见的攻击（含量子计算下的 Grover 算法，密钥强度减半仍有 128 位）。</li>
+<li><strong>加密模式很关键</strong>（"用对算法不等于用对模式"）：</li>
+<li><strong>ECB 绝不要用</strong>：相同明文块产生相同密文块，会泄露数据模式（著名的"ECB 企鹅图"）。</li>
+<li><strong>CBC</strong>：需要随机 IV，且 <strong>本身不防篡改</strong>，要额外加 HMAC（Encrypt-then-MAC）。</li>
+<li><strong>GCM / ChaCha20-Poly1305（AEAD）</strong>：<strong>首选</strong>，加密+认证一体，能检测篡改。</li>
+<li><strong>IV/Nonce 不可重复</strong>：GCM 下 nonce 重用会彻底破坏安全性。</li>
+<li>密钥必须来自 <strong>安全随机源</strong>（<code>get_random_bytes</code>），口令派生密钥要用 PBKDF2/scrypt/Argon2。</li>
+</ul>
+<hr />
+<h2 id="四非对称加密">四、非对称加密</h2>
+<p>非对称（公钥）加密用 <strong>一对密钥</strong>：公钥加密、私钥解密（或私钥签名、公钥验签）。解决了对称加密的密钥分发难题。</p>
+<hr />
+<h2 id="10-rsa">10. RSA</h2>
+<h3 id="原理_9">原理</h3>
+<p>RSA（Rivest–Shamir–Adleman，1977）基于 <strong>大整数分解的困难性</strong>。</p>
+<p><strong>密钥生成</strong>：
+1. 选两个大素数 <code>p</code>、<code>q</code>，计算 <code>n = p*q</code>。
+2. 计算欧拉函数 <code>φ(n) = (p-1)(q-1)</code>。
+3. 选公钥指数 <code>e</code>，满足 <code>1 &lt; e &lt; φ(n)</code> 且 <code>gcd(e, φ(n)) = 1</code>（常用 <code>65537</code>）。
+4. 计算私钥指数 <code>d = e⁻¹ mod φ(n)</code>。
+5. <strong>公钥</strong> = <code>(n, e)</code>，<strong>私钥</strong> = <code>(n, d)</code>。</p>
+<p><strong>加解密</strong>（基于欧拉定理）：</p>
+<pre><code>加密： c = mᵉ mod n
+解密： m = cᵈ mod n
+</code></pre>
+<p>安全性：已知 <code>(n, e)</code>，求 <code>d</code> 需要先分解 <code>n = p*q</code>，而大整数分解在经典计算下是困难问题。</p>
+<h3 id="代码_9">代码</h3>
+<p><strong>教学版（手写，理解原理用，切勿用于生产）</strong>：</p>
+<pre><code class="language-python">from math import gcd
+import random
+
+def is_prime(n, k=20):
+    if n &lt; 2: return False
+    for p in [2,3,5,7,11,13,17,19,23,29]:
+        if n % p == 0: return n == p
+    d, r = n - 1, 0
+    while d % 2 == 0: d //= 2; r += 1
+    for _ in range(k):                       # Miller-Rabin 素性检测
+        a = random.randrange(2, n - 1)
+        x = pow(a, d, n)
+        if x in (1, n - 1): continue
+        for _ in range(r - 1):
+            x = pow(x, 2, n)
+            if x == n - 1: break
+        else:
+            return False
+    return True
+
+def gen_prime(bits):
+    while True:
+        n = random.getrandbits(bits) | (1 &lt;&lt; (bits-1)) | 1
+        if is_prime(n): return n
+
+def generate_keypair(bits=512):
+    p, q = gen_prime(bits), gen_prime(bits)
+    n = p * q
+    phi = (p - 1) * (q - 1)
+    e = 65537
+    d = pow(e, -1, phi)                       # Python 3.8+ 模逆
+    return (n, e), (n, d)
+
+def rsa_encrypt(m: int, pub):
+    n, e = pub
+    return pow(m, e, n)
+
+def rsa_decrypt(c: int, priv):
+    n, d = priv
+    return pow(c, d, n)
+
+if __name__ == &quot;__main__&quot;:
+    pub, priv = generate_keypair(512)
+    m = 42
+    c = rsa_encrypt(m, pub)
+    print(&quot;密文:&quot;, c)
+    print(&quot;解密:&quot;, rsa_decrypt(c, priv))      # 42
+</code></pre>
+<p><strong>生产版（用 <code>pycryptodome</code>，含 OAEP 填充与签名）</strong>：</p>
+<pre><code class="language-python">from Crypto.PublicKey import RSA
+from Crypto.Cipher import PKCS1_OAEP
+from Crypto.Signature import pkcs1_15
+from Crypto.Hash import SHA256
+
+# 1. 生成密钥对
+key = RSA.generate(2048)
+private_key, public_key = key, key.publickey()
+
+# 2. 加密 / 解密（OAEP 填充）
+def rsa_enc(plaintext: bytes) -&gt; bytes:
+    return PKCS1_OAEP.new(public_key).encrypt(plaintext)
+
+def rsa_dec(ciphertext: bytes) -&gt; bytes:
+    return PKCS1_OAEP.new(private_key).decrypt(ciphertext)
+
+# 3. 签名 / 验签
+def sign(msg: bytes) -&gt; bytes:
+    h = SHA256.new(msg)
+    return pkcs1_15.new(private_key).sign(h)
+
+def verify(msg: bytes, signature: bytes) -&gt; bool:
+    h = SHA256.new(msg)
+    try:
+        pkcs1_15.new(public_key).verify(h, signature)
+        return True
+    except (ValueError, TypeError):
+        return False
+
+if __name__ == &quot;__main__&quot;:
+    ct = rsa_enc(b&quot;hello RSA&quot;)
+    print(&quot;解密:&quot;, rsa_dec(ct))
+    sig = sign(b&quot;important doc&quot;)
+    print(&quot;验签:&quot;, verify(b&quot;important doc&quot;, sig))   # True
+    print(&quot;篡改:&quot;, verify(b&quot;tampered doc&quot;, sig))    # False
+</code></pre>
+<h3 id="解析_9">解析</h3>
+<ul>
+<li><strong>为什么需要填充（OAEP）</strong>：裸 RSA（textbook RSA）是 <strong>确定性</strong> 的——相同明文得相同密文，且易受多种攻击（如小指数攻击、选择密文攻击）。<strong>OAEP</strong> 引入随机性和结构，是加密的安全标准；签名用 <strong>PSS</strong> 或 PKCS#1 v1.5。</li>
+<li><strong>密钥长度</strong>：512/1024 位已不安全，<strong>至少 2048 位，推荐 3072/4096 位</strong>。</li>
+<li><strong>性能</strong>：RSA 比对称加密慢几个数量级，因此实际中用 <strong>混合加密</strong>——RSA 只加密一个随机的 AES 会话密钥，真正的数据用 AES 加密。</li>
+<li><strong>量子威胁</strong>：Shor 算法可在量子计算机上多项式时间分解大整数，将彻底攻破 RSA。后量子密码（如 NIST 选定的 ML-KEM/Kyber）正在推进迁移。</li>
+<li><strong>公私钥用途对称但相反</strong>：公钥加密→私钥解密（保密）；私钥签名→公钥验签（认证 + 不可否认）。</li>
+</ul>
+<hr />
+<h2 id="附录环境与安全提示">附录：环境与安全提示</h2>
+<h2 id="依赖安装">依赖安装</h2>
+<pre><code class="language-bash">pip install pycryptodome     # DES / AES / RSA
+# hashlib 为 Python 标准库，无需安装
+</code></pre>
+<h2 id="安全选型速查表">安全选型速查表</h2>
+<table>
+<thead>
+<tr>
+<th>用途</th>
+<th>❌ 不要用</th>
+<th>✅ 推荐</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>口令存储</td>
+<td>MD5/SHA 裸哈希</td>
+<td>Argon2 / bcrypt / scrypt / PBKDF2（加盐）</td>
+</tr>
+<tr>
+<td>完整性校验</td>
+<td>MD5 / SHA-1</td>
+<td>SHA-256 / SHA-3</td>
+</tr>
+<tr>
+<td>对称加密</td>
+<td>DES / 3DES / AES-ECB</td>
+<td>AES-GCM / ChaCha20-Poly1305</td>
+</tr>
+<tr>
+<td>非对称加密</td>
+<td>RSA-1024 / textbook RSA</td>
+<td>RSA-2048+ (OAEP) / ECC / 后量子</td>
+</tr>
+<tr>
+<td>古典密码</td>
+<td>任何实际用途</td>
+<td>仅教学</td>
+</tr>
+</tbody>
+</table>
+<h2 id="核心原则">核心原则</h2>
+<ol>
+<li><strong>不要自己实现密码算法</strong>（除非纯学习）——用经过审计的成熟库。</li>
+<li><strong>Kerckhoffs 原则</strong>：系统安全应只依赖密钥保密，而非算法保密。</li>
+<li><strong>加密 ≠ 完整性</strong>：机密性和防篡改是两回事，用 AEAD 或 Encrypt-then-MAC。</li>
+<li><strong>随机性是基石</strong>：IV、nonce、盐、密钥都要来自密码学安全随机源（CSPRNG）。</li>
+<li><strong>及时迁移</strong>：MD5、SHA-1、DES、短 RSA 都已不安全，关注后量子迁移。</li>
+</ol>
+<hr />
+<blockquote>
+<p>本文档仅用于密码学学习与授权的安全研究。请勿用于任何非法用途。</p>
+</blockquote>
+    </div>
+    <p class="back"><a class="ef-btn" href="crack_enigma/crack_enigma_代码详解.html">`crack_enigma.c` 代码详解 →</a> <a class="ef-btn" href="../index.html">返回本课</a></p>
+  </div>
+  <aside class="ef-margin toc-aside" aria-label="本页目录">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>本页目录</span><span>49 节</span></p>
+      <ol>
+      <li><a class="lvl2" href="#目录">目录</a></li>
+      <li><a class="lvl2" href="#一古典密码">一、古典密码</a></li>
+      <li><a class="lvl2" href="#1-加法密码凯撒密码">1. 加法密码（凯撒密码）</a></li>
+      <li><a class="lvl3" href="#原理">原理</a></li>
+      <li><a class="lvl3" href="#代码">代码</a></li>
+      <li><a class="lvl3" href="#解析">解析</a></li>
+      <li><a class="lvl2" href="#2-乘法密码">2. 乘法密码</a></li>
+      <li><a class="lvl3" href="#原理_1">原理</a></li>
+      <li><a class="lvl3" href="#代码_1">代码</a></li>
+      <li><a class="lvl3" href="#解析_1">解析</a></li>
+      <li><a class="lvl2" href="#3-仿射密码">3. 仿射密码</a></li>
+      <li><a class="lvl3" href="#原理_2">原理</a></li>
+      <li><a class="lvl3" href="#代码_2">代码</a></li>
+      <li><a class="lvl3" href="#解析_2">解析</a></li>
+      <li><a class="lvl2" href="#4-多表密码维吉尼亚">4. 多表密码（维吉尼亚）</a></li>
+      <li><a class="lvl3" href="#原理_3">原理</a></li>
+      <li><a class="lvl3" href="#代码_3">代码</a></li>
+      <li><a class="lvl3" href="#解析_3">解析</a></li>
+      <li><a class="lvl2" href="#5-enigma-机">5. Enigma 机</a></li>
+      <li><a class="lvl3" href="#原理_4">原理</a></li>
+      <li><a class="lvl3" href="#代码_4">代码</a></li>
+      <li><a class="lvl3" href="#解析_4">解析</a></li>
+      <li><a class="lvl2" href="#二哈希与口令破解">二、哈希与口令破解</a></li>
+      <li><a class="lvl2" href="#6-md5">6. MD5</a></li>
+      <li><a class="lvl3" href="#原理_5">原理</a></li>
+      <li><a class="lvl3" href="#代码_5">代码</a></li>
+      <li><a class="lvl3" href="#解析_5">解析</a></li>
+      <li><a class="lvl2" href="#7-彩虹表">7. 彩虹表</a></li>
+      <li><a class="lvl3" href="#原理_6">原理</a></li>
+      <li><a class="lvl3" href="#代码_6">代码</a></li>
+      <li><a class="lvl3" href="#解析_6">解析</a></li>
+      <li><a class="lvl2" href="#三对称加密">三、对称加密</a></li>
+      <li><a class="lvl2" href="#8-des">8. DES</a></li>
+      <li><a class="lvl3" href="#原理_7">原理</a></li>
+      <li><a class="lvl3" href="#代码_7">代码</a></li>
+      <li><a class="lvl3" href="#解析_7">解析</a></li>
+      <li><a class="lvl2" href="#9-aes">9. AES</a></li>
+      <li><a class="lvl3" href="#原理_8">原理</a></li>
+      <li><a class="lvl3" href="#代码_8">代码</a></li>
+      <li><a class="lvl3" href="#解析_8">解析</a></li>
+      <li><a class="lvl2" href="#四非对称加密">四、非对称加密</a></li>
+      <li><a class="lvl2" href="#10-rsa">10. RSA</a></li>
+      <li><a class="lvl3" href="#原理_9">原理</a></li>
+      <li><a class="lvl3" href="#代码_9">代码</a></li>
+      <li><a class="lvl3" href="#解析_9">解析</a></li>
+      <li><a class="lvl2" href="#附录环境与安全提示">附录：环境与安全提示</a></li>
+      <li><a class="lvl2" href="#依赖安装">依赖安装</a></li>
+      <li><a class="lvl2" href="#安全选型速查表">安全选型速查表</a></li>
+      <li><a class="lvl2" href="#核心原则">核心原则</a></li>
+      </ol>
+    </div>
+  </aside>
+</article>
+
+<footer class="foot">
+  <span class="ef-field">KYSIIN.ARCHIVE · 2026.11.15 · 由 Markdown 渲染</span>
+  <span>用 endfield-ui 渲染 · Saira（SIL OFL）自托管</span>
+</footer>
+<script type="module">
+  import { wireTheme } from '../../../assets/fx.js'
+  wireTheme()
+</script>
+<script defer src="../../../assets/search.js?v=202611150558"></script>
+<script>
+  /* 左栏：每个分组可独立展开/收起 */
+  (function () {
+    document.querySelectorAll('.tree-toggle').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var li = btn.closest('.tree-group');
+        var list = li ? li.querySelector('.tree-items') : null;
+        var open = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', String(!open));
+        if (list) list.hidden = open;
+        if (li) li.classList.toggle('is-open', !open);
+      });
+    });
+  })();
+</script>
+<script>
+  /* 右栏目录跟随滚动：读到哪一节就把那一行标出来 */
+  (function () {
+    var links = [].slice.call(document.querySelectorAll('.toc-aside a[href^="#"]'));
+    if (!links.length) return;
+    var items = links.map(function (a) {
+      var el = document.getElementById(a.getAttribute('href').slice(1));
+      return el ? { a: a, el: el } : null;
+    }).filter(Boolean);
+    if (!items.length) return;
+    var ticking = false;
+    function spy() {
+      ticking = false;
+      var line = window.scrollY + 140;
+      var best = null;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].el.getBoundingClientRect().top + window.scrollY <= line) best = items[i];
+      }
+      links.forEach(function (a) { a.removeAttribute('aria-current'); });
+      if (best) best.a.setAttribute('aria-current', 'true');
+    }
+    window.addEventListener('scroll', function () {
+      if (!ticking) { ticking = true; requestAnimationFrame(spy); }
+    }, { passive: true });
+    spy();
+  })();
+</script>
+</body>
+</html>

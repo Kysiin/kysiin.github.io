@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MiniSQL —— 精简型单用户 SQL 引擎（C++） · KYSIIN.ARCHIVE</title>
+<script src="../../../../../assets/variant.js"></script>
+<link rel="stylesheet" href="../../../../../assets/local-fonts.css" />
+<link rel="stylesheet" href="../../../../../assets/endfield.css" />
+
+<style>
+  body { --tri-h: 3px; --topbar-h: 3.1rem; }
+  body > .ef-tri { position: sticky; top: 0; z-index: 61; }
+  .topbar { position:sticky; top:var(--tri-h); z-index:60;
+    display:flex; align-items:center; gap:1.5rem; padding:.85rem var(--ef-pad);
+    border-bottom:1px solid var(--ef-rule); background:var(--ef-panel); }
+  .topbar .brand { margin:0; font-family:var(--ef-font-ui); font-size:.95rem;
+    font-stretch:var(--ef-wider); font-weight:800; letter-spacing:.08em;
+    text-decoration:none; color:var(--ef-ink); }
+  .topbar nav { display:flex; align-items:center; gap:1.25rem; margin-left:auto; }
+  .topbar nav a { text-decoration:none; color:var(--ef-ink-2); }
+  .foot { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between;
+    gap:1rem; padding:1.5rem var(--ef-pad) 2.5rem; border-top:1px solid var(--ef-rule);
+    color:var(--ef-ink-2); font-size:.875rem; }
+  @media (max-width: 959px) { .ef-spread { grid-template-columns:minmax(0,1fr); }
+    .ef-sheet { border-right:0; border-bottom:1px solid var(--ef-rule); } }
+  @media (max-width:760px) { .topbar { flex-wrap:wrap; gap:.75rem; }
+    .topbar nav { order:3; width:100%; margin-left:0; } }
+
+  .title { margin:1.5rem 0 1rem; font-size:clamp(var(--ef-t-title),5vw,var(--ef-t-h1));
+    font-weight:700; line-height:1.3; }
+  .ef-prose { margin-top:1.75rem; }
+  .ef-prose img { max-width:100%; height:auto; border:1px solid var(--ef-rule); background:#fff; }
+  .ef-prose table { width:100%; border-collapse:collapse; font-size:.9rem; }
+  .ef-prose th, .ef-prose td { border-bottom:1px solid var(--ef-rule); padding:.45rem .6rem; text-align:left; }
+  .ef-prose th { font-family:var(--ef-font-ui); font-stretch:var(--ef-wide); font-size:.8rem; }
+  /* 代码块：整块一个背景；块内的 code 不再带行内边框/内边距 */
+  .ef-prose pre { overflow:auto; margin:1rem 0; padding:.9rem 1rem;
+    background:var(--ef-chip); border-left:3px solid var(--ef-rule);
+    font-size:.85rem; line-height:1.6; tab-size:4; }
+  .ef-prose pre code { display:block; padding:0; border:0; background:none;
+    font-family:var(--ef-font-mono); font-size:.85rem; line-height:1.6; white-space:pre; }
+  .ef-prose :not(pre) > code { font-family:var(--ef-font-mono); font-size:.88em;
+    padding:.1em .35em; border:1px solid var(--ef-rule); background:var(--ef-paper); }
+  .ef-prose blockquote { border-left:3px solid var(--ef-ink); margin:1rem 0; padding:.25rem 0 .25rem 1rem;
+    color:var(--ef-ink-2); }
+
+  /* —— 公式：绝不超出正文栏；行间公式可横向滚动 —— */
+  .ef-prose mjx-container { max-width:100%; }
+  .ef-prose mjx-container[display="true"] { display:block; text-align:center; margin:1.1em 0;
+    max-width:100%; overflow-x:auto; overflow-y:hidden; padding:2px 0; }
+  .ef-prose mjx-container[jax="CHTML"] { font-size:1.02em; }
+  .eq { overflow-x:auto; overflow-y:hidden; max-width:100%; padding:2px 0; }
+  .eq mjx-container[display="true"] { margin:.35em 0; }
+
+  .toc ol { margin:0; padding:0; list-style:none; border-left:1px solid var(--ef-rule); }
+  .toc a { display:block; margin-left:-1px; padding:.22rem 0 .22rem .7rem;
+    border-left:3px solid transparent; color:var(--ef-ink-2); font-size:.85rem;
+    overflow-wrap:anywhere; }
+  .toc a:hover { color:var(--ef-ink); border-left-color:var(--ef-trace); }
+  .toc .lvl3 { padding-left:1.3rem; font-size:.8rem; }
+  .back { margin:2rem 0 0; display:flex; flex-wrap:wrap; gap:.75rem; }
+
+  /* —— 三栏铺满：两侧栏贴边，中间正文吃掉所有剩余宽度 —— */
+  .ef-spread { max-width: none; margin: 0; }
+
+  @media (min-width: 1180px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(11rem, 12vw, 14rem) minmax(0, 1fr) clamp(13rem, 14vw, 17rem);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+  }
+  @media (min-width: 960px) and (max-width: 1179px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(10rem, 12vw, 12rem) minmax(0, 1fr);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+    .ef-spread.has-rail > .toc-aside { display: none; }
+  }
+  @media (min-width: 960px) {
+    .ef-spread > .ef-margin {
+      position: sticky;
+      top: calc(var(--tri-h) + var(--topbar-h));
+      align-self: start;
+      max-height: calc(100vh - var(--tri-h) - var(--topbar-h));
+      overflow-y: auto;
+      scrollbar-width: thin;
+      padding: clamp(1.5rem, 3vw, 2.5rem) 1rem;
+    }
+    /* 两侧栏往屏幕边缘靠，别在页边留空 */
+    .ef-spread > .rail-aside { padding-left: .75rem; padding-right: 1.25rem; }
+    .ef-spread > .toc-aside { padding-left: 1.25rem; padding-right: .75rem; }
+    /* 正文左右留呼吸，但不限制宽度 */
+    .ef-spread > .ef-sheet { padding-left: clamp(2rem, 3.5vw, 4rem); padding-right: clamp(2rem, 3.5vw, 4rem); }
+    /* 套件把正文限制在 40rem；中间栏变宽后这里放开，让文字铺满 */
+    .ef-sheet .ef-prose,
+    .ef-sheet .ef-lede,
+    .ef-sheet .title,
+    .ef-sheet .ef-read,
+    .ef-sheet .ef-facts,
+    .ef-sheet .ef-empty,
+    .ef-sheet .ef-notice { max-width: none; }
+  }
+  .ef-margin .toc a { font-size: .74rem; line-height: 1.5; }
+  .toc a[aria-current] { color: var(--ef-ink); border-left-color: var(--ef-trace); font-weight: 600; }
+  .rail-head { display: block; margin: 0 0 .5rem; padding-bottom: .35rem;
+    border-bottom: 1px solid var(--ef-rule); font-size: .68rem; line-height: 1.5; }
+  .rail-head span { display: inline; }
+  .rail-head span + span { display: block; color: var(--ef-ink-2); }
+  .rail-aside .toc a { padding-top: .3rem; padding-bottom: .3rem; }
+  .rail-tree { list-style:none; margin:0; padding:0; }
+  .rail-tree .tree-name { display:block; padding:.35rem .2rem .35rem .6rem;
+    border-left:3px solid transparent; font-size:.76rem; font-weight:600; color:var(--ef-ink); }
+  .rail-tree .tree-label { display:inline; }
+  .rail-tree .tree-name .ef-field { font-size:.68rem; color:var(--ef-ink-2); margin-left:.35rem;
+    white-space:nowrap; }
+  .rail-tree .tree-group.is-open > .tree-name { border-left-color:var(--ef-trace); }
+  .rail-tree .tree-items { list-style:none; margin:.1rem 0 .5rem; padding:0 0 0 .6rem;
+    border-left:1px solid var(--ef-rule); }
+  .rail-tree .tree-items a { padding-left:.6rem; font-size:.72rem; line-height:1.45; }
+  .tree-row { display:flex; align-items:stretch; gap:.15rem; }
+  .tree-row .tree-name { flex:1 1 auto; min-width:0; }
+  .tree-toggle { flex:none; width:1.55rem; min-height:1.9rem; display:grid; place-items:center;
+    padding:0; border:1px solid var(--ef-rule); background:var(--ef-panel); color:var(--ef-ink-2);
+    cursor:pointer; transition:color .12s var(--ef-ease), border-color .12s var(--ef-ease), background .12s var(--ef-ease); }
+  .tree-toggle:hover { color:var(--ef-ink); border-color:var(--ef-ink); background:var(--ef-chip); }
+  .tree-toggle svg { width:.7rem; height:.7rem; transition:transform .15s var(--ef-ease); }
+  .tree-toggle[aria-expanded="true"] svg { transform:rotate(90deg); }
+  .rail-tree .tree-items[hidden] { display:none; }
+  /* 滚动条统一样式在 assets/local-fonts.css 里定义（页面/侧栏/搜索共用） */
+
+  /* 窄屏：正文优先，两侧栏排到后面 */
+  @media (max-width: 959px) {
+    .ef-spread.has-rail > .ef-sheet { order: 1; }
+    .ef-spread.has-rail > .rail-aside { order: 2; border-top: 1px solid var(--ef-rule); }
+    .ef-spread.has-rail > .toc-aside { order: 3; }
+  }
+
+  /* —— 复习笔记：PDF 下载 —— */
+  .pdf-dl { display:flex; flex-wrap:wrap; align-items:center; gap:.75rem; margin:1.1rem 0 0; }
+  .pdf-dl .ef-btn { border-color:var(--ef-ink); }
+
+  /* —— 打印 / 导出 PDF：只留正文 —— */
+  @page { size:A4; margin:16mm 14mm 18mm; }
+  @media print {
+    html, body { background:#fff !important; }
+    .topbar, .foot, .ef-tri, .rail-aside, .toc-aside, .back, .pdf-dl,
+    .ef-crumb, .ef-eyebrow, .ef-facts, .ef-notice { display:none !important; }
+    .ef-spread, .ef-spread.has-rail { display:block !important; max-width:none !important; }
+    .ef-sheet { border:0 !important; padding:0 !important; background:#fff !important; }
+    .ef-sheet .ef-prose, .ef-sheet .ef-lede, .ef-sheet .title { max-width:none !important; }
+    .title { margin:0 0 1rem; }
+    /* 打印用系统字体：体积小、离线打开不依赖自托管字体 */
+    body, .ef-prose, .title, .ef-lede, .ef-facts,
+    h1, h2, h3, h4, h5, h6 { font-family:"Microsoft YaHei UI","Microsoft YaHei","PingFang SC",sans-serif !important; }
+    .ef-prose pre, .ef-prose code { font-family:Consolas,"Cascadia Mono",monospace !important; }
+    .ef-prose { margin-top:1rem; }
+    .ef-prose pre { white-space:pre-wrap; word-break:break-word; }
+    .ef-prose pre code { white-space:pre-wrap; }
+    .ef-prose img, .ef-prose svg, mjx-container { max-width:100% !important; }
+    a { color:inherit !important; text-decoration:none !important; }
+    .ef-prose h2, .ef-prose h3 { break-after:avoid; }
+    .ef-prose pre, .ef-prose table, .eq { break-inside:avoid; }
+  }
+
+</style>
+</head>
+<body class="ef ef-contours">
+<div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+<header class="topbar">
+  <a class="brand" href="../../../../../index.html">KYSIIN.ARCHIVE</a>
+  <nav class="ef-field" aria-label="主导航">
+    <a href="../../../../../index.html">首页</a>
+    <a href="../../../index.html" aria-current="page">数据库系统</a>
+  </nav>
+  <span data-search-slot></span>
+  <button class="ef-btn small" type="button" data-theme-toggle>切换深浅</button>
+</header>
+
+<article class="ef-spread has-rail">
+  <aside class="ef-margin rail-aside" aria-label="本课程分区">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>数据库系统</span><span>2 区</span></p>
+      <ol class="rail-tree">
+        <li class="tree-group">
+          <div class="tree-row">
+            <a class="tree-name" href="../../../index.html#sec-%E4%B8%93%E9%A2%98"><span class="tree-label">专题</span><span class="ef-field">5</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="false" aria-label="展开 专题"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items" hidden>
+            <li><a href="../../final/数据库系统-ER图画法规则总结.html">数据库系统 E-R 图画法规则总结</a></li>
+            <li><a href="../../final/数据库系统-SQL语句用法总结.html">数据库系统 SQL 语句用法总结</a></li>
+            <li><a href="../../final/数据库系统-判断选择题概念总结.html">数据库系统判断/选择题概念总结</a></li>
+            <li><a href="../../final/数据库系统-查询优化规则总结.html">数据库系统查询优化规则总结</a></li>
+            <li><a href="../../final/数据库系统-计算公式总结.html">数据库系统计算公式总结</a></li>
+          </ol>
+        </li>
+        <li class="tree-group is-open">
+          <div class="tree-row">
+            <a class="tree-name" href="../../../index.html#sec-%E5%AE%9E%E9%AA%8C"><span class="tree-label">实验</span><span class="ef-field">9</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="true" aria-label="收起 实验"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items">
+            <li><a href="../../HW/hw6_answers.html">HW6</a></li>
+            <li><a href="../../LAB1/LAB1.html">LAB1</a></li>
+            <li><a href="../../LAB2/LAB2.html">LAB2</a></li>
+            <li><a href="../../LAB3/LAB3.html">LAB3</a></li>
+            <li><a href="../../LAB4/LAB4.html">LAB4</a></li>
+            <li><a href="../../LAB5/实验报告.html">图书管理系统实验报告</a></li>
+            <li><a href="docs/AI辅助开发方法.html">MiniSQL —— AI 辅助开发方法说明</a></li>
+            <li><a href="docs/实验报告.html">MiniSQL 实验报告</a></li>
+            <li><a href="README.html" aria-current="page">MiniSQL —— 精简型单用户 SQL 引擎（C++）</a></li>
+          </ol>
+        </li>
+      </ol>
+      <p class="ef-actions" style="margin:.9rem 0 0">
+        <a class="ef-btn small" href="../../../index.html">返回课程</a>
+      </p>
+    </div>
+  </aside>
+  <div class="ef-sheet">
+    <p class="ef-eyebrow slash">Course / Article</p>
+    <p class="ef-crumb ef-field"><a href="../../../../../index.html">首页</a><a href="../../../index.html">数据库系统</a><span>实验</span><span>大作业/proj</span></p>
+    <ul class="ef-facts ef-field">
+      <li>实验</li>
+      <li>1,779 字</li>
+      <li>2026.11.15</li>
+      <li>9 个小节</li>
+    </ul>
+    <h1 class="title ef-read">MiniSQL —— 精简型单用户 SQL 引擎（C++）</h1>
+    <div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+    
+    
+    <div class="ef-prose">
+<p>MiniSQL 是一个从零实现的精简型单用户关系型数据库引擎。用户通过字符界面（或重定向脚本）输入 SQL，
+完成数据库/表/索引的建立与删除、记录的插入/删除/修改/查找。整体对标 <strong>CMU 15-445 / BusTub</strong> 的分层架构，
+强调对 DBMS 底层技术（缓冲池、B+ 树、记录存储、并发与恢复）的理解与实现。</p>
+<blockquote>
+<p><strong>状态：核心需求 + 全部 Bonus 均已实现，13 个单元测试全部通过。</strong>
+完整验收脚本（3 个数据库、10 万条 <code>insert</code> 及各类 <code>select/delete/update/index</code> 操作）端到端跑通，约 3.4 秒。</p>
+</blockquote>
+<hr />
+<h2 id="1-功能需求覆盖">1. 功能需求覆盖</h2>
+<table>
+<thead>
+<tr>
+<th>需求</th>
+<th>说明</th>
+<th>覆盖位置</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>数据类型</td>
+<td><code>integer</code> / <code>char(n)</code> / <code>float</code> 三种</td>
+<td><code>src/common/value.h</code></td>
+</tr>
+<tr>
+<td>多数据库</td>
+<td><code>create/drop/use database</code>、<code>show databases/tables</code>，每库独立文件</td>
+<td><code>src/api/database_engine.*</code></td>
+</tr>
+<tr>
+<td>表定义</td>
+<td>单表 ≤ 32 属性；属性可声明 <code>unique</code>；支持单属性主键</td>
+<td><code>src/catalog/</code></td>
+</tr>
+<tr>
+<td>索引</td>
+<td>主键/<code>unique</code> 列自动建 B+ 树索引；<code>create/drop index</code> 显式建删（单属性单值）</td>
+<td><code>src/storage/index/</code></td>
+</tr>
+<tr>
+<td>数据操作</td>
+<td>多条件 <code>AND</code> 查询（等值 + 区间）；插入；删除；<strong>修改 (<code>update</code>)</strong></td>
+<td><code>src/api/</code>、<code>src/storage/</code></td>
+</tr>
+<tr>
+<td>约束</td>
+<td>主键唯一、<code>unique</code> 列唯一，借索引在插入/更新时强制</td>
+<td><code>src/api/execute_engine.cpp</code></td>
+</tr>
+<tr>
+<td>持久化</td>
+<td>数据、元数据、索引根、库清单均落盘，重启后恢复</td>
+<td>全栈</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="2-系统架构">2. 系统架构</h2>
+<pre><code>                ┌────────────────────────────┐
+                │   main.cpp  (REPL / 批处理)  │   按 ';' 切分语句
+                └──────────────┬─────────────┘
+                               │ SQL 文本
+                ┌──────────────▼─────────────┐
+   parser/      │  Interpreter  (SQL → AST)   │   手写词法 + 递归下降
+                └──────────────┬─────────────┘
+                               │ Statement
+   api/         ┌──────────────▼─────────────┐
+                │  ExecuteEngine (语句派发)    │   类型强制 / where 过滤 / 索引同步
+                └──────────────┬─────────────┘
+                               │ 作用于「当前库」
+   api/         ┌──────────────▼─────────────┐
+                │  DatabaseEngine (多库管理)   │   每库一套存储栈 + databases.meta
+                └───┬───────────┬─────────┬───┘
+                    │           │         │
+   catalog/  ┌──────▼─────┐  ┌──▼──────┐  │
+             │  Catalog   │  │  Index  │  │
+             │  Manager   │  │ Manager │  │  storage/index/  (B+Tree)
+             └──────┬─────┘  └──┬──────┘  │
+                    │           │         │
+   storage/  ┌──────▼───────────▼─────────▼───┐
+   record/   │  TableHeap / Record (记录存储)  │
+             └──────────────┬─────────────────┘
+                            │ 页请求
+   storage/  ┌──────────────▼─────────────────┐
+   buffer/   │  BufferPoolManager (+Replacer)  │  ← LRU / Clock(Bonus)
+             └──────────────┬─────────────────┘
+                            │ 页读写
+   storage/  ┌──────────────▼─────────────────┐
+   disk/     │  DiskManager (+空闲页回收)       │  ← 数据库文件 + .free 旁车
+             └─────────────────────────────────┘
+
+   Bonus 自包含模块（不在单用户执行路径上）：
+     concurrency/  LockManager + Transaction    (2PL + wound-wait 死锁预防)
+     recovery/     LogManager + RecoveryManager  (WAL / REDO-UNDO 崩溃恢复)
+</code></pre>
+<p><strong>分层铁律</strong>：上层只通过 <code>BufferPoolManager</code> 的 <code>Fetch/New/Unpin</code> 访问页，
+任何模块都<strong>不直接</strong>调用 <code>DiskManager</code>。这是存储层解耦的核心约定。</p>
+<hr />
+<h2 id="3-模块-代码位置映射">3. 模块 → 代码位置映射</h2>
+<table>
+<thead>
+<tr>
+<th>模块</th>
+<th>代码位置</th>
+<th>职责</th>
+<th>单元测试</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>#1 Disk &amp; Buffer Pool</td>
+<td><code>src/storage/disk/</code>、<code>src/storage/buffer/</code></td>
+<td>按页读写磁盘；缓冲池；LRU/Clock 置换</td>
+<td><code>disk_manager_test</code>、<code>buffer_pool_manager_test</code>、<code>lru_replacer_test</code>、<code>clock_replacer_test</code></td>
+</tr>
+<tr>
+<td>#2 Record Manager</td>
+<td><code>src/storage/record/</code></td>
+<td>记录定长序列化、数据页内增删查、堆表</td>
+<td><code>table_heap_test</code></td>
+</tr>
+<tr>
+<td>#3 Index Manager</td>
+<td><code>src/storage/index/</code></td>
+<td>B+ 树（分裂/合并/借位/根塌缩）、点查/区间</td>
+<td><code>b_plus_tree_test</code>、<code>index_manager_test</code></td>
+</tr>
+<tr>
+<td>#4 Catalog Manager</td>
+<td><code>src/catalog/</code></td>
+<td>表/属性/索引元数据管理与单页持久化</td>
+<td><code>catalog_test</code></td>
+</tr>
+<tr>
+<td>多库管理</td>
+<td><code>src/api/database_engine.*</code></td>
+<td>多数据库生命周期与切换</td>
+<td>（经 <code>execute_engine_test</code>）</td>
+</tr>
+<tr>
+<td>SQL 解释器</td>
+<td><code>src/parser/</code></td>
+<td>词法 + 递归下降解析</td>
+<td><code>interpreter_test</code></td>
+</tr>
+<tr>
+<td>执行引擎</td>
+<td><code>src/api/execute_engine.*</code></td>
+<td>语句派发、类型强制、约束、索引同步</td>
+<td><code>execute_engine_test</code>（端到端）</td>
+</tr>
+<tr>
+<td>#6 Recovery (Bonus)</td>
+<td><code>src/recovery/</code></td>
+<td>WAL 日志、REDO 全部 / UNDO 失败事务</td>
+<td><code>recovery_test</code></td>
+</tr>
+<tr>
+<td>#7 Lock Manager (Bonus)</td>
+<td><code>src/concurrency/</code></td>
+<td>共享/排他锁、2PL、wound-wait 死锁预防</td>
+<td><code>lock_manager_test</code></td>
+</tr>
+<tr>
+<td>磁盘空闲页回收 (Bonus)</td>
+<td><code>src/storage/disk/</code>、DROP 路径</td>
+<td>free list + <code>.free</code> 持久化，DROP 真正回收页</td>
+<td><code>disk_reclaim_test</code></td>
+</tr>
+<tr>
+<td>入口</td>
+<td><code>src/main.cpp</code></td>
+<td>REPL / 批处理</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="4-目录结构">4. 目录结构</h2>
+<pre><code>proj/
+├── CMakeLists.txt          # 构建脚本（递归收集 src 下所有 .cpp；test 下每个 .cpp 一个测试）
+├── README.md
+├── docs/
+│   ├── prompts/            # 各模块的 AI 实现 prompt 存档（00..09）
+│   └── 实验报告.md          # 设计与实现报告
+├── src/
+│   ├── main.cpp                        # REPL / 批处理入口
+│   ├── common/        config.h rid.h exception.h value.h
+│   ├── parser/        statement.h interpreter.*
+│   ├── api/           database_engine.* execute_engine.*
+│   ├── catalog/       column.h schema.h catalog_manager.*
+│   ├── concurrency/   transaction.h lock_manager.*         # Bonus
+│   ├── recovery/      log_record.h log_manager.* recovery_manager.*   # Bonus
+│   └── storage/
+│       ├── disk/      disk_manager.*
+│       ├── page/      page.h
+│       ├── buffer/    replacer.h lru_replacer.* clock_replacer.* buffer_pool_manager.*
+│       ├── record/    row.h table_heap.*
+│       └── index/     b_plus_tree.* index_manager.*
+└── test/              每个模块一个不依赖框架的 assert 测试
+</code></pre>
+<hr />
+<h2 id="5-构建与运行">5. 构建与运行</h2>
+<p>依赖：CMake ≥ 3.15，支持 C++17 的编译器（GCC / Clang / MSVC；本项目在 Windows + MinGW g++13 下开发）。</p>
+<pre><code class="language-bash">cmake -S . -B build
+cmake --build build
+ctest --test-dir build --output-on-failure   # 运行全部 13 个单元测试
+</code></pre>
+<p><strong>交互式 REPL</strong>：</p>
+<pre><code class="language-bash">./build/minisql            # Windows: ./build/minisql.exe
+</code></pre>
+<pre><code>minisql&gt; create database school;
+minisql&gt; use school;
+minisql&gt; create table student (id int, name char(20), gpa float, primary key (id));
+minisql&gt; create index idx_name on student (name);
+minisql&gt; insert into student values (1, &quot;alice&quot;, 3.8);
+minisql&gt; select * from student where id = 1 and gpa &gt; 3.0;
+minisql&gt; update student set gpa = 4.0 where id = 1;
+minisql&gt; delete from student where id = 1;
+minisql&gt; exit;
+</code></pre>
+<p><strong>批处理</strong>（重定向 SQL 脚本）：</p>
+<pre><code class="language-bash">./build/minisql &lt; script.sql
+</code></pre>
+<blockquote>
+<p>运行时会在工作目录生成 <code>&lt;db&gt;.db</code>（数据）、<code>databases.meta</code>（库清单）、<code>&lt;db&gt;.db.free</code>（空闲页），
+这些均已被 <code>.gitignore</code> 忽略。</p>
+</blockquote>
+<hr />
+<h2 id="6-支持的-sql-子集">6. 支持的 SQL 子集</h2>
+<table>
+<thead>
+<tr>
+<th>类别</th>
+<th>语句</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>数据库</td>
+<td><code>create database &lt;d&gt;;</code> / <code>drop database &lt;d&gt;;</code> / <code>use &lt;d&gt;;</code> / <code>show databases;</code> / <code>show tables;</code></td>
+</tr>
+<tr>
+<td>建表</td>
+<td><code>create table &lt;t&gt; (&lt;col&gt; &lt;type&gt; [unique], ..., primary key (&lt;col&gt;));</code></td>
+</tr>
+<tr>
+<td>删表</td>
+<td><code>drop table &lt;t&gt;;</code></td>
+</tr>
+<tr>
+<td>索引</td>
+<td><code>create index &lt;name&gt; on &lt;t&gt; (&lt;col&gt;);</code> / <code>drop index &lt;name&gt;;</code></td>
+</tr>
+<tr>
+<td>插入</td>
+<td><code>insert into &lt;t&gt; values (&lt;v1&gt;, &lt;v2&gt;, ...);</code></td>
+</tr>
+<tr>
+<td>删除</td>
+<td><code>delete from &lt;t&gt; [where &lt;cond&gt; and ...];</code></td>
+</tr>
+<tr>
+<td>修改</td>
+<td><code>update &lt;t&gt; set &lt;col&gt; = &lt;v&gt;, ... [where &lt;cond&gt; and ...];</code></td>
+</tr>
+<tr>
+<td>查询</td>
+<td><code>select * \| &lt;col&gt;, ... from &lt;t&gt; [where &lt;cond&gt; and ...];</code></td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>类型：<code>int</code> / <code>char(n)</code> / <code>float</code>；字符串字面量用双引号。</li>
+<li>条件 <code>&lt;cond&gt;</code> 形如 <code>col = v</code> / <code>&lt;&gt;</code> / <code>&lt;</code> / <code>&gt;</code> / <code>&lt;=</code> / <code>&gt;=</code>，多个条件仅用 <code>AND</code> 连接。</li>
+<li>词法支持 <code>--</code> 行注释、关键字大小写不敏感。</li>
+<li>值会按列类型强制（如整数字面量写入 <code>float</code> 列）。</li>
+</ul>
+<blockquote>
+<p>未实现：<code>or</code> / <code>join</code> / 聚合 / 子查询（超出需求范围）。</p>
+</blockquote>
+<hr />
+<h2 id="7-实现要点与优化">7. 实现要点与优化</h2>
+<ul>
+<li><strong>定长记录 + 槽位堆表</strong>：每数据页 <code>[next_page_id | slot_count]</code> 页头 + 「状态字节 + 定长记录」槽；
+  删除按槽标记，空间可复用。</li>
+<li><strong>堆表尾页缓存</strong>：插入直接追加到缓存的尾页（O(1) 摊还），避免每次从链表头扫描（曾导致 10 万插入 O(n²) 超时）。</li>
+<li><strong>B+ 树</strong>：递归实现分裂/合并/借位/根塌缩；节点页为「先插入后分裂」的临时溢出各预留 1 槽（否则溢出键越界）。</li>
+<li><strong>缓冲池</strong>：<code>BUFFER_POOL_SIZE=1024</code>（约 4MB/库），使工作集常驻、减少换出刷盘。</li>
+<li><strong>目录持久化</strong>：表名/schema/<code>first_page_id</code>/索引根序列化到 0 号目录页；索引根随插入变化在 flush 时回填。</li>
+<li><strong>空间回收</strong>：<code>DropTable</code>/<code>DropIndex</code> 经 <code>TableHeap::FreeAllPages</code> 与 <code>BPlusTree::Destroy</code> 把页归还
+  DiskManager 空闲表（<code>.free</code> 旁车文件持久化）。</li>
+</ul>
+<hr />
+<h2 id="8-测试">8. 测试</h2>
+<p>每个模块配一个不依赖第三方框架的 <code>assert</code> 单元测试，<code>ctest</code> 统一运行：</p>
+<pre><code>b_plus_tree_test         buffer_pool_manager_test   catalog_test
+clock_replacer_test      disk_manager_test          disk_reclaim_test
+execute_engine_test      index_manager_test         interpreter_test
+lock_manager_test        lru_replacer_test          recovery_test
+table_heap_test
+                                         → 13/13 全部通过
+</code></pre>
+<p><code>execute_engine_test</code> 为端到端测试（经 Interpreter + ExecuteEngine + 多库存储栈，含关库/重开的持久化验证）。</p>
+<hr />
+<h2 id="9-实现路线按依赖顺序均已完成">9. 实现路线（按依赖顺序，均已完成）</h2>
+<pre><code>DiskManager → BufferPoolManager(+LRUReplacer) → TableHeap/Record → CatalogManager
+                                                       │
+                                                       ▼
+                                              BPlusTree / IndexManager → 回填主键/唯一索引
+                                                       │
+                                                       ▼
+                          Interpreter → DatabaseEngine + ExecuteEngine + main 接线
+                                                       │
+              Bonus: ClockReplacer / 空闲页回收 / LockManager / WAL Recovery
+</code></pre>
+<p>详细设计与实现过程见 <a href="docs/实验报告.html"><code>docs/实验报告.md</code></a>，各模块的 AI 实现 prompt 见 <code>docs/prompts/</code>（未收录）。</p>
+    </div>
+    <p class="back"><a class="ef-btn" href="docs/实验报告.html">← MiniSQL 实验报告</a> <a class="ef-btn" href="../../../index.html">返回本课</a></p>
+  </div>
+  <aside class="ef-margin toc-aside" aria-label="本页目录">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>本页目录</span><span>9 节</span></p>
+      <ol>
+      <li><a class="lvl2" href="#1-功能需求覆盖">1. 功能需求覆盖</a></li>
+      <li><a class="lvl2" href="#2-系统架构">2. 系统架构</a></li>
+      <li><a class="lvl2" href="#3-模块-代码位置映射">3. 模块 → 代码位置映射</a></li>
+      <li><a class="lvl2" href="#4-目录结构">4. 目录结构</a></li>
+      <li><a class="lvl2" href="#5-构建与运行">5. 构建与运行</a></li>
+      <li><a class="lvl2" href="#6-支持的-sql-子集">6. 支持的 SQL 子集</a></li>
+      <li><a class="lvl2" href="#7-实现要点与优化">7. 实现要点与优化</a></li>
+      <li><a class="lvl2" href="#8-测试">8. 测试</a></li>
+      <li><a class="lvl2" href="#9-实现路线按依赖顺序均已完成">9. 实现路线（按依赖顺序，均已完成）</a></li>
+      </ol>
+    </div>
+  </aside>
+</article>
+
+<footer class="foot">
+  <span class="ef-field">KYSIIN.ARCHIVE · 2026.11.15 · 由 Markdown 渲染</span>
+  <span>用 endfield-ui 渲染 · Saira（SIL OFL）自托管</span>
+</footer>
+<script type="module">
+  import { wireTheme } from '../../../../../assets/fx.js'
+  wireTheme()
+</script>
+<script defer src="../../../../../assets/search.js?v=202611150558"></script>
+<script>
+  /* 左栏：每个分组可独立展开/收起 */
+  (function () {
+    document.querySelectorAll('.tree-toggle').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var li = btn.closest('.tree-group');
+        var list = li ? li.querySelector('.tree-items') : null;
+        var open = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', String(!open));
+        if (list) list.hidden = open;
+        if (li) li.classList.toggle('is-open', !open);
+      });
+    });
+  })();
+</script>
+<script>
+  /* 右栏目录跟随滚动：读到哪一节就把那一行标出来 */
+  (function () {
+    var links = [].slice.call(document.querySelectorAll('.toc-aside a[href^="#"]'));
+    if (!links.length) return;
+    var items = links.map(function (a) {
+      var el = document.getElementById(a.getAttribute('href').slice(1));
+      return el ? { a: a, el: el } : null;
+    }).filter(Boolean);
+    if (!items.length) return;
+    var ticking = false;
+    function spy() {
+      ticking = false;
+      var line = window.scrollY + 140;
+      var best = null;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].el.getBoundingClientRect().top + window.scrollY <= line) best = items[i];
+      }
+      links.forEach(function (a) { a.removeAttribute('aria-current'); });
+      if (best) best.a.setAttribute('aria-current', 'true');
+    }
+    window.addEventListener('scroll', function () {
+      if (!ticking) { ticking = true; requestAnimationFrame(spy); }
+    }, { passive: true });
+    spy();
+  })();
+</script>
+</body>
+</html>

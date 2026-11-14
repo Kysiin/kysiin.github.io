@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LAB1 · KYSIIN.ARCHIVE</title>
+<script src="../../../../assets/variant.js"></script>
+<link rel="stylesheet" href="../../../../assets/local-fonts.css" />
+<link rel="stylesheet" href="../../../../assets/endfield.css" />
+
+<style>
+  body { --tri-h: 3px; --topbar-h: 3.1rem; }
+  body > .ef-tri { position: sticky; top: 0; z-index: 61; }
+  .topbar { position:sticky; top:var(--tri-h); z-index:60;
+    display:flex; align-items:center; gap:1.5rem; padding:.85rem var(--ef-pad);
+    border-bottom:1px solid var(--ef-rule); background:var(--ef-panel); }
+  .topbar .brand { margin:0; font-family:var(--ef-font-ui); font-size:.95rem;
+    font-stretch:var(--ef-wider); font-weight:800; letter-spacing:.08em;
+    text-decoration:none; color:var(--ef-ink); }
+  .topbar nav { display:flex; align-items:center; gap:1.25rem; margin-left:auto; }
+  .topbar nav a { text-decoration:none; color:var(--ef-ink-2); }
+  .foot { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between;
+    gap:1rem; padding:1.5rem var(--ef-pad) 2.5rem; border-top:1px solid var(--ef-rule);
+    color:var(--ef-ink-2); font-size:.875rem; }
+  @media (max-width: 959px) { .ef-spread { grid-template-columns:minmax(0,1fr); }
+    .ef-sheet { border-right:0; border-bottom:1px solid var(--ef-rule); } }
+  @media (max-width:760px) { .topbar { flex-wrap:wrap; gap:.75rem; }
+    .topbar nav { order:3; width:100%; margin-left:0; } }
+
+  .title { margin:1.5rem 0 1rem; font-size:clamp(var(--ef-t-title),5vw,var(--ef-t-h1));
+    font-weight:700; line-height:1.3; }
+  .ef-prose { margin-top:1.75rem; }
+  .ef-prose img { max-width:100%; height:auto; border:1px solid var(--ef-rule); background:#fff; }
+  .ef-prose table { width:100%; border-collapse:collapse; font-size:.9rem; }
+  .ef-prose th, .ef-prose td { border-bottom:1px solid var(--ef-rule); padding:.45rem .6rem; text-align:left; }
+  .ef-prose th { font-family:var(--ef-font-ui); font-stretch:var(--ef-wide); font-size:.8rem; }
+  /* 代码块：整块一个背景；块内的 code 不再带行内边框/内边距 */
+  .ef-prose pre { overflow:auto; margin:1rem 0; padding:.9rem 1rem;
+    background:var(--ef-chip); border-left:3px solid var(--ef-rule);
+    font-size:.85rem; line-height:1.6; tab-size:4; }
+  .ef-prose pre code { display:block; padding:0; border:0; background:none;
+    font-family:var(--ef-font-mono); font-size:.85rem; line-height:1.6; white-space:pre; }
+  .ef-prose :not(pre) > code { font-family:var(--ef-font-mono); font-size:.88em;
+    padding:.1em .35em; border:1px solid var(--ef-rule); background:var(--ef-paper); }
+  .ef-prose blockquote { border-left:3px solid var(--ef-ink); margin:1rem 0; padding:.25rem 0 .25rem 1rem;
+    color:var(--ef-ink-2); }
+
+  /* —— 公式：绝不超出正文栏；行间公式可横向滚动 —— */
+  .ef-prose mjx-container { max-width:100%; }
+  .ef-prose mjx-container[display="true"] { display:block; text-align:center; margin:1.1em 0;
+    max-width:100%; overflow-x:auto; overflow-y:hidden; padding:2px 0; }
+  .ef-prose mjx-container[jax="CHTML"] { font-size:1.02em; }
+  .eq { overflow-x:auto; overflow-y:hidden; max-width:100%; padding:2px 0; }
+  .eq mjx-container[display="true"] { margin:.35em 0; }
+
+  .toc ol { margin:0; padding:0; list-style:none; border-left:1px solid var(--ef-rule); }
+  .toc a { display:block; margin-left:-1px; padding:.22rem 0 .22rem .7rem;
+    border-left:3px solid transparent; color:var(--ef-ink-2); font-size:.85rem;
+    overflow-wrap:anywhere; }
+  .toc a:hover { color:var(--ef-ink); border-left-color:var(--ef-trace); }
+  .toc .lvl3 { padding-left:1.3rem; font-size:.8rem; }
+  .back { margin:2rem 0 0; display:flex; flex-wrap:wrap; gap:.75rem; }
+
+  /* —— 三栏铺满：两侧栏贴边，中间正文吃掉所有剩余宽度 —— */
+  .ef-spread { max-width: none; margin: 0; }
+
+  @media (min-width: 1180px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(11rem, 12vw, 14rem) minmax(0, 1fr) clamp(13rem, 14vw, 17rem);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+  }
+  @media (min-width: 960px) and (max-width: 1179px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(10rem, 12vw, 12rem) minmax(0, 1fr);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+    .ef-spread.has-rail > .toc-aside { display: none; }
+  }
+  @media (min-width: 960px) {
+    .ef-spread > .ef-margin {
+      position: sticky;
+      top: calc(var(--tri-h) + var(--topbar-h));
+      align-self: start;
+      max-height: calc(100vh - var(--tri-h) - var(--topbar-h));
+      overflow-y: auto;
+      scrollbar-width: thin;
+      padding: clamp(1.5rem, 3vw, 2.5rem) 1rem;
+    }
+    /* 两侧栏往屏幕边缘靠，别在页边留空 */
+    .ef-spread > .rail-aside { padding-left: .75rem; padding-right: 1.25rem; }
+    .ef-spread > .toc-aside { padding-left: 1.25rem; padding-right: .75rem; }
+    /* 正文左右留呼吸，但不限制宽度 */
+    .ef-spread > .ef-sheet { padding-left: clamp(2rem, 3.5vw, 4rem); padding-right: clamp(2rem, 3.5vw, 4rem); }
+    /* 套件把正文限制在 40rem；中间栏变宽后这里放开，让文字铺满 */
+    .ef-sheet .ef-prose,
+    .ef-sheet .ef-lede,
+    .ef-sheet .title,
+    .ef-sheet .ef-read,
+    .ef-sheet .ef-facts,
+    .ef-sheet .ef-empty,
+    .ef-sheet .ef-notice { max-width: none; }
+  }
+  .ef-margin .toc a { font-size: .74rem; line-height: 1.5; }
+  .toc a[aria-current] { color: var(--ef-ink); border-left-color: var(--ef-trace); font-weight: 600; }
+  .rail-head { display: block; margin: 0 0 .5rem; padding-bottom: .35rem;
+    border-bottom: 1px solid var(--ef-rule); font-size: .68rem; line-height: 1.5; }
+  .rail-head span { display: inline; }
+  .rail-head span + span { display: block; color: var(--ef-ink-2); }
+  .rail-aside .toc a { padding-top: .3rem; padding-bottom: .3rem; }
+  .rail-tree { list-style:none; margin:0; padding:0; }
+  .rail-tree .tree-name { display:block; padding:.35rem .2rem .35rem .6rem;
+    border-left:3px solid transparent; font-size:.76rem; font-weight:600; color:var(--ef-ink); }
+  .rail-tree .tree-label { display:inline; }
+  .rail-tree .tree-name .ef-field { font-size:.68rem; color:var(--ef-ink-2); margin-left:.35rem;
+    white-space:nowrap; }
+  .rail-tree .tree-group.is-open > .tree-name { border-left-color:var(--ef-trace); }
+  .rail-tree .tree-items { list-style:none; margin:.1rem 0 .5rem; padding:0 0 0 .6rem;
+    border-left:1px solid var(--ef-rule); }
+  .rail-tree .tree-items a { padding-left:.6rem; font-size:.72rem; line-height:1.45; }
+  .tree-row { display:flex; align-items:stretch; gap:.15rem; }
+  .tree-row .tree-name { flex:1 1 auto; min-width:0; }
+  .tree-toggle { flex:none; width:1.55rem; min-height:1.9rem; display:grid; place-items:center;
+    padding:0; border:1px solid var(--ef-rule); background:var(--ef-panel); color:var(--ef-ink-2);
+    cursor:pointer; transition:color .12s var(--ef-ease), border-color .12s var(--ef-ease), background .12s var(--ef-ease); }
+  .tree-toggle:hover { color:var(--ef-ink); border-color:var(--ef-ink); background:var(--ef-chip); }
+  .tree-toggle svg { width:.7rem; height:.7rem; transition:transform .15s var(--ef-ease); }
+  .tree-toggle[aria-expanded="true"] svg { transform:rotate(90deg); }
+  .rail-tree .tree-items[hidden] { display:none; }
+  /* 滚动条统一样式在 assets/local-fonts.css 里定义（页面/侧栏/搜索共用） */
+
+  /* 窄屏：正文优先，两侧栏排到后面 */
+  @media (max-width: 959px) {
+    .ef-spread.has-rail > .ef-sheet { order: 1; }
+    .ef-spread.has-rail > .rail-aside { order: 2; border-top: 1px solid var(--ef-rule); }
+    .ef-spread.has-rail > .toc-aside { order: 3; }
+  }
+
+  /* —— 复习笔记：PDF 下载 —— */
+  .pdf-dl { display:flex; flex-wrap:wrap; align-items:center; gap:.75rem; margin:1.1rem 0 0; }
+  .pdf-dl .ef-btn { border-color:var(--ef-ink); }
+
+  /* —— 打印 / 导出 PDF：只留正文 —— */
+  @page { size:A4; margin:16mm 14mm 18mm; }
+  @media print {
+    html, body { background:#fff !important; }
+    .topbar, .foot, .ef-tri, .rail-aside, .toc-aside, .back, .pdf-dl,
+    .ef-crumb, .ef-eyebrow, .ef-facts, .ef-notice { display:none !important; }
+    .ef-spread, .ef-spread.has-rail { display:block !important; max-width:none !important; }
+    .ef-sheet { border:0 !important; padding:0 !important; background:#fff !important; }
+    .ef-sheet .ef-prose, .ef-sheet .ef-lede, .ef-sheet .title { max-width:none !important; }
+    .title { margin:0 0 1rem; }
+    /* 打印用系统字体：体积小、离线打开不依赖自托管字体 */
+    body, .ef-prose, .title, .ef-lede, .ef-facts,
+    h1, h2, h3, h4, h5, h6 { font-family:"Microsoft YaHei UI","Microsoft YaHei","PingFang SC",sans-serif !important; }
+    .ef-prose pre, .ef-prose code { font-family:Consolas,"Cascadia Mono",monospace !important; }
+    .ef-prose { margin-top:1rem; }
+    .ef-prose pre { white-space:pre-wrap; word-break:break-word; }
+    .ef-prose pre code { white-space:pre-wrap; }
+    .ef-prose img, .ef-prose svg, mjx-container { max-width:100% !important; }
+    a { color:inherit !important; text-decoration:none !important; }
+    .ef-prose h2, .ef-prose h3 { break-after:avoid; }
+    .ef-prose pre, .ef-prose table, .eq { break-inside:avoid; }
+  }
+
+</style>
+</head>
+<body class="ef ef-contours">
+<div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+<header class="topbar">
+  <a class="brand" href="../../../../index.html">KYSIIN.ARCHIVE</a>
+  <nav class="ef-field" aria-label="主导航">
+    <a href="../../../../index.html">首页</a>
+    <a href="../../index.html" aria-current="page">面向信息安全的信号处理</a>
+  </nav>
+  <span data-search-slot></span>
+  <button class="ef-btn small" type="button" data-theme-toggle>切换深浅</button>
+</header>
+
+<article class="ef-spread has-rail">
+  <aside class="ef-margin rail-aside" aria-label="本课程分区">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>面向信息安全的信号处理</span><span>1 区</span></p>
+      <ol class="rail-tree">
+        <li class="tree-group is-open">
+          <div class="tree-row">
+            <a class="tree-name" href="../../index.html#sec-%E5%AE%9E%E9%AA%8C"><span class="tree-label">实验</span><span class="ef-field">1</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="true" aria-label="收起 实验"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items">
+            <li><a href="LAB1.html" aria-current="page">LAB1</a></li>
+          </ol>
+        </li>
+      </ol>
+      <p class="ef-actions" style="margin:.9rem 0 0">
+        <a class="ef-btn small" href="../../index.html">返回课程</a>
+      </p>
+    </div>
+  </aside>
+  <div class="ef-sheet">
+    <p class="ef-eyebrow slash">Course / Article</p>
+    <p class="ef-crumb ef-field"><a href="../../../../index.html">首页</a><a href="../../index.html">面向信息安全的信号处理</a><span>实验</span><span>LAB1</span></p>
+    <ul class="ef-facts ef-field">
+      <li>实验</li>
+      <li>1,021 字</li>
+      <li>2026.11.15</li>
+      <li>0 个小节</li>
+    </ul>
+    <h1 class="title ef-read">LAB1</h1>
+    <div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+    
+    
+    <div class="ef-prose">
+<p><img alt="" src="attachments/Pasted image 20261104154341.png" /></p>
+<pre><code class="language-MATLAB">% 1. 定义自变量 n，范围从 -10 到 10，步长为 1
+n = -10:1:10;
+
+% 2. 生成离散正弦序列 x1(n) 和余弦序列 x2(n)
+x1 = 3 * sin(0.2 * pi * n + 2 * pi / 3);
+x2 = 3 * cos(0.2 * pi * n + 2 * pi / 3);
+
+% 3. 计算序列的相加和点乘
+x_add = x1 + x2;
+x_mul = x1 .* x2;
+
+% 4. 绘制图形
+figure;
+
+% 子图1：绘制 x1(n)
+subplot(2, 2, 1);
+stem(n, x1, 'filled');
+title('离散正弦序列 x_1(n)');
+xlabel('n'); ylabel('x_1(n)');
+grid on;
+
+% 子图2：绘制 x2(n)
+subplot(2, 2, 2);
+stem(n, x2, 'filled');
+title('离散余弦序列 x_2(n)');
+xlabel('n'); ylabel('x_2(n)');
+grid on;
+
+% 子图3：绘制 x1(n) + x2(n)
+subplot(2, 2, 3);
+stem(n, x_add, 'filled');
+title('序列相加 x_1(n) + x_2(n)');
+xlabel('n'); ylabel('x_1(n) + x_2(n)');
+grid on;
+
+% 子图4：绘制 x1(n) .* x2(n)
+subplot(2, 2, 4);
+stem(n, x_mul, 'filled');
+title('序列相乘 x_1(n) \cdot x_2(n)');
+xlabel('n'); ylabel('x_1(n) \cdot x_2(n)');
+grid on;
+</code></pre>
+<p><img alt="" src="attachments/Pasted image 20261104154555.png" />
+<img alt="" src="attachments/Pasted image 20261104154621.png" /></p>
+<pre><code class="language-MATLAB">% 1. 定义两个序列的数值
+x = [5, 6, 11, 0, -3, 1, 7];
+y = [7, -3, 1, 0, -2, 4];
+
+% 2. 定义两个序列的时间索引范围
+nx = -3:3;
+ny = -1:4;
+
+% 3. 计算卷积数值
+z = conv(x, y);
+
+% 4. 计算卷积后序列的时间索引范围
+nz_start = nx(1) + ny(1);      % 起始索引：-3 + (-1) = -4
+nz_end = nx(end) + ny(end);    % 结束索引：3 + 4 = 7
+nz = nz_start : nz_end;        % 生成索引向量 [-4, -3, ..., 7]
+
+% 5. 打印结果到命令行窗口
+disp('卷积结果 z(n) 的数值为：');
+disp(z);
+disp('对应的索引 n 为：');
+disp(nz);
+
+% 6. 绘图展示
+figure;
+subplot(3,1,1);
+stem(nx, x, 'filled'); title('序列 x(n)'); xlabel('n'); ylabel('x(n)'); grid on;
+subplot(3,1,2);
+stem(ny, y, 'filled'); title('序列 y(n)'); xlabel('n'); ylabel('y(n)'); grid on;
+subplot(3,1,3);
+stem(nz, z, 'filled', 'r'); title('卷积结果 z(n) = x(n) * y(n)'); xlabel('n'); ylabel('z(n)'); grid on;
+</code></pre>
+<p><img alt="" src="attachments/Pasted image 20261104154734.png" />
+<img alt="" src="attachments/Pasted image 20261104155210.png" /></p>
+<pre><code class="language-MATLAB">% 1. 定义基本参数
+n16 = 0:15; % N=16 的索引
+n8 = 0:7;   % N=8 的索引
+
+% 2. 生成序列
+x1_16 = exp(1j * (pi/8) * n16);
+x1_8  = exp(1j * (pi/8) * n8);
+
+x2_16 = cos((pi/8) * n16);
+x2_8  = cos((pi/8) * n8);
+
+% 3. 计算 DFT
+X1_16 = fft(x1_16, 16);
+X1_8  = fft(x1_8, 8);
+
+X2_16 = fft(x2_16, 16);
+X2_8  = fft(x2_8, 8);
+
+% 4. 绘制幅频特性曲线
+figure('Name', 'DFT幅频特性');
+
+% 绘制 x1 的幅频特性
+subplot(2,2,1);
+k16 = 0:15;
+stem(k16, abs(X1_16), 'filled'); title('x_1(n) 幅频特性 (N=16)');
+xlabel('k'); ylabel('|X_1(k)|'); grid on;
+
+subplot(2,2,2);
+k8 = 0:7;
+stem(k8, abs(X1_8), 'filled'); title('x_1(n) 幅频特性 (N=8)');
+xlabel('k'); ylabel('|X_1(k)|'); grid on;
+
+% 绘制 x2 的幅频特性
+subplot(2,2,3);
+stem(k16, abs(X2_16), 'filled'); title('x_2(n) 幅频特性 (N=16)');
+xlabel('k'); ylabel('|X_2(k)|'); grid on;
+
+subplot(2,2,4);
+stem(k8, abs(X2_8), 'filled'); title('x_2(n) 幅频特性 (N=8)');
+xlabel('k'); ylabel('|X_2(k)|'); grid on;
+
+
+% 5. 使用 IDFT 恢复 x2 信号
+% 分别对 N=16 和 N=8 的频域结果进行 IFFT
+x2_rec_16 = ifft(X2_16, 16);
+x2_rec_8  = ifft(X2_8, 8);
+
+% 取实部
+x2_rec_16 = real(x2_rec_16);
+x2_rec_8  = real(x2_rec_8);
+
+% 绘制恢复信号对比图
+figure('Name', 'IDFT恢复信号对比');
+
+subplot(2,1,1);
+stem(n16, x2_16, 'b', 'LineWidth', 1.5); hold on;
+stem(n16, x2_rec_16, 'r--o', 'LineWidth', 1.5);
+title('N=16 时，原始 x_2(n) 与 IDFT 恢复信号对比');
+legend('原始信号', '恢复信号'); xlabel('n'); ylabel('幅度'); grid on;
+
+subplot(2,1,2);
+stem(n8, x2_8, 'b', 'LineWidth', 1.5); hold on;
+stem(n8, x2_rec_8, 'r--o', 'LineWidth', 1.5);
+title('N=8 时，原始 x_2(n) 与 IDFT 恢复信号对比');
+legend('原始信号', '恢复信号'); xlabel('n'); ylabel('幅度'); grid on;
+
+% 计算恢复误差
+disp('N=16 时的恢复误差最大绝对值:');
+disp(max(abs(x2_16 - x2_rec_16)));
+disp('N=8 时的恢复误差最大绝对值:');
+disp(max(abs(x2_8 - x2_rec_8)));
+</code></pre>
+<p><img alt="" src="attachments/Pasted image 20261104155230.png" />
+<img alt="" src="attachments/Pasted image 20261104155244.png" />
+两种DFT有差别，因为N越大，DFT的频率分辨率越高，N=16能分辨出 π/8的频率成分，而N=8分辨不出。且当信号频率不在 DFT 的采样点上时，就会发生“栅栏效应”，导致能量向周围频点扩散，产生泄露，N=8时产生了频谱泄露。</p>
+<p>IDFT恢复得到的信号与原信号一致。</p>
+    </div>
+    <p class="back"> <a class="ef-btn" href="../../index.html">返回本课</a></p>
+  </div>
+  <aside class="ef-margin toc-aside" aria-label="本页目录">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>本页目录</span><span>0 节</span></p>
+      <ol>
+      <li><span class="ef-field">本页没有小标题</span></li>
+      </ol>
+    </div>
+  </aside>
+</article>
+
+<footer class="foot">
+  <span class="ef-field">KYSIIN.ARCHIVE · 2026.11.15 · 由 Markdown 渲染</span>
+  <span>用 endfield-ui 渲染 · Saira（SIL OFL）自托管</span>
+</footer>
+<script type="module">
+  import { wireTheme } from '../../../../assets/fx.js'
+  wireTheme()
+</script>
+<script defer src="../../../../assets/search.js?v=202611150558"></script>
+<script>
+  /* 左栏：每个分组可独立展开/收起 */
+  (function () {
+    document.querySelectorAll('.tree-toggle').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var li = btn.closest('.tree-group');
+        var list = li ? li.querySelector('.tree-items') : null;
+        var open = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', String(!open));
+        if (list) list.hidden = open;
+        if (li) li.classList.toggle('is-open', !open);
+      });
+    });
+  })();
+</script>
+<script>
+  /* 右栏目录跟随滚动：读到哪一节就把那一行标出来 */
+  (function () {
+    var links = [].slice.call(document.querySelectorAll('.toc-aside a[href^="#"]'));
+    if (!links.length) return;
+    var items = links.map(function (a) {
+      var el = document.getElementById(a.getAttribute('href').slice(1));
+      return el ? { a: a, el: el } : null;
+    }).filter(Boolean);
+    if (!items.length) return;
+    var ticking = false;
+    function spy() {
+      ticking = false;
+      var line = window.scrollY + 140;
+      var best = null;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].el.getBoundingClientRect().top + window.scrollY <= line) best = items[i];
+      }
+      links.forEach(function (a) { a.removeAttribute('aria-current'); });
+      if (best) best.a.setAttribute('aria-current', 'true');
+    }
+    window.addEventListener('scroll', function () {
+      if (!ticking) { ticking = true; requestAnimationFrame(spy); }
+    }, { passive: true });
+    spy();
+  })();
+</script>
+</body>
+</html>

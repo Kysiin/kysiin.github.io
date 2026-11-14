@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PROJECT REPORT · KYSIIN.ARCHIVE</title>
+<script src="../../../../assets/variant.js"></script>
+<link rel="stylesheet" href="../../../../assets/local-fonts.css" />
+<link rel="stylesheet" href="../../../../assets/endfield.css" />
+
+<style>
+  body { --tri-h: 3px; --topbar-h: 3.1rem; }
+  body > .ef-tri { position: sticky; top: 0; z-index: 61; }
+  .topbar { position:sticky; top:var(--tri-h); z-index:60;
+    display:flex; align-items:center; gap:1.5rem; padding:.85rem var(--ef-pad);
+    border-bottom:1px solid var(--ef-rule); background:var(--ef-panel); }
+  .topbar .brand { margin:0; font-family:var(--ef-font-ui); font-size:.95rem;
+    font-stretch:var(--ef-wider); font-weight:800; letter-spacing:.08em;
+    text-decoration:none; color:var(--ef-ink); }
+  .topbar nav { display:flex; align-items:center; gap:1.25rem; margin-left:auto; }
+  .topbar nav a { text-decoration:none; color:var(--ef-ink-2); }
+  .foot { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between;
+    gap:1rem; padding:1.5rem var(--ef-pad) 2.5rem; border-top:1px solid var(--ef-rule);
+    color:var(--ef-ink-2); font-size:.875rem; }
+  @media (max-width: 959px) { .ef-spread { grid-template-columns:minmax(0,1fr); }
+    .ef-sheet { border-right:0; border-bottom:1px solid var(--ef-rule); } }
+  @media (max-width:760px) { .topbar { flex-wrap:wrap; gap:.75rem; }
+    .topbar nav { order:3; width:100%; margin-left:0; } }
+
+  .title { margin:1.5rem 0 1rem; font-size:clamp(var(--ef-t-title),5vw,var(--ef-t-h1));
+    font-weight:700; line-height:1.3; }
+  .ef-prose { margin-top:1.75rem; }
+  .ef-prose img { max-width:100%; height:auto; border:1px solid var(--ef-rule); background:#fff; }
+  .ef-prose table { width:100%; border-collapse:collapse; font-size:.9rem; }
+  .ef-prose th, .ef-prose td { border-bottom:1px solid var(--ef-rule); padding:.45rem .6rem; text-align:left; }
+  .ef-prose th { font-family:var(--ef-font-ui); font-stretch:var(--ef-wide); font-size:.8rem; }
+  /* 代码块：整块一个背景；块内的 code 不再带行内边框/内边距 */
+  .ef-prose pre { overflow:auto; margin:1rem 0; padding:.9rem 1rem;
+    background:var(--ef-chip); border-left:3px solid var(--ef-rule);
+    font-size:.85rem; line-height:1.6; tab-size:4; }
+  .ef-prose pre code { display:block; padding:0; border:0; background:none;
+    font-family:var(--ef-font-mono); font-size:.85rem; line-height:1.6; white-space:pre; }
+  .ef-prose :not(pre) > code { font-family:var(--ef-font-mono); font-size:.88em;
+    padding:.1em .35em; border:1px solid var(--ef-rule); background:var(--ef-paper); }
+  .ef-prose blockquote { border-left:3px solid var(--ef-ink); margin:1rem 0; padding:.25rem 0 .25rem 1rem;
+    color:var(--ef-ink-2); }
+
+  /* —— 公式：绝不超出正文栏；行间公式可横向滚动 —— */
+  .ef-prose mjx-container { max-width:100%; }
+  .ef-prose mjx-container[display="true"] { display:block; text-align:center; margin:1.1em 0;
+    max-width:100%; overflow-x:auto; overflow-y:hidden; padding:2px 0; }
+  .ef-prose mjx-container[jax="CHTML"] { font-size:1.02em; }
+  .eq { overflow-x:auto; overflow-y:hidden; max-width:100%; padding:2px 0; }
+  .eq mjx-container[display="true"] { margin:.35em 0; }
+
+  .toc ol { margin:0; padding:0; list-style:none; border-left:1px solid var(--ef-rule); }
+  .toc a { display:block; margin-left:-1px; padding:.22rem 0 .22rem .7rem;
+    border-left:3px solid transparent; color:var(--ef-ink-2); font-size:.85rem;
+    overflow-wrap:anywhere; }
+  .toc a:hover { color:var(--ef-ink); border-left-color:var(--ef-trace); }
+  .toc .lvl3 { padding-left:1.3rem; font-size:.8rem; }
+  .back { margin:2rem 0 0; display:flex; flex-wrap:wrap; gap:.75rem; }
+
+  /* —— 三栏铺满：两侧栏贴边，中间正文吃掉所有剩余宽度 —— */
+  .ef-spread { max-width: none; margin: 0; }
+
+  @media (min-width: 1180px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(11rem, 12vw, 14rem) minmax(0, 1fr) clamp(13rem, 14vw, 17rem);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+  }
+  @media (min-width: 960px) and (max-width: 1179px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(10rem, 12vw, 12rem) minmax(0, 1fr);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+    .ef-spread.has-rail > .toc-aside { display: none; }
+  }
+  @media (min-width: 960px) {
+    .ef-spread > .ef-margin {
+      position: sticky;
+      top: calc(var(--tri-h) + var(--topbar-h));
+      align-self: start;
+      max-height: calc(100vh - var(--tri-h) - var(--topbar-h));
+      overflow-y: auto;
+      scrollbar-width: thin;
+      padding: clamp(1.5rem, 3vw, 2.5rem) 1rem;
+    }
+    /* 两侧栏往屏幕边缘靠，别在页边留空 */
+    .ef-spread > .rail-aside { padding-left: .75rem; padding-right: 1.25rem; }
+    .ef-spread > .toc-aside { padding-left: 1.25rem; padding-right: .75rem; }
+    /* 正文左右留呼吸，但不限制宽度 */
+    .ef-spread > .ef-sheet { padding-left: clamp(2rem, 3.5vw, 4rem); padding-right: clamp(2rem, 3.5vw, 4rem); }
+    /* 套件把正文限制在 40rem；中间栏变宽后这里放开，让文字铺满 */
+    .ef-sheet .ef-prose,
+    .ef-sheet .ef-lede,
+    .ef-sheet .title,
+    .ef-sheet .ef-read,
+    .ef-sheet .ef-facts,
+    .ef-sheet .ef-empty,
+    .ef-sheet .ef-notice { max-width: none; }
+  }
+  .ef-margin .toc a { font-size: .74rem; line-height: 1.5; }
+  .toc a[aria-current] { color: var(--ef-ink); border-left-color: var(--ef-trace); font-weight: 600; }
+  .rail-head { display: block; margin: 0 0 .5rem; padding-bottom: .35rem;
+    border-bottom: 1px solid var(--ef-rule); font-size: .68rem; line-height: 1.5; }
+  .rail-head span { display: inline; }
+  .rail-head span + span { display: block; color: var(--ef-ink-2); }
+  .rail-aside .toc a { padding-top: .3rem; padding-bottom: .3rem; }
+  .rail-tree { list-style:none; margin:0; padding:0; }
+  .rail-tree .tree-name { display:block; padding:.35rem .2rem .35rem .6rem;
+    border-left:3px solid transparent; font-size:.76rem; font-weight:600; color:var(--ef-ink); }
+  .rail-tree .tree-label { display:inline; }
+  .rail-tree .tree-name .ef-field { font-size:.68rem; color:var(--ef-ink-2); margin-left:.35rem;
+    white-space:nowrap; }
+  .rail-tree .tree-group.is-open > .tree-name { border-left-color:var(--ef-trace); }
+  .rail-tree .tree-items { list-style:none; margin:.1rem 0 .5rem; padding:0 0 0 .6rem;
+    border-left:1px solid var(--ef-rule); }
+  .rail-tree .tree-items a { padding-left:.6rem; font-size:.72rem; line-height:1.45; }
+  .tree-row { display:flex; align-items:stretch; gap:.15rem; }
+  .tree-row .tree-name { flex:1 1 auto; min-width:0; }
+  .tree-toggle { flex:none; width:1.55rem; min-height:1.9rem; display:grid; place-items:center;
+    padding:0; border:1px solid var(--ef-rule); background:var(--ef-panel); color:var(--ef-ink-2);
+    cursor:pointer; transition:color .12s var(--ef-ease), border-color .12s var(--ef-ease), background .12s var(--ef-ease); }
+  .tree-toggle:hover { color:var(--ef-ink); border-color:var(--ef-ink); background:var(--ef-chip); }
+  .tree-toggle svg { width:.7rem; height:.7rem; transition:transform .15s var(--ef-ease); }
+  .tree-toggle[aria-expanded="true"] svg { transform:rotate(90deg); }
+  .rail-tree .tree-items[hidden] { display:none; }
+  /* 滚动条统一样式在 assets/local-fonts.css 里定义（页面/侧栏/搜索共用） */
+
+  /* 窄屏：正文优先，两侧栏排到后面 */
+  @media (max-width: 959px) {
+    .ef-spread.has-rail > .ef-sheet { order: 1; }
+    .ef-spread.has-rail > .rail-aside { order: 2; border-top: 1px solid var(--ef-rule); }
+    .ef-spread.has-rail > .toc-aside { order: 3; }
+  }
+
+  /* —— 复习笔记：PDF 下载 —— */
+  .pdf-dl { display:flex; flex-wrap:wrap; align-items:center; gap:.75rem; margin:1.1rem 0 0; }
+  .pdf-dl .ef-btn { border-color:var(--ef-ink); }
+
+  /* —— 打印 / 导出 PDF：只留正文 —— */
+  @page { size:A4; margin:16mm 14mm 18mm; }
+  @media print {
+    html, body { background:#fff !important; }
+    .topbar, .foot, .ef-tri, .rail-aside, .toc-aside, .back, .pdf-dl,
+    .ef-crumb, .ef-eyebrow, .ef-facts, .ef-notice { display:none !important; }
+    .ef-spread, .ef-spread.has-rail { display:block !important; max-width:none !important; }
+    .ef-sheet { border:0 !important; padding:0 !important; background:#fff !important; }
+    .ef-sheet .ef-prose, .ef-sheet .ef-lede, .ef-sheet .title { max-width:none !important; }
+    .title { margin:0 0 1rem; }
+    /* 打印用系统字体：体积小、离线打开不依赖自托管字体 */
+    body, .ef-prose, .title, .ef-lede, .ef-facts,
+    h1, h2, h3, h4, h5, h6 { font-family:"Microsoft YaHei UI","Microsoft YaHei","PingFang SC",sans-serif !important; }
+    .ef-prose pre, .ef-prose code { font-family:Consolas,"Cascadia Mono",monospace !important; }
+    .ef-prose { margin-top:1rem; }
+    .ef-prose pre { white-space:pre-wrap; word-break:break-word; }
+    .ef-prose pre code { white-space:pre-wrap; }
+    .ef-prose img, .ef-prose svg, mjx-container { max-width:100% !important; }
+    a { color:inherit !important; text-decoration:none !important; }
+    .ef-prose h2, .ef-prose h3 { break-after:avoid; }
+    .ef-prose pre, .ef-prose table, .eq { break-inside:avoid; }
+  }
+
+</style>
+</head>
+<body class="ef ef-contours">
+<div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+<header class="topbar">
+  <a class="brand" href="../../../../index.html">KYSIIN.ARCHIVE</a>
+  <nav class="ef-field" aria-label="主导航">
+    <a href="../../../../index.html">首页</a>
+    <a href="../../index.html" aria-current="page">计算机系统Ⅰ</a>
+  </nav>
+  <span data-search-slot></span>
+  <button class="ef-btn small" type="button" data-theme-toggle>切换深浅</button>
+</header>
+
+<article class="ef-spread has-rail">
+  <aside class="ef-margin rail-aside" aria-label="本课程分区">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>计算机系统Ⅰ</span><span>1 区</span></p>
+      <ol class="rail-tree">
+        <li class="tree-group is-open">
+          <div class="tree-row">
+            <a class="tree-name" href="../../index.html#sec-%E5%AE%9E%E9%AA%8C"><span class="tree-label">实验</span><span class="ef-field">6</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="true" aria-label="收起 实验"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items">
+            <li><a href="../LAB0实验报告.html">LAB0实验报告</a></li>
+            <li><a href="../LAB1/LAB1 REPOERT/LAB1 REPORT.html">LAB1 REPORT</a></li>
+            <li><a href="../LAB2/LAB 2 REPORT.html">LAB 2 REPORT</a></li>
+            <li><a href="../LAB3/LAB3 REPORT.html">LAB3 REPORT</a></li>
+            <li><a href="../LAB5/LAB5 REPORT.html">LAB5 REPORT</a></li>
+            <li><a href="PROJECT REPORT.html" aria-current="page">PROJECT REPORT</a></li>
+          </ol>
+        </li>
+      </ol>
+      <p class="ef-actions" style="margin:.9rem 0 0">
+        <a class="ef-btn small" href="../../index.html">返回课程</a>
+      </p>
+    </div>
+  </aside>
+  <div class="ef-sheet">
+    <p class="ef-eyebrow slash">Course / Article</p>
+    <p class="ef-crumb ef-field"><a href="../../../../index.html">首页</a><a href="../../index.html">计算机系统Ⅰ</a><span>实验</span><span>PROJECT</span></p>
+    <ul class="ef-facts ef-field">
+      <li>实验</li>
+      <li>1,258 字</li>
+      <li>2026.11.15</li>
+      <li>15 个小节</li>
+    </ul>
+    <h1 class="title ef-read">PROJECT REPORT</h1>
+    <div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+    
+    <p class="ef-notice" data-flag="pdf-fallback">本页引用的 9 张图片没有随文件复制过来，完整版见同目录 PDF：<a href="%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9FI-%E7%BB%BC%E5%90%88%E9%A1%B9%E7%9B%AE-%E5%8D%95%E5%91%A8%E6%9C%9FCPU.pdf">计算机系统I-综合项目-单周期CPU.pdf</a></p>
+    <div class="ef-prose">
+<h2 id="reg-file">REG FILE</h2>
+<p>定义寄存器</p>
+<blockquote>
+<p><code>verilog
+ integer i;
+ data_t register [0:31]; // x1 - x31, x0 keeps zero</code></p>
+</blockquote>
+<p>读入数据</p>
+<blockquote>
+<p><code>verilog
+assign read_data_1 = (read_addr_1 == 0) ? 64'b0 : register[read_addr_1];
+assign read_data_2 = (read_addr_2 == 0) ? 64'b0 : register[read_addr_2];</code></p>
+</blockquote>
+<p>置零</p>
+<blockquote>
+<p><code>verilog
+ for(i=0;i&lt;32;i=i+1)begin
+   register[i] &lt;= 0;
+ end</code></p>
+</blockquote>
+<p>若写使能且有地址则写入</p>
+<blockquote>
+<p><code>verilog
+else if((write_addr!=0)&amp;&amp;we)begin
+  register[write_addr] &lt;= write_data;
+end</code></p>
+</blockquote>
+<h2 id="alu">ALU</h2>
+<pre><code class="language-verilog">  data_t result;
+  reg [4:0] addr = b[4:0];
+  wire [31:0] addw_result = a[31:0] + b[31:0];
+  wire [31:0] subw_result = a[31:0] - b[31:0];
+  wire [31:0] sllw_result = a[31:0] &lt;&lt; addr;
+
+  always @(*) begin
+    case (alu_op)
+      ALU_ADD:    result = a + b;
+      ALU_SUB:    result = a - b;
+      ALU_AND:    result = a &amp; b;
+      ALU_OR:     result = a | b;
+      ALU_XOR:    result = a ^ b;
+      ALU_SLL:    result = a &lt;&lt; b[5:0];
+      ALU_SRL:    result = a &gt;&gt; b[5:0];
+      ALU_SRA:    result = $signed(a) &gt;&gt;&gt; $signed(b[5:0]);
+      ALU_SLT:    result = ($signed(a) &lt; $signed(b)) ? 64'b1 : 64'b0;
+      ALU_SLTU:   result = (a &lt;  b) ? 64'b1 : 64'b0;
+      ALU_ADDW:   result = {{32{addw_result[31]}}, addw_result};
+      ALU_SUBW:   result = {{32{subw_result[31]}}, subw_result};
+      ALU_SLLW:   result = {{32{sllw_result[31]}}, sllw_result[31:0]};
+      ALU_SRLW:   result = {{32{1'b0}}, a[31:0] &gt;&gt; addr};
+      ALU_SRAW:   result = {{32{a[31]}}, $signed(a[31:0]) &gt;&gt;&gt; addr};
+      ALU_DEFAULT:result = 64'b0;
+    endcase
+  end
+</code></pre>
+<p>一开始<code>SLL</code>和<code>SRL</code>用的是b[4:0]，但发现有大于31的情况，于是改为[5:0]</p>
+<p>符号位扩展容易出错，改来改去变成了先把32位的结果算出来，也就是<code>sllw_result</code>和<code>addw_result subw_result</code>，然后再扩展</p>
+<h2 id="cmp">CMP</h2>
+<pre><code class="language-verilog">CMP_NO:   result = 1'b0;
+CMP_EQ:   result = (a == b);
+CMP_NE:   result = (a != b);
+CMP_LT:   result = ($signed(a) &lt; $signed(b));
+CMP_GE:   result = ($signed(a) &gt;= $signed(b));
+CMP_LTU:  result = (a &lt; b);
+CMP_GEU:  result = (a &gt;= b);
+default:  result = 1'b0;
+</code></pre>
+<h2 id="controller">CONTROLLER</h2>
+<p>取inst中的低7位作为opcode，12到14位作为funct3，最后25到31位作为funct7。</p>
+<p>通过opcode和funct判断指令类型，并分门别类给写使能、读使能、立即数类型等(即controller的输出)赋值。</p>
+<p>示例：</p>
+<pre><code class="language-verilog">IMM_OPCODE: begin
+                we_reg = 1;
+                immgen_op = I_IMM;
+                alu_asel = ASEL_REG;
+                alu_bsel = BSEL_IMM;
+                wb_sel = WB_SEL_ALU;
+                case (funct3)
+                    ADD_FUNCT3: alu_op = ALU_ADD;
+                    SLL_FUNCT3: alu_op = ALU_SLL;
+                    SLT_FUNCT3: alu_op = ALU_SLT;
+                    SLTU_FUNCT3: alu_op = ALU_SLTU;
+                    XOR_FUNCT3: alu_op = ALU_XOR;
+                    SRL_FUNCT3: alu_op = (funct7 == 7'b0000000) ? ALU_SRL : ALU_SRA;
+                    OR_FUNCT3: alu_op = ALU_OR;
+                    AND_FUNCT3: alu_op = ALU_AND;
+                    default: alu_op = ALU_DEFAULT;
+                endcase
+</code></pre>
+<p>在<code>IMMW</code>和<code>REGW</code>中有些opcode是重复的，用funct3判断，funct3重复的用funct7判断。</p>
+<h2 id="core">CORE</h2>
+<p>将REG ALU CONTROLLER CMP几个模块连接起来</p>
+<p><code>PC</code></p>
+<pre><code class="language-verilog">    always @(posedge clk) begin
+        if (rst) begin
+            pc &lt;= 64'b0;
+        end else begin
+            pc &lt;= next_pc;
+        end
+    end
+
+    always @(*) begin
+        if (is_j) begin
+            next_pc = (alu_asel == ASEL_PC) ? (pc + imm) : alu_res;
+        end else if (is_b &amp;&amp; cmp_res) begin
+            next_pc = pc + imm;
+        end else begin
+            next_pc = pc + 4;
+        end
+    end
+</code></pre>
+<p><code>写回</code></p>
+<pre><code class="language-verilog">    assign wb_val = (wb_sel == WB_SEL_MEM) ? data_trun :
+                    (wb_sel == WB_SEL_PC)  ? (pc + 4) :
+                    (wb_sel == WB_SEL_ALU) ? alu_res :
+                    imm;
+</code></pre>
+<p><code>立即数生成</code></p>
+<pre><code class="language-verilog">    always @(*) begin
+        case (immgen_op)
+            IMM0: imm = 64'b0;
+            I_IMM: imm = {{52{inst[31]}}, inst[31:20]};
+            S_IMM: imm = {{52{inst[31]}}, inst[31:25], inst[11:7]};
+            B_IMM: imm = {{51{inst[31]}}, inst[31], inst[7], inst[30:25], inst[11:8], 1'b0};
+            U_IMM: imm = {{32{inst[31]}}, inst[31:12], 12'b0};
+            UJ_IMM: imm = {{43{inst[31]}}, inst[31], inst[19:12], inst[20], inst[30:21], 1'b0};
+            default: imm = 64'b0;
+        endcase
+    end
+</code></pre>
+<p><code>ALU输入赋值</code></p>
+<pre><code class="language-verilog">    always @(*) begin
+        case (alu_asel)
+            ASEL0: alu_op1 = 0;
+            ASEL_REG: alu_op1 = read_data_1;
+            ASEL_PC: alu_op1 = pc;
+            default: alu_op1 = 0;
+        endcase
+    end
+
+    always @(*) begin
+        case (alu_bsel)
+            BSEL0: alu_op2 = 0;
+            BSEL_REG: alu_op2 = read_data_2;
+            BSEL_IMM: alu_op2 = imm;
+            default: alu_op2 = 0;
+        endcase
+    end
+</code></pre>
+<p><code>数据打包</code></p>
+<pre><code class="language-verilog">    DataPackage dp (
+        .data_in(read_data_2),
+        .addr(alu_res[2:0]),
+        .data_out(data_packaged)
+    );
+    DataMaskGeneration dmg (
+        .mem_op(mem_op),
+        .addr(alu_res[2:0]),
+        .mask(mask)
+    );
+    DataTruncation dt (
+        .data_in(data_from_mem),
+        .mem_op(mem_op),
+        .addr(alu_res[2:0]),
+        .data_out(data_trun)
+    );
+
+    assign dmem_ift.r_request_bits.raddr = alu_res;
+    assign dmem_ift.r_request_valid =re_mem ;
+    assign data_from_mem = dmem_ift.r_reply_bits.rdata;
+    assign dmem_ift.w_request_bits.waddr = alu_res;
+    assign dmem_ift.w_request_bits.wdata = data_packaged;
+    assign dmem_ift.w_request_bits.wmask = mask;
+    assign dmem_ift.w_request_valid = we_mem;
+
+
+    module DataMaskGeneration (
+    input [2:0] mem_op,
+    input [2:0] addr,
+    output logic [7:0] mask
+);
+    import CorePack::*;
+    always_comb begin
+        case (mem_op)
+            MEM_NO: mask = 8'b00000000&lt;&lt;(addr);
+            MEM_B: mask = 8'b00000001&lt;&lt;(addr);
+            MEM_H: mask = 8'b00000011&lt;&lt;(addr);
+            MEM_W: mask = 8'b00001111&lt;&lt;(addr);
+            MEM_D: mask = 8'b11111111&lt;&lt;(addr);
+            MEM_UB: mask = 8'b00000001&lt;&lt;(addr);
+            MEM_UH: mask = 8'b00000011&lt;&lt;(addr);
+            MEM_UW: mask = 8'b00001111&lt;&lt;(addr);
+            default: mask = 8'b00000000&lt;&lt;(addr);
+        endcase
+    end
+endmodule
+
+module DataPackage (
+    input [63:0] data_in,
+    input [2:0] addr,
+    output logic [63:0] data_out
+);
+    import CorePack::*;
+    assign data_out = data_in &lt;&lt; (8*addr);
+endmodule
+
+module DataTruncation (
+    input [63:0] data_in,
+    input [2:0] mem_op,
+    input [2:0] addr,
+    output logic [63:0] data_out
+);
+    import CorePack::*;
+    reg [63:0] data_in_reg;
+    always @(*) begin
+        data_in_reg = data_in &gt;&gt; (8 *addr);
+        case (mem_op)
+            MEM_NO:data_out = data_in_reg;
+            MEM_D:data_out = data_in_reg;
+            MEM_W:data_out = {{32{data_in_reg[31]}},data_in_reg[31:0]};
+            MEM_H:data_out = {{48{data_in_reg[15]}},data_in_reg[15:0]};
+            MEM_B:data_out = {{56{data_in_reg[7]}},data_in_reg[7:0]};
+            MEM_UB:data_out = {{56{1'b0}},data_in_reg[7:0]};
+            MEM_UH:data_out = {{48{1'b0}},data_in_reg[15:0]};
+            MEM_UW:data_out = {{32{1'b0}},data_in_reg[31:0]};
+            default:data_out = 0;
+        endcase
+    end
+endmodule
+</code></pre>
+<h2 id="仿真">仿真</h2>
+<h3 id="rtype">RTYPE</h3>
+<p><strong>［图片缺失］</strong></p>
+<h3 id="itype">ITYPE</h3>
+<p><strong>［图片缺失］</strong></p>
+<h3 id="btype">BTYPE</h3>
+<p><strong>［图片缺失］</strong></p>
+<h3 id="utype">UTYPE</h3>
+<p><strong>［图片缺失］</strong></p>
+<h3 id="jtype">JTYPE</h3>
+<p><strong>［图片缺失］</strong></p>
+<h3 id="stype">STYPE</h3>
+<p><strong>［图片缺失］</strong></p>
+<h3 id="remain">REMAIN</h3>
+<p><strong>［图片缺失］</strong></p>
+<h3 id="full">FULL</h3>
+<p><strong>［图片缺失］</strong></p>
+<h2 id="上板">上板</h2>
+<p><span class="ef-field">［图片缺失］</span></p>
+    </div>
+    <p class="back"><a class="ef-btn" href="../LAB5/LAB5 REPORT.html">← LAB5 REPORT</a> <a class="ef-btn" href="../../index.html">返回本课</a></p>
+  </div>
+  <aside class="ef-margin toc-aside" aria-label="本页目录">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>本页目录</span><span>15 节</span></p>
+      <ol>
+      <li><a class="lvl2" href="#reg-file">REG FILE</a></li>
+      <li><a class="lvl2" href="#alu">ALU</a></li>
+      <li><a class="lvl2" href="#cmp">CMP</a></li>
+      <li><a class="lvl2" href="#controller">CONTROLLER</a></li>
+      <li><a class="lvl2" href="#core">CORE</a></li>
+      <li><a class="lvl2" href="#仿真">仿真</a></li>
+      <li><a class="lvl3" href="#rtype">RTYPE</a></li>
+      <li><a class="lvl3" href="#itype">ITYPE</a></li>
+      <li><a class="lvl3" href="#btype">BTYPE</a></li>
+      <li><a class="lvl3" href="#utype">UTYPE</a></li>
+      <li><a class="lvl3" href="#jtype">JTYPE</a></li>
+      <li><a class="lvl3" href="#stype">STYPE</a></li>
+      <li><a class="lvl3" href="#remain">REMAIN</a></li>
+      <li><a class="lvl3" href="#full">FULL</a></li>
+      <li><a class="lvl2" href="#上板">上板</a></li>
+      </ol>
+    </div>
+  </aside>
+</article>
+
+<footer class="foot">
+  <span class="ef-field">KYSIIN.ARCHIVE · 2026.11.15 · 由 Markdown 渲染</span>
+  <span>用 endfield-ui 渲染 · Saira（SIL OFL）自托管</span>
+</footer>
+<script type="module">
+  import { wireTheme } from '../../../../assets/fx.js'
+  wireTheme()
+</script>
+<script defer src="../../../../assets/search.js?v=202611150558"></script>
+<script>
+  /* 左栏：每个分组可独立展开/收起 */
+  (function () {
+    document.querySelectorAll('.tree-toggle').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var li = btn.closest('.tree-group');
+        var list = li ? li.querySelector('.tree-items') : null;
+        var open = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', String(!open));
+        if (list) list.hidden = open;
+        if (li) li.classList.toggle('is-open', !open);
+      });
+    });
+  })();
+</script>
+<script>
+  /* 右栏目录跟随滚动：读到哪一节就把那一行标出来 */
+  (function () {
+    var links = [].slice.call(document.querySelectorAll('.toc-aside a[href^="#"]'));
+    if (!links.length) return;
+    var items = links.map(function (a) {
+      var el = document.getElementById(a.getAttribute('href').slice(1));
+      return el ? { a: a, el: el } : null;
+    }).filter(Boolean);
+    if (!items.length) return;
+    var ticking = false;
+    function spy() {
+      ticking = false;
+      var line = window.scrollY + 140;
+      var best = null;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].el.getBoundingClientRect().top + window.scrollY <= line) best = items[i];
+      }
+      links.forEach(function (a) { a.removeAttribute('aria-current'); });
+      if (best) best.a.setAttribute('aria-current', 'true');
+    }
+    window.addEventListener('scroll', function () {
+      if (!ticking) { ticking = true; requestAnimationFrame(spy); }
+    }, { passive: true });
+    spy();
+  })();
+</script>
+</body>
+</html>

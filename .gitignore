@@ -1,0 +1,19 @@
+# 兜底：压缩包在构建时就不拷进站（里面多是作业源码），这里再挡一层
+*.zip
+
+# 大体积二进制与构建输出（ClothLab 产出只登记、不入库）
+bin/
+report/
+sample.doc
+
+# 来源记录：本地保留，不进公开仓库
+tools/sources.local.json
+
+# 系统与工具噪音
+.DS_Store
+Thumbs.db
+node_modules/
+__pycache__/
+.vitepress/cache/
+.vitepress/dist/
+*.log

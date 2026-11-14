@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>KYSIIN.ARCHIVE · 全部资料</title>
+<meta name="description" content="个人资料仓库：课程笔记、专题复习、代码实验。" />
+<script src="assets/variant.js"></script>
+<link rel="stylesheet" href="assets/local-fonts.css" />
+<link rel="stylesheet" href="assets/endfield.css" />
+<style>
+  body { --tri-h: 3px; --topbar-h: 3.1rem; }
+  body > .ef-tri { position: sticky; top: 0; z-index: 61; }
+  .topbar { position:sticky; top:var(--tri-h); z-index:60;
+    display:flex; align-items:center; gap:1.5rem; padding:.85rem var(--ef-pad);
+    border-bottom:1px solid var(--ef-rule); background:var(--ef-panel); }
+  .topbar .brand { margin:0; font-family:var(--ef-font-ui); font-size:.95rem;
+    font-stretch:var(--ef-wider); font-weight:800; letter-spacing:.08em;
+    text-decoration:none; color:var(--ef-ink); }
+  .topbar nav { display:flex; align-items:center; gap:1.25rem; margin-left:auto; }
+  .topbar nav a { text-decoration:none; color:var(--ef-ink-2);
+    padding-bottom:2px; border-bottom:2px solid transparent; }
+  .topbar nav a[aria-current='page'] { color:var(--ef-ink); border-bottom-color:var(--ef-trace); }
+  /* 点顶栏跳分区时，别让粘性顶栏盖住那一段的标题 */
+  #all, #stats { scroll-margin-top: calc(var(--tri-h) + var(--topbar-h) + .6rem); }
+  .title { margin:1.5rem 0 1rem; font-size:clamp(var(--ef-t-title),5.5vw,var(--ef-t-h1));
+    font-weight:700; line-height:1.25; }
+  .ids { display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; margin:0 0 .75rem; }
+  .foot { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between;
+    gap:1rem; padding:1.5rem var(--ef-pad) 2.5rem; border-top:1px solid var(--ef-rule);
+    color:var(--ef-ink-2); font-size:.875rem; }
+  .back { margin:1.5rem 0 0; }
+  @media (min-width: 960px) {
+    .ef-spread > .ef-margin {
+      position: sticky; top: calc(var(--tri-h) + var(--topbar-h)); align-self: start;
+      max-height: calc(100vh - var(--tri-h) - var(--topbar-h)); overflow-y: auto; scrollbar-width: thin;
+    }
+  }
+
+  /* 铺满：正文吃掉剩余宽度，右栏贴边 */
+  @media (min-width: 960px) {
+    .ef-spread {
+      grid-template-columns: minmax(0, 1fr) clamp(14rem, 16vw, 19rem);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+      max-width: none;
+      margin: 0;
+    }
+    .ef-spread > .ef-margin {
+      padding: clamp(1.5rem, 3vw, 2.5rem) .75rem clamp(1.5rem, 3vw, 2.5rem) 1.25rem;
+    }
+    .ef-spread > .ef-sheet {
+      padding-left: clamp(2rem, 3.5vw, 4rem);
+      padding-right: clamp(2rem, 3.5vw, 4rem);
+    }
+    /* 正文不再被 40rem 卡住 */
+    .ef-sheet .ef-prose,
+    .ef-sheet .ef-lede,
+    .ef-sheet .ef-read,
+    .ef-sheet .ef-facts,
+    .ef-sheet .ef-empty,
+    .ef-sheet .ef-notice { max-width: none; }
+  }
+  .ef-margin .ef-ledger li,
+  .ef-margin .toc a { font-size: .82rem; }
+
+  /* 滚动条统一样式在 assets/local-fonts.css 里定义（页面/侧栏/搜索共用） */
+
+
+  .band { display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between;
+    gap:1.5rem; padding:clamp(1.5rem,3vw,2.5rem) var(--ef-pad) clamp(1.25rem,2.5vw,2rem);
+    border-bottom:1px solid var(--ef-rule); background:var(--ef-panel); }
+  .band-title { margin:.2rem 0 .8rem; font-family:var(--ef-font-ui); font-stretch:var(--ef-wider);
+    font-weight:800; line-height:.95; letter-spacing:-.01em; font-size:clamp(2rem,4vw,3.4rem); }
+  .band-title .hollow { color:transparent; -webkit-text-stroke:1.5px var(--ef-ink); }
+  .band-note { max-width:32rem; margin:0; color:var(--ef-ink-2); }
+  .filters { padding:1rem var(--ef-pad); border-bottom:1px solid var(--ef-rule); }
+  .chip-row { display:flex; flex-wrap:wrap; align-items:center; gap:.4rem; margin-bottom:.5rem; }
+  .chip-row .ef-field { width:3rem; flex:none; }
+  .chip { font:inherit; font-size:.78rem; line-height:1.6; padding:.15em .7em; cursor:pointer;
+    border:1px solid var(--ef-rule); background:var(--ef-panel); color:var(--ef-ink-2); }
+  .chip:hover { color:var(--ef-ink); border-color:var(--ef-ink); }
+  .chip.is-on { background:var(--ef-signal); border-color:var(--ef-signal); color:var(--ef-on-signal); font-weight:600; }
+  .cols { display:grid; grid-template-columns:repeat(auto-fill,minmax(17rem,1fr));
+    gap:0; border-top:1px solid var(--ef-rule); }
+  /* 每格自己画右边框：网格的竖线不再依赖"后一张卡片"，末行不满也照常收边，
+     筛选隐藏卡片后也不会错位 */
+  .col-card { display:flex; flex-direction:column; gap:.35rem; padding:1.1rem var(--ef-pad);
+    border-right:1px solid var(--ef-rule); border-bottom:1px solid var(--ef-rule);
+    text-decoration:none; color:var(--ef-ink);
+    transition:background .15s var(--ef-ease); }
+  .col-card:hover { background:var(--ef-chip); }
+  .col-card .card-name { font-size:1.02rem; font-weight:700; line-height:1.4; }
+  .col-card .card-meta { color:var(--ef-ink-2); }
+  .col-card[hidden] { display:none; }
+  .recent { padding:clamp(1.5rem,3vw,2.5rem) var(--ef-pad) 1rem; }
+  .recent .ef-bar-title { margin-bottom:1rem; }
+  .hero { --mx:0; --my:0; display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,40%);
+    grid-template-rows:auto 1fr auto auto;
+    column-gap:clamp(1.5rem,4vw,3.5rem);
+    min-height:min(41rem,calc(100dvh - 3px)); padding-top:1.25rem;
+    border-bottom:1px solid var(--ef-rule); overflow:hidden; }
+  .hero > .meta { grid-column:1; margin:0; padding-inline:var(--ef-pad); }
+  .hero > .meta > * + *::before { content:'/'; margin-inline:.75em; color:var(--ef-rule); }
+  .hero .ef-wordmark { grid-column:1; align-self:end; margin-top:2rem; padding-left:var(--ef-pad); }
+  .hero .copy { grid-column:1; padding:1.75rem var(--ef-pad) 2.25rem; }
+  .hero .copy p { margin:0; }
+  .hero .claim { font-size:clamp(1.1rem,2.1vw,1.5rem); }
+  .hero .bio { max-width:33rem; margin-top:.9rem !important; color:var(--ef-ink-2); }
+  .hero .ef-actions { margin-top:1.5rem; }
+  .hero .ef-frame { grid-column:2; grid-row:1 / 4; margin:0 var(--ef-pad) 2.25rem 0; }
+  .hero .ef-frame::before { transform:translate(calc(var(--mx) * 12px),calc(var(--my) * 10px)); }
+  .hero .ef-frame svg { width:100%; height:100%;
+    transform:translate(calc(var(--mx) * -14px),calc(var(--my) * -8px));
+    transition:transform .4s var(--ef-ease); }
+  .hero .ef-ticker { grid-column:1 / -1; }
+  @media (max-width:899px) {
+    .hero { grid-template-columns:minmax(0,1fr); grid-template-rows:none; min-height:0; }
+    .hero .ef-frame { grid-column:1; grid-row:auto; height:18rem;
+      margin:0 calc(var(--ef-pad) + 1rem) 2.25rem var(--ef-pad); }
+  }
+  @media (max-width:760px) { .topbar { flex-wrap:wrap; gap:.75rem; }
+    .topbar nav { order:3; width:100%; margin-left:0; } }
+</style>
+</head>
+<body class="ef ef-contours">
+<div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+<header class="topbar">
+  <a class="brand" href="index.html">KYSIIN.ARCHIVE</a>
+  <nav class="ef-field" aria-label="主导航">
+    <a href="index.html">首页</a>
+    <a href="index.html#all" >资料库</a>
+    <a href="index.html#stats">统计</a>
+  </nav>
+  <span data-search-slot></span>
+  <button class="ef-btn small" type="button" data-theme-toggle>切换深浅</button>
+</header>
+
+<section class="band">
+  <div>
+    <p class="ef-eyebrow slash">Archive</p>
+    <h1 class="band-title">KYSIIN<span class="hollow">.ARCHIVE</span></h1>
+    <ul class="ef-facts ef-field">
+      <li>16 门课</li>
+      <li>85 篇文章</li>
+      <li>353 个文件</li>
+      <li>108.8 MB</li>
+      <li>最近更新 2026.11.15</li>
+    </ul>
+  </div>
+  <p class="band-note ef-read">一门课一个入口，课内再分章节 / 专题 / 实验。下面可以按方向、学期筛，或者直接搜索。</p>
+</section>
+
+<section class="filters" aria-label="筛选">
+    <div class="chip-row">
+      <span class="ef-field">方向</span>
+      <button type="button" class="chip is-on" data-dim="area" data-val="">全部</button>
+      <button type="button" class="chip" data-dim="area" data-val="信息安全">信息安全</button>
+      <button type="button" class="chip" data-dim="area" data-val="计算机基础">计算机基础</button>
+      <button type="button" class="chip" data-dim="area" data-val="数理基础">数理基础</button>
+      <button type="button" class="chip" data-dim="area" data-val="计算机拓展">计算机拓展</button>
+    </div>
+    <div class="chip-row">
+      <span class="ef-field">学期</span>
+      <button type="button" class="chip is-on" data-dim="term" data-val="">全部</button>
+      <button type="button" class="chip" data-dim="term" data-val="2026秋">2026秋</button>
+      <button type="button" class="chip" data-dim="term" data-val="2026春">2026春</button>
+      <button type="button" class="chip" data-dim="term" data-val="2024春">2024春</button>
+      <button type="button" class="chip" data-dim="term" data-val="2023秋">2023秋</button>
+    </div>
+    <p class="ef-field" id="filter-count" style="margin:.6rem 0 0">16 门课</p>
+</section>
+
+<section class="cols" id="all">
+<a class="col-card" href="collections/animation-review/index.html" data-area="计算机拓展" data-term="2026秋"><span class="card-top ef-field">计算机拓展 · 2026秋</span><span class="card-name">计算机动画</span><span class="card-meta ef-field">13 章节 · 3 专题 · 2 实验 · 11.5 MB</span></a>
+<a class="col-card" href="collections/physics-review/index.html" data-area="数理基础" data-term="2026秋"><span class="card-top ef-field">数理基础 · 2026秋</span><span class="card-name">大学物理乙2</span><span class="card-meta ef-field">3 章节 · 5 专题 · 5.6 MB</span></a>
+<a class="col-card" href="collections/sfs/index.html" data-area="信息安全" data-term="2026秋"><span class="card-top ef-field">信息安全 · 2026秋</span><span class="card-name">软件安全原理与实践</span><span class="card-meta ef-field">7 实验 · 30.2 MB</span></a>
+<a class="col-card" href="collections/oop/index.html" data-area="计算机基础" data-term="2026春"><span class="card-top ef-field">计算机基础 · 2026春</span><span class="card-name">面向对象程序设计（OOP）</span><span class="card-meta ef-field">1 章节 · 2 实验 · 0.5 MB</span></a>
+<a class="col-card" href="collections/netlab/index.html" data-area="计算机基础" data-term="2026秋"><span class="card-top ef-field">计算机基础 · 2026秋</span><span class="card-name">计算机网络</span><span class="card-meta ef-field">4 实验 · 3.9 MB</span></a>
+<a class="col-card" href="collections/sys2/index.html" data-area="计算机基础" data-term="2026秋"><span class="card-top ef-field">计算机基础 · 2026秋</span><span class="card-name">计算机系统Ⅱ</span><span class="card-meta ef-field">1 实验 · 2.7 MB</span></a>
+<a class="col-card" href="collections/signal/index.html" data-area="信息安全" data-term="2026秋"><span class="card-top ef-field">信息安全 · 2026秋</span><span class="card-name">面向信息安全的信号处理</span><span class="card-meta ef-field">1 实验 · 0.7 MB</span></a>
+<a class="col-card" href="collections/wireless/index.html" data-area="信息安全" data-term="2026春"><span class="card-top ef-field">信息安全 · 2026春</span><span class="card-name">无线与物联网安全基础</span><span class="card-meta ef-field">2 文件 · 1.9 MB</span></a>
+<a class="col-card" href="collections/db-2026/index.html" data-area="计算机基础" data-term="2026春"><span class="card-top ef-field">计算机基础 · 2026春</span><span class="card-name">数据库系统</span><span class="card-meta ef-field">5 专题 · 9 实验 · 6.6 MB</span></a>
+<a class="col-card" href="collections/sys1-2024/index.html" data-area="计算机基础" data-term="2024春"><span class="card-top ef-field">计算机基础 · 2024春</span><span class="card-name">计算机系统Ⅰ</span><span class="card-meta ef-field">6 实验 · 28.8 MB</span></a>
+<a class="col-card" href="collections/sysintro-2023/index.html" data-area="计算机基础" data-term="2023秋"><span class="card-top ef-field">计算机基础 · 2023秋</span><span class="card-name">计算机系统概论</span><span class="card-meta ef-field">1 专题 · 6 实验 · 0.3 MB</span></a>
+<a class="col-card" href="collections/netsec-2026/index.html" data-area="信息安全" data-term="2026春"><span class="card-top ef-field">信息安全 · 2026春</span><span class="card-name">网络安全原理与实践</span><span class="card-meta ef-field">1 专题 · 5 实验 · 8.7 MB</span></a>
+<a class="col-card" href="collections/crypto-2026/index.html" data-area="信息安全" data-term="2026春"><span class="card-top ef-field">信息安全 · 2026春</span><span class="card-name">密码学</span><span class="card-meta ef-field">1 章节 · 3 实验 · 2.1 MB</span></a>
+<a class="col-card" href="collections/ads-2024/index.html" data-area="计算机基础" data-term="2024春"><span class="card-top ef-field">计算机基础 · 2024春</span><span class="card-name">高级数据结构与算法分析</span><span class="card-meta ef-field">1 专题 · 3 实验 · 0.3 MB</span></a>
+<a class="col-card" href="collections/iot-2026/index.html" data-area="计算机拓展" data-term="2026春"><span class="card-top ef-field">计算机拓展 · 2026春</span><span class="card-name">物联网与信息电子应用导论</span><span class="card-meta ef-field">1 专题 · 0.0 MB</span></a>
+<a class="col-card" href="collections/compiler-2026/index.html" data-area="计算机基础" data-term="2026春"><span class="card-top ef-field">计算机基础 · 2026春</span><span class="card-name">编译原理</span><span class="card-meta ef-field">1 实验 · 5.2 MB</span></a>
+</section>
+
+<section class="recent" id="recent">
+  <h2 class="ef-bar-title">最近更新</h2>
+  <ol class="ef-records">
+          <li><a class="ef-record" href="E:/Proj/KysiinArchive/site/collections/ads-2024/files/TIPS.html"><span class="ef-tag">11.15</span><span class="ef-field">高级数据结构与算法分析</span><span class="name ef-read">TIPS</span><span class="ef-field">672 字</span></a></li>
+          <li><a class="ef-record" href="E:/Proj/KysiinArchive/site/collections/ads-2024/files/project_3/Recover the Design.html"><span class="ef-tag">11.15</span><span class="ef-field">高级数据结构与算法分析</span><span class="name ef-read">Recover the Design</span><span class="ef-field">2,565 字</span></a></li>
+          <li><a class="ef-record" href="E:/Proj/KysiinArchive/site/collections/ads-2024/files/project_6/Complexity.html"><span class="ef-tag">11.15</span><span class="ef-field">高级数据结构与算法分析</span><span class="name ef-read">Complexity</span><span class="ef-field">524 字</span></a></li>
+          <li><a class="ef-record" href="E:/Proj/KysiinArchive/site/collections/ads-2024/files/FDS/A+B with Binary Search Trees.html"><span class="ef-tag">11.15</span><span class="ef-field">高级数据结构与算法分析</span><span class="name ef-read">A+B with Binary Search Trees</span><span class="ef-field">2,002 字</span></a></li>
+          <li><a class="ef-record" href="E:/Proj/KysiinArchive/site/collections/oop/files/补充/Perosonal_Diary/IMPLEMENTATION.html"><span class="ef-tag">11.15</span><span class="ef-field">面向对象程序设计（OOP）</span><span class="name ef-read">Personal Diary 实验实现说明</span><span class="ef-field">1,932 字</span></a></li>
+          <li><a class="ef-record" href="E:/Proj/KysiinArchive/site/collections/signal/files/LAB1/LAB1.html"><span class="ef-tag">11.15</span><span class="ef-field">面向信息安全的信号处理</span><span class="name ef-read">LAB1</span><span class="ef-field">1,021 字</span></a></li>
+          <li><a class="ef-record" href="E:/Proj/KysiinArchive/site/collections/sfs/files/LAB4/Lab4 Spectre Attack and Meltdown Attack.html"><span class="ef-tag">11.15</span><span class="ef-field">软件安全原理与实践</span><span class="name ef-read">Lab4 Spectre Attack and Meltdown Attack</span><span class="ef-field">598 字</span></a></li>
+          <li><a class="ef-record" href="E:/Proj/KysiinArchive/site/collections/sfs/files/LAB1_SET_UID/Lab1 Set-UID.html"><span class="ef-tag">11.15</span><span class="ef-field">软件安全原理与实践</span><span class="name ef-read">Lab1 Set-UID</span><span class="ef-field">464 字</span></a></li>
+  </ol>
+</section>
+
+<section class="index" id="stats" style="padding:1rem var(--ef-pad) 3rem">
+  <h2 class="ef-bar-title">统计</h2>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:0 clamp(2rem,5vw,4rem)">
+    <div>
+      <h2 class="ef-field" style="margin:0 0 .75rem">按分区</h2>
+      <ul class="ef-ledger">
+        <li><span>章节</span><span class="ef-field">18 篇</span></li>
+        <li><span>专题</span><span class="ef-field">17 篇</span></li>
+        <li><span>实验</span><span class="ef-field">50 篇</span></li>
+      </ul>
+    </div>
+    <div>
+      <h2 class="ef-field" style="margin:0 0 .75rem">体量</h2>
+      <ul class="ef-ledger">
+        <li><span>入库文件</span><span class="ef-field">353</span></li>
+        <li><span>入库体积</span><span class="ef-field">108.8 MB</span></li>
+        <li><span>未收录</span><span class="ef-field">67 文件 · 117 MB</span></li>
+      </ul>
+    </div>
+    <div>
+      <h2 class="ef-field" style="margin:0 0 .75rem">阅读</h2>
+      <ul class="ef-ledger">
+        <li><span>课程</span><span class="ef-field">16 门</span></li>
+        <li><span>文章</span><span class="ef-field">85 篇</span></li>
+        <li><span>搜索</span><span class="ef-field">⌘K / Ctrl+K</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer class="foot">
+  <span class="ef-field">KYSIIN.ARCHIVE · 2026.11.15 · 自动生成</span>
+  <span>用 endfield-ui 渲染 · Saira（SIL OFL）自托管</span>
+</footer>
+<script type="module">
+  import { wireTheme } from './assets/fx.js'
+  wireTheme()
+</script>
+<script defer src="assets/search.js?v=202611150558"></script>
+<script>
+  /* 首页筛选：三个维度各自单选，组合生效 */
+  (function () {
+    var state = { area: '', term: '' };
+    var cards = [].slice.call(document.querySelectorAll('.col-card'));
+    var count = document.getElementById('filter-count');
+    function apply() {
+      var shown = 0;
+      cards.forEach(function (c) {
+        var ok = (!state.area || c.dataset.area === state.area)
+              && (!state.term || c.dataset.term === state.term);
+        c.hidden = !ok;
+        if (ok) shown++;
+      });
+      if (count) count.textContent = shown + ' 门课';
+    }
+    document.querySelectorAll('.chip').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var dim = b.dataset.dim;
+        state[dim] = b.dataset.val;
+        document.querySelectorAll('.chip[data-dim="' + dim + '"]').forEach(function (x) {
+          x.classList.toggle('is-on', x === b);
+        });
+        apply();
+      });
+    });
+  })();
+</script>
+<script>
+  /* 顶栏高亮：首页有「资料库 / 统计」两个锚点分区，滚到哪一块就点亮哪一项。
+     课程页 / 文章页没有这些锚点，保持静态的「资料库」不变。 */
+  (function () {
+    var nav = document.querySelector('.topbar nav');
+    if (!nav) return;
+    var links = [].slice.call(nav.querySelectorAll('a'));
+    function target(a) {
+      var h = a.getAttribute('href') || '';
+      var i = h.indexOf('#');
+      return i < 0 ? null : document.getElementById(h.slice(i + 1));
+    }
+    var items = links.map(function (a) { return { a: a, el: target(a) }; });
+    if (!items.some(function (t) { return t.el; })) return;
+    var home = items.filter(function (t) { return !t.el; })[0];
+    function setActive(a) {
+      links.forEach(function (x) { x.removeAttribute('aria-current'); });
+      if (a) a.setAttribute('aria-current', 'page');
+    }
+    var ticking = false;
+    function spy() {
+      ticking = false;
+      var line = window.scrollY + 140;
+      var current = home ? home.a : null;
+      items.forEach(function (t) {
+        if (t.el && t.el.getBoundingClientRect().top + window.scrollY <= line) current = t.a;
+      });
+      /* 页面滚到底时最后一块到不了阈值（它下面没有内容了），直接点亮最后一项；
+         但整页本来就装得下时不算"滚到底"，仍按位置判断 */
+      var doc = document.documentElement;
+      if (window.innerHeight + window.scrollY >= doc.scrollHeight - 4
+          && doc.scrollHeight > window.innerHeight + 40) {
+        current = items[items.length - 1].a;
+      }
+      setActive(current);
+    }
+    window.addEventListener('scroll', function () {
+      if (!ticking) { ticking = true; requestAnimationFrame(spy); }
+    }, { passive: true });
+    window.addEventListener('resize', spy);
+    /* 点了某个分区（页面装得下、不发生滚动的情况）：立刻点亮被点的那一项 */
+    window.addEventListener('hashchange', function () {
+      var h = location.hash.slice(1);
+      var hit = items.filter(function (t) { return t.el && t.el.id === h; })[0];
+      if (hit) setActive(hit.a); else spy();
+    });
+    spy();
+  })();
+</script>
+</body>
+</html>

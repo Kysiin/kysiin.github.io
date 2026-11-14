@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>第三部分　动画的12条基本原则 · KYSIIN.ARCHIVE</title>
+<script src="../../../../assets/variant.js"></script>
+<link rel="stylesheet" href="../../../../assets/local-fonts.css" />
+<link rel="stylesheet" href="../../../../assets/endfield.css" />
+<link rel="stylesheet" href="../../../../assets/mathjax/mathjax.css" />
+<style>
+  body { --tri-h: 3px; --topbar-h: 3.1rem; }
+  body > .ef-tri { position: sticky; top: 0; z-index: 61; }
+  .topbar { position:sticky; top:var(--tri-h); z-index:60;
+    display:flex; align-items:center; gap:1.5rem; padding:.85rem var(--ef-pad);
+    border-bottom:1px solid var(--ef-rule); background:var(--ef-panel); }
+  .topbar .brand { margin:0; font-family:var(--ef-font-ui); font-size:.95rem;
+    font-stretch:var(--ef-wider); font-weight:800; letter-spacing:.08em;
+    text-decoration:none; color:var(--ef-ink); }
+  .topbar nav { display:flex; align-items:center; gap:1.25rem; margin-left:auto; }
+  .topbar nav a { text-decoration:none; color:var(--ef-ink-2); }
+  .foot { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between;
+    gap:1rem; padding:1.5rem var(--ef-pad) 2.5rem; border-top:1px solid var(--ef-rule);
+    color:var(--ef-ink-2); font-size:.875rem; }
+  @media (max-width: 959px) { .ef-spread { grid-template-columns:minmax(0,1fr); }
+    .ef-sheet { border-right:0; border-bottom:1px solid var(--ef-rule); } }
+  @media (max-width:760px) { .topbar { flex-wrap:wrap; gap:.75rem; }
+    .topbar nav { order:3; width:100%; margin-left:0; } }
+
+  .title { margin:1.5rem 0 1rem; font-size:clamp(var(--ef-t-title),5vw,var(--ef-t-h1));
+    font-weight:700; line-height:1.3; }
+  .ef-prose { margin-top:1.75rem; }
+  .ef-prose img { max-width:100%; height:auto; border:1px solid var(--ef-rule); background:#fff; }
+  .ef-prose table { width:100%; border-collapse:collapse; font-size:.9rem; }
+  .ef-prose th, .ef-prose td { border-bottom:1px solid var(--ef-rule); padding:.45rem .6rem; text-align:left; }
+  .ef-prose th { font-family:var(--ef-font-ui); font-stretch:var(--ef-wide); font-size:.8rem; }
+  /* 代码块：整块一个背景；块内的 code 不再带行内边框/内边距 */
+  .ef-prose pre { overflow:auto; margin:1rem 0; padding:.9rem 1rem;
+    background:var(--ef-chip); border-left:3px solid var(--ef-rule);
+    font-size:.85rem; line-height:1.6; tab-size:4; }
+  .ef-prose pre code { display:block; padding:0; border:0; background:none;
+    font-family:var(--ef-font-mono); font-size:.85rem; line-height:1.6; white-space:pre; }
+  .ef-prose :not(pre) > code { font-family:var(--ef-font-mono); font-size:.88em;
+    padding:.1em .35em; border:1px solid var(--ef-rule); background:var(--ef-paper); }
+  .ef-prose blockquote { border-left:3px solid var(--ef-ink); margin:1rem 0; padding:.25rem 0 .25rem 1rem;
+    color:var(--ef-ink-2); }
+
+  /* —— 公式：绝不超出正文栏；行间公式可横向滚动 —— */
+  .ef-prose mjx-container { max-width:100%; }
+  .ef-prose mjx-container[display="true"] { display:block; text-align:center; margin:1.1em 0;
+    max-width:100%; overflow-x:auto; overflow-y:hidden; padding:2px 0; }
+  .ef-prose mjx-container[jax="CHTML"] { font-size:1.02em; }
+  .eq { overflow-x:auto; overflow-y:hidden; max-width:100%; padding:2px 0; }
+  .eq mjx-container[display="true"] { margin:.35em 0; }
+
+  .toc ol { margin:0; padding:0; list-style:none; border-left:1px solid var(--ef-rule); }
+  .toc a { display:block; margin-left:-1px; padding:.22rem 0 .22rem .7rem;
+    border-left:3px solid transparent; color:var(--ef-ink-2); font-size:.85rem;
+    overflow-wrap:anywhere; }
+  .toc a:hover { color:var(--ef-ink); border-left-color:var(--ef-trace); }
+  .toc .lvl3 { padding-left:1.3rem; font-size:.8rem; }
+  .back { margin:2rem 0 0; display:flex; flex-wrap:wrap; gap:.75rem; }
+
+  /* —— 三栏铺满：两侧栏贴边，中间正文吃掉所有剩余宽度 —— */
+  .ef-spread { max-width: none; margin: 0; }
+
+  @media (min-width: 1180px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(11rem, 12vw, 14rem) minmax(0, 1fr) clamp(13rem, 14vw, 17rem);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+  }
+  @media (min-width: 960px) and (max-width: 1179px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(10rem, 12vw, 12rem) minmax(0, 1fr);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+    .ef-spread.has-rail > .toc-aside { display: none; }
+  }
+  @media (min-width: 960px) {
+    .ef-spread > .ef-margin {
+      position: sticky;
+      top: calc(var(--tri-h) + var(--topbar-h));
+      align-self: start;
+      max-height: calc(100vh - var(--tri-h) - var(--topbar-h));
+      overflow-y: auto;
+      scrollbar-width: thin;
+      padding: clamp(1.5rem, 3vw, 2.5rem) 1rem;
+    }
+    /* 两侧栏往屏幕边缘靠，别在页边留空 */
+    .ef-spread > .rail-aside { padding-left: .75rem; padding-right: 1.25rem; }
+    .ef-spread > .toc-aside { padding-left: 1.25rem; padding-right: .75rem; }
+    /* 正文左右留呼吸，但不限制宽度 */
+    .ef-spread > .ef-sheet { padding-left: clamp(2rem, 3.5vw, 4rem); padding-right: clamp(2rem, 3.5vw, 4rem); }
+    /* 套件把正文限制在 40rem；中间栏变宽后这里放开，让文字铺满 */
+    .ef-sheet .ef-prose,
+    .ef-sheet .ef-lede,
+    .ef-sheet .title,
+    .ef-sheet .ef-read,
+    .ef-sheet .ef-facts,
+    .ef-sheet .ef-empty,
+    .ef-sheet .ef-notice { max-width: none; }
+  }
+  .ef-margin .toc a { font-size: .74rem; line-height: 1.5; }
+  .toc a[aria-current] { color: var(--ef-ink); border-left-color: var(--ef-trace); font-weight: 600; }
+  .rail-head { display: block; margin: 0 0 .5rem; padding-bottom: .35rem;
+    border-bottom: 1px solid var(--ef-rule); font-size: .68rem; line-height: 1.5; }
+  .rail-head span { display: inline; }
+  .rail-head span + span { display: block; color: var(--ef-ink-2); }
+  .rail-aside .toc a { padding-top: .3rem; padding-bottom: .3rem; }
+  .rail-tree { list-style:none; margin:0; padding:0; }
+  .rail-tree .tree-name { display:block; padding:.35rem .2rem .35rem .6rem;
+    border-left:3px solid transparent; font-size:.76rem; font-weight:600; color:var(--ef-ink); }
+  .rail-tree .tree-label { display:inline; }
+  .rail-tree .tree-name .ef-field { font-size:.68rem; color:var(--ef-ink-2); margin-left:.35rem;
+    white-space:nowrap; }
+  .rail-tree .tree-group.is-open > .tree-name { border-left-color:var(--ef-trace); }
+  .rail-tree .tree-items { list-style:none; margin:.1rem 0 .5rem; padding:0 0 0 .6rem;
+    border-left:1px solid var(--ef-rule); }
+  .rail-tree .tree-items a { padding-left:.6rem; font-size:.72rem; line-height:1.45; }
+  .tree-row { display:flex; align-items:stretch; gap:.15rem; }
+  .tree-row .tree-name { flex:1 1 auto; min-width:0; }
+  .tree-toggle { flex:none; width:1.55rem; min-height:1.9rem; display:grid; place-items:center;
+    padding:0; border:1px solid var(--ef-rule); background:var(--ef-panel); color:var(--ef-ink-2);
+    cursor:pointer; transition:color .12s var(--ef-ease), border-color .12s var(--ef-ease), background .12s var(--ef-ease); }
+  .tree-toggle:hover { color:var(--ef-ink); border-color:var(--ef-ink); background:var(--ef-chip); }
+  .tree-toggle svg { width:.7rem; height:.7rem; transition:transform .15s var(--ef-ease); }
+  .tree-toggle[aria-expanded="true"] svg { transform:rotate(90deg); }
+  .rail-tree .tree-items[hidden] { display:none; }
+  /* 滚动条统一样式在 assets/local-fonts.css 里定义（页面/侧栏/搜索共用） */
+
+  /* 窄屏：正文优先，两侧栏排到后面 */
+  @media (max-width: 959px) {
+    .ef-spread.has-rail > .ef-sheet { order: 1; }
+    .ef-spread.has-rail > .rail-aside { order: 2; border-top: 1px solid var(--ef-rule); }
+    .ef-spread.has-rail > .toc-aside { order: 3; }
+  }
+
+  /* —— 复习笔记：PDF 下载 —— */
+  .pdf-dl { display:flex; flex-wrap:wrap; align-items:center; gap:.75rem; margin:1.1rem 0 0; }
+  .pdf-dl .ef-btn { border-color:var(--ef-ink); }
+
+  /* —— 打印 / 导出 PDF：只留正文 —— */
+  @page { size:A4; margin:16mm 14mm 18mm; }
+  @media print {
+    html, body { background:#fff !important; }
+    .topbar, .foot, .ef-tri, .rail-aside, .toc-aside, .back, .pdf-dl,
+    .ef-crumb, .ef-eyebrow, .ef-facts, .ef-notice { display:none !important; }
+    .ef-spread, .ef-spread.has-rail { display:block !important; max-width:none !important; }
+    .ef-sheet { border:0 !important; padding:0 !important; background:#fff !important; }
+    .ef-sheet .ef-prose, .ef-sheet .ef-lede, .ef-sheet .title { max-width:none !important; }
+    .title { margin:0 0 1rem; }
+    /* 打印用系统字体：体积小、离线打开不依赖自托管字体 */
+    body, .ef-prose, .title, .ef-lede, .ef-facts,
+    h1, h2, h3, h4, h5, h6 { font-family:"Microsoft YaHei UI","Microsoft YaHei","PingFang SC",sans-serif !important; }
+    .ef-prose pre, .ef-prose code { font-family:Consolas,"Cascadia Mono",monospace !important; }
+    .ef-prose { margin-top:1rem; }
+    .ef-prose pre { white-space:pre-wrap; word-break:break-word; }
+    .ef-prose pre code { white-space:pre-wrap; }
+    .ef-prose img, .ef-prose svg, mjx-container { max-width:100% !important; }
+    a { color:inherit !important; text-decoration:none !important; }
+    .ef-prose h2, .ef-prose h3 { break-after:avoid; }
+    .ef-prose pre, .ef-prose table, .eq { break-inside:avoid; }
+  }
+
+</style>
+</head>
+<body class="ef ef-contours">
+<div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+<header class="topbar">
+  <a class="brand" href="../../../../index.html">KYSIIN.ARCHIVE</a>
+  <nav class="ef-field" aria-label="主导航">
+    <a href="../../../../index.html">首页</a>
+    <a href="../../index.html" aria-current="page">计算机动画</a>
+  </nav>
+  <span data-search-slot></span>
+  <button class="ef-btn small" type="button" data-theme-toggle>切换深浅</button>
+</header>
+
+<article class="ef-spread has-rail">
+  <aside class="ef-margin rail-aside" aria-label="本课程分区">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>计算机动画</span><span>3 区</span></p>
+      <ol class="rail-tree">
+        <li class="tree-group is-open">
+          <div class="tree-row">
+            <a class="tree-name" href="../../index.html#sec-%E7%AB%A0%E8%8A%82"><span class="tree-label">章节</span><span class="ef-field">13</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="true" aria-label="收起 章节"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items">
+            <li><a href="01_基础.html">第一部分　考试概况与复习方法</a></li>
+            <li><a href="02_原则.html" aria-current="page">第三部分　动画的12条基本原则</a></li>
+            <li><a href="03_朝向.html">第四部分　物体朝向的表示与四元数</a></li>
+            <li><a href="04_二维渐变.html">第五部分　二维形状渐变与图像 Morphing</a></li>
+            <li><a href="05_三维渐变.html">第六部分　三维形状渐变（3D Morphing）</a></li>
+            <li><a href="06_粒子群组.html">第七部分　粒子系统、元球与群组动画</a></li>
+            <li><a href="07_关节动画.html">第八部分　关节动画：正向运动学与逆向运动学</a></li>
+            <li><a href="08_运动捕获.html">第九部分　运动捕获、角色绑定与表情动画</a></li>
+            <li><a href="09_变形.html">第十部分　变形（Deformation）</a></li>
+            <li><a href="10_布料.html">第十一部分　布料动画</a></li>
+            <li><a href="11_隐式曲面.html">第十二部分　隐式曲面与元球自动拟合</a></li>
+            <li><a href="12_碰撞.html">第十三部分　碰撞检测与碰撞响应</a></li>
+            <li><a href="13_数值积分.html">第十四部分　数值积分与物理动画基础</a></li>
+          </ol>
+        </li>
+        <li class="tree-group">
+          <div class="tree-row">
+            <a class="tree-name" href="../../index.html#sec-%E4%B8%93%E9%A2%98"><span class="tree-label">专题</span><span class="ef-field">3</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="false" aria-label="展开 专题"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items" hidden>
+            <li><a href="14_判断题.html">第十五部分　判断题易错点（123 条自查）</a></li>
+            <li><a href="15_问答.html">第十六部分　问答题预测与答题模板</a></li>
+            <li><a href="16_附录.html">第十七部分　附录</a></li>
+          </ol>
+        </li>
+        <li class="tree-group">
+          <div class="tree-row">
+            <a class="tree-name" href="../../index.html#sec-%E5%AE%9E%E9%AA%8C"><span class="tree-label">实验</span><span class="ef-field">2</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="false" aria-label="展开 实验"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items" hidden>
+            <li><a href="../../../clothlab-src/files/README.html">ClothLab — 基于质点-弹簧模型的布料动画与碰撞响应</a></li>
+            <li><a href="../../../clothlab-src/files/选题与规划.html">计算机动画课程设计 · 选题与实施规划</a></li>
+          </ol>
+        </li>
+      </ol>
+      <p class="ef-actions" style="margin:.9rem 0 0">
+        <a class="ef-btn small" href="../../index.html">返回课程</a>
+      </p>
+    </div>
+  </aside>
+  <div class="ef-sheet">
+    <p class="ef-eyebrow slash">Course / Article</p>
+    <p class="ef-crumb ef-field"><a href="../../../../index.html">首页</a><a href="../../index.html">计算机动画</a><span>章节</span><span>content</span></p>
+    <ul class="ef-facts ef-field">
+      <li>章节</li>
+      <li>3,145 字</li>
+      <li>2026.11.15</li>
+      <li>14 个小节</li>
+    </ul>
+    <h1 class="title ef-read">第三部分　动画的12条基本原则</h1>
+    <div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+    <p class="ef-actions pdf-dl"><a class="ef-btn" href="%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%8A%A8%E7%94%BB-%E7%AC%AC%E4%B8%89%E9%83%A8%E5%88%86%20%E5%8A%A8%E7%94%BB%E7%9A%8412%E6%9D%A1%E5%9F%BA%E6%9C%AC%E5%8E%9F%E5%88%99.pdf" download>下载 PDF</a><span class="ef-field">离线 / 打印版</span></p>
+    
+    <div class="ef-prose">
+<h2 id="21-背景与总览">2.1 背景与总览</h2>
+<p>这 12 条原则由迪士尼九老（Frank Thomas 与 Ollie Johnston）在长期实践中总结，1981 年写入《The Illusion of Life》，并被归纳为 12 条。它们原本针对<strong>二维手绘动画</strong>，但被证明是"让画面有生命、可信、易读"的一般规律，因此也构成三维计算机动画的表演与制作基础。</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>原则（中/英）</th>
+<th>一句话含义</th>
+<th>三维中的主要实现</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>挤压与拉伸 / Squash and Stretch</td>
+<td>用形变表现重量、弹性、材质</td>
+<td>骨骼缩放、晶格/变形器、肌肉系统</td>
+</tr>
+<tr>
+<td>2</td>
+<td>预期 / Anticipation</td>
+<td>动作前的反向准备</td>
+<td>预备姿态、蓄力帧</td>
+</tr>
+<tr>
+<td>3</td>
+<td>舞台化（布局）/ Staging</td>
+<td>让观众一眼看清要表达的内容</td>
+<td>镜头、构图、灯光、遮挡、剪影</td>
+</tr>
+<tr>
+<td>4</td>
+<td>连贯动作法与关键动作法 / Straight Ahead &amp; Pose to Pose</td>
+<td>两种制作方法</td>
+<td>关键帧+插值；特效用逐帧/程序化</td>
+</tr>
+<tr>
+<td>5</td>
+<td>跟随动作与重叠动作 / Follow Through &amp; Overlapping Action</td>
+<td>主体停后附属部分继续；各部件不同步</td>
+<td>动力学、次级骨骼、布料/毛发</td>
+</tr>
+<tr>
+<td>6</td>
+<td>慢入与慢出 / Slow In and Slow Out</td>
+<td>起止慢、中间快</td>
+<td>曲线切线、缓动函数</td>
+</tr>
+<tr>
+<td>7</td>
+<td>弧线 / Arcs</td>
+<td>自然运动走弧线</td>
+<td>轨迹编辑、弧形约束、脊柱曲线</td>
+</tr>
+<tr>
+<td>8</td>
+<td>次要动作 / Secondary Action</td>
+<td>补充主表演的小动作</td>
+<td>分层动画、程序化细节</td>
+</tr>
+<tr>
+<td>9</td>
+<td>时间（节奏）/ Timing</td>
+<td>帧间隔决定重量、速度与情绪</td>
+<td>关键帧间距、时间缩放</td>
+</tr>
+<tr>
+<td>10</td>
+<td>夸张 / Exaggeration</td>
+<td>强化本质以传达</td>
+<td>姿态夸张、形变、smear/拖影</td>
+</tr>
+<tr>
+<td>11</td>
+<td>扎实的描绘 / Solid Drawing</td>
+<td>结构、体积、透视、重心</td>
+<td>造型/解剖/权重/体积感</td>
+</tr>
+<tr>
+<td>12</td>
+<td>吸引力 / Appeal</td>
+<td>角色有魅力、可读、有性格</td>
+<td>造型、材质、表演、剪影</td>
+</tr>
+</tbody>
+</table>
+<p><strong>整体原理</strong>：这 12 条共同服务于三个目标——<strong>可读性（观众看得懂）</strong>、<strong>可信性（像真的、有重量）</strong>、<strong>表现力（有情绪、有性格）</strong>。它们不是孤立规则，而是互相配合：预期 + 慢入慢出 + 弧线 + 跟随动作共同构成一个"可信的动作"。</p>
+<h2 id="22-挤压与拉伸squash-and-stretch">2.2 挤压与拉伸（Squash and Stretch）</h2>
+<p><strong>含义</strong>：物体在受力/运动时发生形变——被压缩时变扁变宽（squash），被拉伸时变长变细（stretch）。</p>
+<p><strong>原理</strong>：
+- 真实物体都不是刚体，受力会产生弹性形变；形变向观众传递"重量、软硬、速度、力度"；
+- 关键约束是<strong>体积守恒（近似）</strong>：沿一个方向压缩，另外两个方向必须膨胀；否则看起来像"缩放"而不是"挤压"；
+- 是最能体现"物质感"的一条：球落地压扁 → 弹起拉长；布袋 vs 铁球靠形变区分。</p>
+<p><strong>三维中的实现与注意</strong>：
+- 用骨骼缩放（scale）、晶格（lattice）、变形器（bend/taper）、肌肉/脂肪系统、blendshape；
+- 需要保持体积：只缩放一个轴会"瘦下去"，应同时反向缩放另两轴；
+- 拉伸常用于表现快速运动（配合运动模糊），可做"拖影/smear"；
+- 过度挤压拉伸会走向卡通化（如《猫和老鼠》），写实角色需克制；布料、软组织、脂肪的晃动属于同一族效果（jiggle）。</p>
+<h2 id="23-预期anticipation">2.3 预期（Anticipation）</h2>
+<p><strong>含义</strong>：在主要动作之前，加入方向相反或蓄力的准备动作（向后拉弓才能射箭），让观众预先知道"将要发生什么"，并让动作更有力。</p>
+<p><strong>原理</strong>：
+- 人做动作前必须蓄力/调整重心，物理上必要；
+- 心理上，预期建立"期待—满足"，使动作可读、有张力；没有预期，动作会显得突兀、无力；
+- 预期还可以用于"反预期"（观众以为要往左，实际往右）制造笑点或惊讶。</p>
+<p><strong>三维中的实现</strong>：预备姿态（anticipation pose）、更长的蓄力时间、面部与视线先行（眼睛先看目标）、重心下沉；注意预期不能过长，否则节奏拖沓；次级预期（double take）用于喜剧。</p>
+<h2 id="24-舞台化-布局staging">2.4 舞台化 / 布局（Staging）</h2>
+<p><strong>含义</strong>：以最清晰的方式呈现一个动作、一个想法或一种情绪——构图、机位、姿势、剪影、灯光都为"可读性"服务。</p>
+<p><strong>原理</strong>：
+- 观众只在一瞬间看画面，任何含糊（遮挡、重叠、正对镜头的动作、灰暗的光）都会让信息丢失；
+- 一次只讲一件事（one idea at a time），用视线引导、明暗对比、留白来突出主体；
+- <strong>剪影测试</strong>：把角色涂黑，若姿态仍能读懂，则舞台化成功。</p>
+<p><strong>三维中的实现</strong>：Layout/previs、相机选择（正面/侧面/三分之四）、景深与焦点、灯光引导、避免角色与背景融合（轮廓光）、避免肢体自遮挡（"剪影清晰"的 pose）、镜头长度与切换节奏。</p>
+<h2 id="25-跟随动作与重叠动作follow-through-overlapping-action">2.5 跟随动作与重叠动作（Follow Through &amp; Overlapping Action）</h2>
+<p><strong>含义</strong>：
+- <strong>跟随动作</strong>：主体停止后，附属部分（头发、衣摆、耳朵、尾巴、肚腩）因惯性继续运动并逐渐衰减；
+- <strong>重叠动作</strong>：一个角色的各部件不以同一节奏运动——身体先动、头后动、手臂再晚一点，形成"错峰"，避免像一块铁板。</p>
+<p><strong>原理</strong>：惯性与阻尼；不同质量的部件有不同的跟随延迟（重量差异）；符合牛顿力学与观察经验，能显著提升真实感与流畅感。</p>
+<p><strong>三维中的实现</strong>：次级骨骼/非均匀延迟（offset keyframes）、动力学（hair/cloth/soft body）、程序化跟随（spring/jiggle）、给不同部件设置不同的时间偏移；注意"重叠"不是"乱"，主次分明，跟随动作不能抢主表演。</p>
+<h2 id="26-慢入与慢出slow-in-and-slow-out">2.6 慢入与慢出（Slow In and Slow Out）</h2>
+<p>见 2.14 专节（大纲单列，务必掌握）。</p>
+<h2 id="27-弧线arcs">2.7 弧线（Arcs）</h2>
+<p><strong>含义</strong>：自然界的运动大多沿弧线（抛体、摆动、转身、关节转动），而不是直线或折线。</p>
+<p><strong>原理</strong>：关节的转动使末端走圆弧；重力使抛体走抛物线；生物体的运动是旋转的复合。直线运动显得机械、生硬（机器人感）。</p>
+<p><strong>三维中的实现</strong>：检查运动轨迹曲线（motion trail）、调整曲线切线使轨迹平滑、用弧形/圆形约束、脊柱与四肢的弯曲、避免肢体在同一平面内做直线位移；对快速动作可加"弧线拖影"。</p>
+<h2 id="28-次要动作secondary-action">2.8 次要动作（Secondary Action）</h2>
+<p><strong>含义</strong>：为强化主动作而附加的小动作或细节（说话时的手势、走路时晃动的配饰、思考时皱眉）。</p>
+<p><strong>原理</strong>：次要动作使角色"活着"、有性格、有细节；但它必须<strong>从属于</strong>主动作，不能分散注意力，也不能改变主动作的含义。</p>
+<p><strong>三维中的实现</strong>：分层动画（身体层、面部层、手指层）、程序化细节（呼吸、眨眼、重心微移）、物理模拟（衣摆、头发）、表情叠加；注意"次要"是相对主动作而言，若它抢戏就变成"抢镜"。</p>
+<h2 id="29-时间节奏-timing">2.9 时间（节奏 / Timing）</h2>
+<p><strong>含义</strong>：动作在时间上的分配——两个关键帧之间的间隔决定动作的快慢、重量与情绪。时间（timing）+ 空间（幅度/spacing）= 动作的全部表达。</p>
+<p><strong>原理</strong>：
+- 同一动作在不同 timing 下含义完全不同：快速=轻/急/紧张，缓慢=重/懒/庄重；
+- "timing 决定重量"：重物起落慢、加速慢；轻物快；
+- 帧数（在固定帧率下）就是时间的度量，因此"加一帧/减一帧"都会改变表演。</p>
+<p><strong>三维中的实现</strong>：关键帧间距、曲线形状、时间缩放（time warp）、慢动作/快进、动画层的时间偏移、24/60fps 的选择；戏剧节奏（停顿、留白）也是 timing 的一部分。</p>
+<h2 id="210-夸张exaggeration">2.10 夸张（Exaggeration）</h2>
+<p><strong>含义</strong>：把动作、表情、形体的特征强化到超出真实，以突出本质、传达情绪。</p>
+<p><strong>原理</strong>：真实往往平淡，强化才能被"读到"；夸张不是胡乱变形，而是<strong>抓住本质特征并放大</strong>，仍需保持可信（"基于真实的谎言"）。夸张程度取决于风格：写实片克制，卡通片放开。</p>
+<p><strong>三维中的实现</strong>：pose 夸张（更大的伸展、更强的对比）、形变（挤压拉伸）、面部表情夸张（blendshape 幅度）、速度夸张（smear frame、拖影）、比例夸张（大头小身）；注意夸张过度会失去重量感与可信度。</p>
+<h2 id="211-扎实的描绘solid-drawing">2.11 扎实的描绘（Solid Drawing）</h2>
+<p><strong>含义</strong>：画出的形象要有体积、结构、透视、重心与平衡感，像"能拿在手里"的三维物体。</p>
+<p><strong>原理</strong>：观众能感知"不对劲"的结构（重心不稳、透视错误、体积消失）；扎实的造型是一切表演的载体。</p>
+<p><strong>三维中的对应</strong>：模型拓扑与体积、解剖结构（骨骼与肌肉）、重心与平衡（pose 的平衡线）、透视与镜头焦距、权重（变形时不塌陷）、材质与光照的体积感。三维中"solid drawing"转化为"扎实的造型与解剖 + 正确的体积/重量"。</p>
+<h2 id="212-吸引力appeal">2.12 吸引力（Appeal）</h2>
+<p><strong>含义</strong>：角色要让观众愿意看——有魅力、有个性、有可读的剪影，而不只是"好看/可爱"。</p>
+<p><strong>原理</strong>：吸引力来自设计（造型、比例、色彩、材质）、表演（性格、节奏、眼神）与"可读性"（剪影清晰、动作明确）；反派也可以有吸引力（魅力型反派）。</p>
+<p><strong>三维中的实现</strong>：造型与比例设计、材质与色彩、剪影测试、性格化的表演与 pose、镜头与灯光塑造；避免"塑料感/无个性"的通用模型。</p>
+<h2 id="213-连贯动作法与关键动作法">2.13 连贯动作法与关键动作法</h2>
+<table>
+<thead>
+<tr>
+<th>比较项</th>
+<th>连贯动作法（Straight Ahead Action）</th>
+<th>关键动作法（Pose to Pose）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>做法</td>
+<td>从第一帧开始<strong>按顺序</strong>逐帧往下画，事先不规划中间姿态，边画边定</td>
+<td>先画出<strong>关键姿态（极值/转折）</strong>，再补中间帧</td>
+</tr>
+<tr>
+<td>优点</td>
+<td>动作流畅自然、有即兴感与意外的生动（尤其适合快速、复杂的动作）</td>
+<td>结构清晰、时间与构图可控、便于分工与修改、便于三维实现</td>
+</tr>
+<tr>
+<td>缺点</td>
+<td>难以控制时长、关键姿态与整体节奏，容易"跑偏"、返工大</td>
+<td>容易僵硬、缺少流畅感，需靠曲线与中间姿态补足</td>
+</tr>
+<tr>
+<td>适用</td>
+<td>火、水、烟、爆炸、毛发、快速打斗、群舞等"流动"的内容</td>
+<td>有明确表演与节奏的角色动作、对白、绝大多数三维角色动画</td>
+</tr>
+</tbody>
+</table>
+<p><strong>原理</strong>：两者本质是"自下而上（局部生成整体）"与"自上而下（先定骨架再填肉）"的差别。三维计算机动画的基础流程是<strong>关键动作法 + 曲线插值</strong>（关键帧 + F-curve + 缓动），再叠加连贯动作法的思路做细节（粒子、布料、特效、逐帧修正）。现代流程常混合使用：主体用 pose to pose，布料/毛发/粒子用 straight ahead（物理模拟）。</p>
+<h2 id="214-慢入和慢出原则slow-in-and-slow-out">2.14 "慢入和慢出"原则（Slow In and Slow Out）</h2>
+<p><strong>含义</strong>：动作在开始（slow in）和结束（slow out）时速度慢，中间速度快——中间帧在时间上靠近关键帧（两端帧密集、中间帧稀疏）。</p>
+<p><strong>原理</strong>：
+- <strong>物理</strong>：物体有质量与惯性，启动需要加速过程，停止需要减速过程，因此位置—时间曲线在两端斜率小、中间斜率大；
+- <strong>知觉</strong>：观众通过"帧的疏密（spacing）"感知速度与重量，两端加密使动作"有重量、不生硬"；
+- <strong>表演</strong>：缓入缓出也用于强调与情绪，如缓慢转头、停顿后突然发力。</p>
+<p><strong>数学表达</strong>：设归一化时间 t∈[0,1]，位置 s(t) 从 0 到 1。线性为 s(t)=t；常用的缓入缓出为平滑阶跃</p>
+<div class="eq"><mjx-container class="MathJax" jax="CHTML" display="true"><mjx-math display="true" style="margin-left: 0; margin-right: 0;" class=" MJX-TEX"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D460 TEX-I"></mjx-c></mjx-mi><mjx-mo class="mjx-n"><mjx-c class="mjx-c28"></mjx-c></mjx-mo><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D461 TEX-I"></mjx-c></mjx-mi><mjx-mo class="mjx-n"><mjx-c class="mjx-c29"></mjx-c></mjx-mo><mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c3D"></mjx-c></mjx-mo><mjx-mn class="mjx-n" space="4"><mjx-c class="mjx-c33"></mjx-c></mjx-mn><mjx-msup><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D461 TEX-I"></mjx-c></mjx-mi><mjx-script style="vertical-align: 0.413em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mn class="mjx-n"><mjx-c class="mjx-c32"></mjx-c></mjx-mn></mjx-TeXAtom></mjx-script></mjx-msup><mjx-mo class="mjx-n" space="3"><mjx-c class="mjx-c2212"></mjx-c></mjx-mo><mjx-mn class="mjx-n" space="3"><mjx-c class="mjx-c32"></mjx-c></mjx-mn><mjx-msup><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D461 TEX-I"></mjx-c></mjx-mi><mjx-script style="vertical-align: 0.413em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mn class="mjx-n"><mjx-c class="mjx-c33"></mjx-c></mjx-mn></mjx-TeXAtom></mjx-script></mjx-msup><mjx-mo class="mjx-n"><mjx-c class="mjx-c2C"></mjx-c></mjx-mo><mjx-mstyle><mjx-mspace style="width: 1em;"></mjx-mspace></mjx-mstyle><mjx-mi class="mjx-i" space="2"><mjx-c class="mjx-c1D463 TEX-I"></mjx-c></mjx-mi><mjx-mo class="mjx-n"><mjx-c class="mjx-c28"></mjx-c></mjx-mo><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D461 TEX-I"></mjx-c></mjx-mi><mjx-mo class="mjx-n"><mjx-c class="mjx-c29"></mjx-c></mjx-mo><mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c3D"></mjx-c></mjx-mo><mjx-mi class="mjx-i" space="4"><mjx-c class="mjx-c1D451 TEX-I"></mjx-c></mjx-mi><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D460 TEX-I"></mjx-c></mjx-mi><mjx-TeXAtom texclass="ORD"><mjx-mo class="mjx-n"><mjx-c class="mjx-c2F"></mjx-c></mjx-mo></mjx-TeXAtom><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D451 TEX-I"></mjx-c></mjx-mi><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D461 TEX-I"></mjx-c></mjx-mi><mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c3D"></mjx-c></mjx-mo><mjx-mn class="mjx-n" space="4"><mjx-c class="mjx-c36"></mjx-c></mjx-mn><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D461 TEX-I"></mjx-c></mjx-mi><mjx-mo class="mjx-n"><mjx-c class="mjx-c28"></mjx-c></mjx-mo><mjx-mn class="mjx-n"><mjx-c class="mjx-c31"></mjx-c></mjx-mn><mjx-mo class="mjx-n" space="3"><mjx-c class="mjx-c2212"></mjx-c></mjx-mo><mjx-mi class="mjx-i" space="3"><mjx-c class="mjx-c1D461 TEX-I"></mjx-c></mjx-mi><mjx-mo class="mjx-n"><mjx-c class="mjx-c29"></mjx-c></mjx-mo></mjx-math></mjx-container></div>
+<div class="eq"><mjx-container class="MathJax" jax="CHTML" display="true"><mjx-math display="true" style="margin-left: 0; margin-right: 0;" class=" MJX-TEX"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D460 TEX-I"></mjx-c></mjx-mi><mjx-mo class="mjx-n"><mjx-c class="mjx-c28"></mjx-c></mjx-mo><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D461 TEX-I"></mjx-c></mjx-mi><mjx-mo class="mjx-n"><mjx-c class="mjx-c29"></mjx-c></mjx-mo><mjx-mo class="mjx-n" space="4"><mjx-c class="mjx-c3D"></mjx-c></mjx-mo><mjx-msup space="4"><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D461 TEX-I"></mjx-c></mjx-mi><mjx-script style="vertical-align: 0.413em;"><mjx-TeXAtom size="s" texclass="ORD"><mjx-mn class="mjx-n"><mjx-c class="mjx-c32"></mjx-c></mjx-mn></mjx-TeXAtom></mjx-script></mjx-msup><mjx-mo class="mjx-n"><mjx-c class="mjx-c28"></mjx-c></mjx-mo><mjx-mn class="mjx-n"><mjx-c class="mjx-c33"></mjx-c></mjx-mn><mjx-mo class="mjx-n" space="3"><mjx-c class="mjx-c2212"></mjx-c></mjx-mo><mjx-mn class="mjx-n" space="3"><mjx-c class="mjx-c32"></mjx-c></mjx-mn><mjx-mi class="mjx-i"><mjx-c class="mjx-c1D461 TEX-I"></mjx-c></mjx-mi><mjx-mo class="mjx-n"><mjx-c class="mjx-c29"></mjx-c></mjx-mo><mjx-mstyle><mjx-mspace style="width: 1em;"></mjx-mspace></mjx-mstyle><mjx-mo class="mjx-n"><mjx-c class="mjx-c28"></mjx-c></mjx-mo><mjx-mtext class="mjx-n"><mjx-c class="mjx-c73"></mjx-c><mjx-c class="mjx-c6D"></mjx-c><mjx-c class="mjx-c6F"></mjx-c><mjx-c class="mjx-c6F"></mjx-c><mjx-c class="mjx-c74"></mjx-c><mjx-c class="mjx-c68"></mjx-c><mjx-c class="mjx-c73"></mjx-c><mjx-c class="mjx-c74"></mjx-c><mjx-c class="mjx-c65"></mjx-c><mjx-c class="mjx-c70"></mjx-c></mjx-mtext><mjx-mo class="mjx-n"><mjx-c class="mjx-c29"></mjx-c></mjx-mo></mjx-math></mjx-container></div>
+<p><img alt="图 2-1　慢入慢出：位置曲线两端平、中间陡；速度曲线呈&quot;山形&quot;；等时间间隔的帧在两端密、中间疏" src="../figs/slowinout.png" /></p>
+<p>其速度在 t=0 与 t=1 处为 0，中间最大（0.5 处 v=1.5），即"两端慢、中间快"。更一般的三次贝塞尔缓动用两个控制柄 (c1, c2) 调节快慢分布（c1 越大启动越慢，c2 越大收尾越慢）。</p>
+<p><strong>注意</strong>：
+- <strong>并非所有动作都要缓动</strong>：机械运动、匀速平移、钟表指针应保持线性；全部缓动会让动作"漂浮（floaty）"、失去重量与力度；
+- 缓动的"对比"才有力量：慢之后要快，快之后要停；
+- 三维中的实现：F-curve 的贝塞尔切线/自动钳制（auto-clamped）、ease in/out 关键帧类型、曲线编辑器中的手柄；物理模拟的弹簧阻尼也会自然产生缓动。</p>
+<blockquote>
+<p><strong>考点</strong>：慢入慢出的定义 + 物理/知觉原理 + 数学形式（s(t)=3t²−2t³，速度为 0 的端点）+ 反例（机械运动应线性）+ 三维实现（曲线切线）。</p>
+</blockquote>
+    </div>
+    <p class="back"><a class="ef-btn" href="01_基础.html">← 第一部分　考试概况与复习方法</a> <a class="ef-btn" href="03_朝向.html">第四部分　物体朝向的表示与四元数 →</a> <a class="ef-btn" href="../../index.html">返回本课</a></p>
+  </div>
+  <aside class="ef-margin toc-aside" aria-label="本页目录">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>本页目录</span><span>14 节</span></p>
+      <ol>
+      <li><a class="lvl2" href="#21-背景与总览">2.1 背景与总览</a></li>
+      <li><a class="lvl2" href="#22-挤压与拉伸squash-and-stretch">2.2 挤压与拉伸（Squash and Stretch）</a></li>
+      <li><a class="lvl2" href="#23-预期anticipation">2.3 预期（Anticipation）</a></li>
+      <li><a class="lvl2" href="#24-舞台化-布局staging">2.4 舞台化 / 布局（Staging）</a></li>
+      <li><a class="lvl2" href="#25-跟随动作与重叠动作follow-through-overlapping-action">2.5 跟随动作与重叠动作（Follow Through &amp; Overlapping Action）</a></li>
+      <li><a class="lvl2" href="#26-慢入与慢出slow-in-and-slow-out">2.6 慢入与慢出（Slow In and Slow Out）</a></li>
+      <li><a class="lvl2" href="#27-弧线arcs">2.7 弧线（Arcs）</a></li>
+      <li><a class="lvl2" href="#28-次要动作secondary-action">2.8 次要动作（Secondary Action）</a></li>
+      <li><a class="lvl2" href="#29-时间节奏-timing">2.9 时间（节奏 / Timing）</a></li>
+      <li><a class="lvl2" href="#210-夸张exaggeration">2.10 夸张（Exaggeration）</a></li>
+      <li><a class="lvl2" href="#211-扎实的描绘solid-drawing">2.11 扎实的描绘（Solid Drawing）</a></li>
+      <li><a class="lvl2" href="#212-吸引力appeal">2.12 吸引力（Appeal）</a></li>
+      <li><a class="lvl2" href="#213-连贯动作法与关键动作法">2.13 连贯动作法与关键动作法</a></li>
+      <li><a class="lvl2" href="#214-慢入和慢出原则slow-in-and-slow-out">2.14 "慢入和慢出"原则（Slow In and Slow Out）</a></li>
+      </ol>
+    </div>
+  </aside>
+</article>
+
+<footer class="foot">
+  <span class="ef-field">KYSIIN.ARCHIVE · 2026.11.15 · 由 Markdown 渲染</span>
+  <span>用 endfield-ui 渲染 · Saira（SIL OFL）自托管</span>
+</footer>
+<script type="module">
+  import { wireTheme } from '../../../../assets/fx.js'
+  wireTheme()
+</script>
+<script defer src="../../../../assets/search.js?v=202611150558"></script>
+<script>
+  /* 左栏：每个分组可独立展开/收起 */
+  (function () {
+    document.querySelectorAll('.tree-toggle').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var li = btn.closest('.tree-group');
+        var list = li ? li.querySelector('.tree-items') : null;
+        var open = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', String(!open));
+        if (list) list.hidden = open;
+        if (li) li.classList.toggle('is-open', !open);
+      });
+    });
+  })();
+</script>
+<script>
+  /* 右栏目录跟随滚动：读到哪一节就把那一行标出来 */
+  (function () {
+    var links = [].slice.call(document.querySelectorAll('.toc-aside a[href^="#"]'));
+    if (!links.length) return;
+    var items = links.map(function (a) {
+      var el = document.getElementById(a.getAttribute('href').slice(1));
+      return el ? { a: a, el: el } : null;
+    }).filter(Boolean);
+    if (!items.length) return;
+    var ticking = false;
+    function spy() {
+      ticking = false;
+      var line = window.scrollY + 140;
+      var best = null;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].el.getBoundingClientRect().top + window.scrollY <= line) best = items[i];
+      }
+      links.forEach(function (a) { a.removeAttribute('aria-current'); });
+      if (best) best.a.setAttribute('aria-current', 'true');
+    }
+    window.addEventListener('scroll', function () {
+      if (!ticking) { ticking = true; requestAnimationFrame(spy); }
+    }, { passive: true });
+    spy();
+  })();
+</script>
+</body>
+</html>

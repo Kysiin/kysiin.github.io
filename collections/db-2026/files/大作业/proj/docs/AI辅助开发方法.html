@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MiniSQL —— AI 辅助开发方法说明 · KYSIIN.ARCHIVE</title>
+<script src="../../../../../../assets/variant.js"></script>
+<link rel="stylesheet" href="../../../../../../assets/local-fonts.css" />
+<link rel="stylesheet" href="../../../../../../assets/endfield.css" />
+
+<style>
+  body { --tri-h: 3px; --topbar-h: 3.1rem; }
+  body > .ef-tri { position: sticky; top: 0; z-index: 61; }
+  .topbar { position:sticky; top:var(--tri-h); z-index:60;
+    display:flex; align-items:center; gap:1.5rem; padding:.85rem var(--ef-pad);
+    border-bottom:1px solid var(--ef-rule); background:var(--ef-panel); }
+  .topbar .brand { margin:0; font-family:var(--ef-font-ui); font-size:.95rem;
+    font-stretch:var(--ef-wider); font-weight:800; letter-spacing:.08em;
+    text-decoration:none; color:var(--ef-ink); }
+  .topbar nav { display:flex; align-items:center; gap:1.25rem; margin-left:auto; }
+  .topbar nav a { text-decoration:none; color:var(--ef-ink-2); }
+  .foot { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between;
+    gap:1rem; padding:1.5rem var(--ef-pad) 2.5rem; border-top:1px solid var(--ef-rule);
+    color:var(--ef-ink-2); font-size:.875rem; }
+  @media (max-width: 959px) { .ef-spread { grid-template-columns:minmax(0,1fr); }
+    .ef-sheet { border-right:0; border-bottom:1px solid var(--ef-rule); } }
+  @media (max-width:760px) { .topbar { flex-wrap:wrap; gap:.75rem; }
+    .topbar nav { order:3; width:100%; margin-left:0; } }
+
+  .title { margin:1.5rem 0 1rem; font-size:clamp(var(--ef-t-title),5vw,var(--ef-t-h1));
+    font-weight:700; line-height:1.3; }
+  .ef-prose { margin-top:1.75rem; }
+  .ef-prose img { max-width:100%; height:auto; border:1px solid var(--ef-rule); background:#fff; }
+  .ef-prose table { width:100%; border-collapse:collapse; font-size:.9rem; }
+  .ef-prose th, .ef-prose td { border-bottom:1px solid var(--ef-rule); padding:.45rem .6rem; text-align:left; }
+  .ef-prose th { font-family:var(--ef-font-ui); font-stretch:var(--ef-wide); font-size:.8rem; }
+  /* 代码块：整块一个背景；块内的 code 不再带行内边框/内边距 */
+  .ef-prose pre { overflow:auto; margin:1rem 0; padding:.9rem 1rem;
+    background:var(--ef-chip); border-left:3px solid var(--ef-rule);
+    font-size:.85rem; line-height:1.6; tab-size:4; }
+  .ef-prose pre code { display:block; padding:0; border:0; background:none;
+    font-family:var(--ef-font-mono); font-size:.85rem; line-height:1.6; white-space:pre; }
+  .ef-prose :not(pre) > code { font-family:var(--ef-font-mono); font-size:.88em;
+    padding:.1em .35em; border:1px solid var(--ef-rule); background:var(--ef-paper); }
+  .ef-prose blockquote { border-left:3px solid var(--ef-ink); margin:1rem 0; padding:.25rem 0 .25rem 1rem;
+    color:var(--ef-ink-2); }
+
+  /* —— 公式：绝不超出正文栏；行间公式可横向滚动 —— */
+  .ef-prose mjx-container { max-width:100%; }
+  .ef-prose mjx-container[display="true"] { display:block; text-align:center; margin:1.1em 0;
+    max-width:100%; overflow-x:auto; overflow-y:hidden; padding:2px 0; }
+  .ef-prose mjx-container[jax="CHTML"] { font-size:1.02em; }
+  .eq { overflow-x:auto; overflow-y:hidden; max-width:100%; padding:2px 0; }
+  .eq mjx-container[display="true"] { margin:.35em 0; }
+
+  .toc ol { margin:0; padding:0; list-style:none; border-left:1px solid var(--ef-rule); }
+  .toc a { display:block; margin-left:-1px; padding:.22rem 0 .22rem .7rem;
+    border-left:3px solid transparent; color:var(--ef-ink-2); font-size:.85rem;
+    overflow-wrap:anywhere; }
+  .toc a:hover { color:var(--ef-ink); border-left-color:var(--ef-trace); }
+  .toc .lvl3 { padding-left:1.3rem; font-size:.8rem; }
+  .back { margin:2rem 0 0; display:flex; flex-wrap:wrap; gap:.75rem; }
+
+  /* —— 三栏铺满：两侧栏贴边，中间正文吃掉所有剩余宽度 —— */
+  .ef-spread { max-width: none; margin: 0; }
+
+  @media (min-width: 1180px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(11rem, 12vw, 14rem) minmax(0, 1fr) clamp(13rem, 14vw, 17rem);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+  }
+  @media (min-width: 960px) and (max-width: 1179px) {
+    .ef-spread.has-rail {
+      grid-template-columns: clamp(10rem, 12vw, 12rem) minmax(0, 1fr);
+      column-gap: clamp(.75rem, 1vw, 1.25rem);
+    }
+    .ef-spread.has-rail > .toc-aside { display: none; }
+  }
+  @media (min-width: 960px) {
+    .ef-spread > .ef-margin {
+      position: sticky;
+      top: calc(var(--tri-h) + var(--topbar-h));
+      align-self: start;
+      max-height: calc(100vh - var(--tri-h) - var(--topbar-h));
+      overflow-y: auto;
+      scrollbar-width: thin;
+      padding: clamp(1.5rem, 3vw, 2.5rem) 1rem;
+    }
+    /* 两侧栏往屏幕边缘靠，别在页边留空 */
+    .ef-spread > .rail-aside { padding-left: .75rem; padding-right: 1.25rem; }
+    .ef-spread > .toc-aside { padding-left: 1.25rem; padding-right: .75rem; }
+    /* 正文左右留呼吸，但不限制宽度 */
+    .ef-spread > .ef-sheet { padding-left: clamp(2rem, 3.5vw, 4rem); padding-right: clamp(2rem, 3.5vw, 4rem); }
+    /* 套件把正文限制在 40rem；中间栏变宽后这里放开，让文字铺满 */
+    .ef-sheet .ef-prose,
+    .ef-sheet .ef-lede,
+    .ef-sheet .title,
+    .ef-sheet .ef-read,
+    .ef-sheet .ef-facts,
+    .ef-sheet .ef-empty,
+    .ef-sheet .ef-notice { max-width: none; }
+  }
+  .ef-margin .toc a { font-size: .74rem; line-height: 1.5; }
+  .toc a[aria-current] { color: var(--ef-ink); border-left-color: var(--ef-trace); font-weight: 600; }
+  .rail-head { display: block; margin: 0 0 .5rem; padding-bottom: .35rem;
+    border-bottom: 1px solid var(--ef-rule); font-size: .68rem; line-height: 1.5; }
+  .rail-head span { display: inline; }
+  .rail-head span + span { display: block; color: var(--ef-ink-2); }
+  .rail-aside .toc a { padding-top: .3rem; padding-bottom: .3rem; }
+  .rail-tree { list-style:none; margin:0; padding:0; }
+  .rail-tree .tree-name { display:block; padding:.35rem .2rem .35rem .6rem;
+    border-left:3px solid transparent; font-size:.76rem; font-weight:600; color:var(--ef-ink); }
+  .rail-tree .tree-label { display:inline; }
+  .rail-tree .tree-name .ef-field { font-size:.68rem; color:var(--ef-ink-2); margin-left:.35rem;
+    white-space:nowrap; }
+  .rail-tree .tree-group.is-open > .tree-name { border-left-color:var(--ef-trace); }
+  .rail-tree .tree-items { list-style:none; margin:.1rem 0 .5rem; padding:0 0 0 .6rem;
+    border-left:1px solid var(--ef-rule); }
+  .rail-tree .tree-items a { padding-left:.6rem; font-size:.72rem; line-height:1.45; }
+  .tree-row { display:flex; align-items:stretch; gap:.15rem; }
+  .tree-row .tree-name { flex:1 1 auto; min-width:0; }
+  .tree-toggle { flex:none; width:1.55rem; min-height:1.9rem; display:grid; place-items:center;
+    padding:0; border:1px solid var(--ef-rule); background:var(--ef-panel); color:var(--ef-ink-2);
+    cursor:pointer; transition:color .12s var(--ef-ease), border-color .12s var(--ef-ease), background .12s var(--ef-ease); }
+  .tree-toggle:hover { color:var(--ef-ink); border-color:var(--ef-ink); background:var(--ef-chip); }
+  .tree-toggle svg { width:.7rem; height:.7rem; transition:transform .15s var(--ef-ease); }
+  .tree-toggle[aria-expanded="true"] svg { transform:rotate(90deg); }
+  .rail-tree .tree-items[hidden] { display:none; }
+  /* 滚动条统一样式在 assets/local-fonts.css 里定义（页面/侧栏/搜索共用） */
+
+  /* 窄屏：正文优先，两侧栏排到后面 */
+  @media (max-width: 959px) {
+    .ef-spread.has-rail > .ef-sheet { order: 1; }
+    .ef-spread.has-rail > .rail-aside { order: 2; border-top: 1px solid var(--ef-rule); }
+    .ef-spread.has-rail > .toc-aside { order: 3; }
+  }
+
+  /* —— 复习笔记：PDF 下载 —— */
+  .pdf-dl { display:flex; flex-wrap:wrap; align-items:center; gap:.75rem; margin:1.1rem 0 0; }
+  .pdf-dl .ef-btn { border-color:var(--ef-ink); }
+
+  /* —— 打印 / 导出 PDF：只留正文 —— */
+  @page { size:A4; margin:16mm 14mm 18mm; }
+  @media print {
+    html, body { background:#fff !important; }
+    .topbar, .foot, .ef-tri, .rail-aside, .toc-aside, .back, .pdf-dl,
+    .ef-crumb, .ef-eyebrow, .ef-facts, .ef-notice { display:none !important; }
+    .ef-spread, .ef-spread.has-rail { display:block !important; max-width:none !important; }
+    .ef-sheet { border:0 !important; padding:0 !important; background:#fff !important; }
+    .ef-sheet .ef-prose, .ef-sheet .ef-lede, .ef-sheet .title { max-width:none !important; }
+    .title { margin:0 0 1rem; }
+    /* 打印用系统字体：体积小、离线打开不依赖自托管字体 */
+    body, .ef-prose, .title, .ef-lede, .ef-facts,
+    h1, h2, h3, h4, h5, h6 { font-family:"Microsoft YaHei UI","Microsoft YaHei","PingFang SC",sans-serif !important; }
+    .ef-prose pre, .ef-prose code { font-family:Consolas,"Cascadia Mono",monospace !important; }
+    .ef-prose { margin-top:1rem; }
+    .ef-prose pre { white-space:pre-wrap; word-break:break-word; }
+    .ef-prose pre code { white-space:pre-wrap; }
+    .ef-prose img, .ef-prose svg, mjx-container { max-width:100% !important; }
+    a { color:inherit !important; text-decoration:none !important; }
+    .ef-prose h2, .ef-prose h3 { break-after:avoid; }
+    .ef-prose pre, .ef-prose table, .eq { break-inside:avoid; }
+  }
+
+</style>
+</head>
+<body class="ef ef-contours">
+<div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+<header class="topbar">
+  <a class="brand" href="../../../../../../index.html">KYSIIN.ARCHIVE</a>
+  <nav class="ef-field" aria-label="主导航">
+    <a href="../../../../../../index.html">首页</a>
+    <a href="../../../../index.html" aria-current="page">数据库系统</a>
+  </nav>
+  <span data-search-slot></span>
+  <button class="ef-btn small" type="button" data-theme-toggle>切换深浅</button>
+</header>
+
+<article class="ef-spread has-rail">
+  <aside class="ef-margin rail-aside" aria-label="本课程分区">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>数据库系统</span><span>2 区</span></p>
+      <ol class="rail-tree">
+        <li class="tree-group">
+          <div class="tree-row">
+            <a class="tree-name" href="../../../../index.html#sec-%E4%B8%93%E9%A2%98"><span class="tree-label">专题</span><span class="ef-field">5</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="false" aria-label="展开 专题"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items" hidden>
+            <li><a href="../../../final/数据库系统-ER图画法规则总结.html">数据库系统 E-R 图画法规则总结</a></li>
+            <li><a href="../../../final/数据库系统-SQL语句用法总结.html">数据库系统 SQL 语句用法总结</a></li>
+            <li><a href="../../../final/数据库系统-判断选择题概念总结.html">数据库系统判断/选择题概念总结</a></li>
+            <li><a href="../../../final/数据库系统-查询优化规则总结.html">数据库系统查询优化规则总结</a></li>
+            <li><a href="../../../final/数据库系统-计算公式总结.html">数据库系统计算公式总结</a></li>
+          </ol>
+        </li>
+        <li class="tree-group is-open">
+          <div class="tree-row">
+            <a class="tree-name" href="../../../../index.html#sec-%E5%AE%9E%E9%AA%8C"><span class="tree-label">实验</span><span class="ef-field">9</span></a>
+            <button class="tree-toggle" type="button" aria-expanded="true" aria-label="收起 实验"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2 L9 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <ol class="tree-items">
+            <li><a href="../../../HW/hw6_answers.html">HW6</a></li>
+            <li><a href="../../../LAB1/LAB1.html">LAB1</a></li>
+            <li><a href="../../../LAB2/LAB2.html">LAB2</a></li>
+            <li><a href="../../../LAB3/LAB3.html">LAB3</a></li>
+            <li><a href="../../../LAB4/LAB4.html">LAB4</a></li>
+            <li><a href="../../../LAB5/实验报告.html">图书管理系统实验报告</a></li>
+            <li><a href="AI辅助开发方法.html" aria-current="page">MiniSQL —— AI 辅助开发方法说明</a></li>
+            <li><a href="实验报告.html">MiniSQL 实验报告</a></li>
+            <li><a href="../README.html">MiniSQL —— 精简型单用户 SQL 引擎（C++）</a></li>
+          </ol>
+        </li>
+      </ol>
+      <p class="ef-actions" style="margin:.9rem 0 0">
+        <a class="ef-btn small" href="../../../../index.html">返回课程</a>
+      </p>
+    </div>
+  </aside>
+  <div class="ef-sheet">
+    <p class="ef-eyebrow slash">Course / Article</p>
+    <p class="ef-crumb ef-field"><a href="../../../../../../index.html">首页</a><a href="../../../../index.html">数据库系统</a><span>实验</span><span>大作业/proj/docs</span></p>
+    <ul class="ef-facts ef-field">
+      <li>实验</li>
+      <li>2,818 字</li>
+      <li>2026.11.15</li>
+      <li>21 个小节</li>
+    </ul>
+    <h1 class="title ef-read">MiniSQL —— AI 辅助开发方法说明</h1>
+    <div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+    
+    
+    <div class="ef-prose">
+<p>本文记录本项目「AI 辅助开发」的具体做法，围绕五个方面展开：系统设计与模块拆分、
+提示词与任务流程设计、对 AI 结果的监督与反馈、代码审查/集成/调试、测试设计与正确性验证。
+所有做法均以本项目（C++17 精简 DBMS）的真实过程为依据。</p>
+<hr />
+<h2 id="1-如何进行系统设计和模块拆分">1. 如何进行系统设计和模块拆分</h2>
+<h3 id="11-先定架构再拆模块而不是让-ai-一次生成整个系统">1.1 先定架构，再拆模块——而不是让 AI 一次生成整个系统</h3>
+<p>AI 一次性生成大型系统极易产生「看似能跑、实则耦合混乱」的代码。本项目先由人确定<strong>分层架构</strong>与
+<strong>模块边界</strong>，把系统切成职责单一、依赖单向的小模块，再让 AI 逐个实现。</p>
+<p>采用对标 CMU 15-445 / BusTub 的自底向上分层：</p>
+<pre><code>DiskManager → BufferPoolManager(+Replacer) → TableHeap / BPlusTree
+            → CatalogManager / IndexManager → DatabaseEngine
+            → ExecuteEngine → Interpreter → main(REPL)
+</code></pre>
+<h3 id="12-拆分原则">1.2 拆分原则</h3>
+<ul>
+<li><strong>单一职责</strong>：每个模块只解决一件事（如 <code>DiskManager</code> 只管按页读写文件，不懂记录/索引语义）。</li>
+<li><strong>单向依赖</strong>：上层依赖下层，下层不知道上层。由此可以<strong>按依赖顺序自底向上实现</strong>，
+  每实现一个模块，其依赖都已就绪且经过测试，避免「依赖未实现导致无法验证」。</li>
+<li><strong>接口先行</strong>：先写好头文件（类、方法签名、模块边界、注释语义），方法体以
+  <code>NotImplementedException</code> 占位。AI 实现时只填方法体，不改接口，从而<strong>锁定契约、约束生成范围</strong>。</li>
+<li><strong>一条铁律降低耦合</strong>：除 <code>BufferPoolManager</code> 外任何模块都不直接碰 <code>DiskManager</code>，
+  全部经 <code>Fetch/New/Unpin</code> 访问页。这条约定写进文档与注释，AI 实现各模块时一律遵守。</li>
+</ul>
+<h3 id="13-模块清单与实现顺序">1.3 模块清单与实现顺序</h3>
+<table>
+<thead>
+<tr>
+<th>顺序</th>
+<th>模块</th>
+<th>依赖</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>DiskManager / BufferPool / Replacer</td>
+<td>无</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Value / Row / TableHeap（记录与堆表）</td>
+<td>缓冲池</td>
+</tr>
+<tr>
+<td>3</td>
+<td>CatalogManager（元数据）</td>
+<td>堆表</td>
+</tr>
+<tr>
+<td>4</td>
+<td>BPlusTree / IndexManager（索引）</td>
+<td>缓冲池；之后回填 Catalog 的索引接线</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Interpreter（SQL 解析）</td>
+<td>独立</td>
+</tr>
+<tr>
+<td>6</td>
+<td>DatabaseEngine + ExecuteEngine + main（接线）</td>
+<td>以上全部</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Bonus：Clock / 空闲页回收 / Lock / WAL</td>
+<td>局部</td>
+</tr>
+</tbody>
+</table>
+<p><strong>关键判断</strong>：把「最大、最易出错」的 B+ 树放在元数据之后单独攻坚；把「自包含、可独立测」的解析器
+和 Bonus 安排在不阻塞主线的位置。这样任何一步卡住都不会让整个系统无法推进。</p>
+<hr />
+<h2 id="2-如何设计提示词任务流程或-agent-工作方式">2. 如何设计提示词、任务流程或 Agent 工作方式</h2>
+<h3 id="21-任务流程一模块一循环">2.1 任务流程：一模块一循环</h3>
+<p>每个模块走同一套闭环（写进项目约定，贯穿始终）：</p>
+<pre><code>① 人写实现 prompt（记录到 docs/prompts/NN-模块.md）
+② AI 生成实现 + 不依赖框架的 assert 单元测试
+③ 构建验证：cmake 配置 → 构建 → ctest 运行
+④ 人审查、定位并纠正问题（必要时回到 ②）
+⑤ 通过后单独 git commit + push（英文提交信息）
+</code></pre>
+<p>每个模块独立提交，使开发轨迹清晰、可回溯每步的范围与验证结果。</p>
+<h3 id="22-提示词设计原则">2.2 提示词设计原则</h3>
+<p><code>docs/prompts/</code> 下 00 是模板，01–09 是各模块的真实 prompt。一条好的实现 prompt 至少包含：</p>
+<ul>
+<li><strong>目标文件与接口约束</strong>：「实现 <code>xxx.cpp</code> 的全部方法，接口见 <code>.h</code>，签名不变」——防止 AI 擅改契约。</li>
+<li><strong>精确语义</strong>：逐方法说明行为与边界。例如缓冲池 <code>Unpin</code> 的「只置脏不清除」、B+ 树「先插入后分裂」。</li>
+<li><strong>数据结构/布局</strong>：直接给出页内布局（如堆表页头 <code>[next_page_id | slot_count]</code> + 「状态字节 + 定长记录」槽），
+  避免 AI 自由发挥导致与其它模块不兼容。</li>
+<li><strong>明确的坑提示</strong>：把已知陷阱写进 prompt。例如「<code>NewPage</code> 会把页置零，新页必须显式把 <code>next_page_id</code>
+  写成 INVALID」「节点页要为临时溢出预留 1 个槽位」。</li>
+<li><strong>测试要求</strong>：指明要覆盖的场景（如「池满全 pin 时 NewPage 返回 nullptr」「换出脏页后重读磁盘」）。</li>
+</ul>
+<blockquote>
+<p>示例（B+ 树）摘要："实现单属性单值 B+ 树……<code>Insert</code> 叶层去重、溢出分裂（叶复制首键上推、内部
+中键上推）、根分裂升高；<code>Remove</code> 下溢向兄弟借或合并、根塌缩……关键：节点页要为先插入后分裂的
+临时溢出多预留 1 个键/项的容量。"</p>
+</blockquote>
+<h3 id="23-agent-工作方式">2.3 Agent 工作方式</h3>
+<ul>
+<li><strong>范围最小化</strong>：一次只让 AI 改一个模块/一组紧密相关的文件，便于审查与回退。</li>
+<li><strong>结构化产出</strong>：要求 AI 同时产出实现与测试，并在 prompt 文档里回填「产出要点 / 问题与纠正 / 审查与测试」。</li>
+<li><strong>复用既有约定</strong>：让新模块「读起来像周围的代码」——注释密度、命名、错误处理（统一抛 <code>SqlException</code>）保持一致。</li>
+<li><strong>必要时人来做架构决策</strong>：涉及跨模块签名变更（如给 <code>CatalogManager</code> 注入 <code>DiskManager</code>、
+  给 B+ 树构造函数加 key 类型/尺寸）时，由人先定方案再让 AI 落地，而非让 AI 自行扩散改动。</li>
+</ul>
+<hr />
+<h2 id="3-如何监督-ai-生成结果并进行反馈修改">3. 如何监督 AI 生成结果并进行反馈修改</h2>
+<h3 id="31-监督手段让对错可被机器和人同时判定">3.1 监督手段：让"对错"可被机器和人同时判定</h3>
+<ul>
+<li><strong>编译器即第一道关</strong>：<code>-Wall -Wextra</code> 全开，警告当错误看待。</li>
+<li><strong>单元测试即第二道关</strong>：每模块的 assert 测试必须全绿才算完成。</li>
+<li><strong>端到端脚本即第三道关</strong>：用约 10 万行验收脚本压力验证真实行为。</li>
+<li><strong>人工阅读即第四道关</strong>：逐行读懂 AI 写的逻辑，确认边界与契约。</li>
+</ul>
+<h3 id="32-反馈修改的真实案例本项目实际发生">3.2 反馈—修改的真实案例（本项目实际发生）</h3>
+<table>
+<thead>
+<tr>
+<th>现象</th>
+<th>监督手段发现</th>
+<th>反馈/纠正</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>B+ 树小扇出测试段错误</td>
+<td>ctest 段错误</td>
+<td>定位为内部节点溢出键覆盖孩子数组 → 键/项各预留 +1 槽</td>
+</tr>
+<tr>
+<td>验收脚本 2 分钟超时</td>
+<td>端到端脚本计时</td>
+<td>定位堆表插入 O(n²) → 缓存尾页追加 + 调大缓冲池</td>
+</tr>
+<tr>
+<td>期望的 UNIQUE 冲突未被拒</td>
+<td>端到端脚本输出比对脚本注释</td>
+<td>Catalog 改为对 <code>unique</code> 列也自动建索引</td>
+</tr>
+<tr>
+<td><code>update</code> 报未知语句</td>
+<td>端到端脚本报错</td>
+<td>补 <code>StmtType::UPDATE</code> + 解析 + 执行</td>
+</tr>
+<tr>
+<td>重开库数据丢失</td>
+<td>持久化单测失败</td>
+<td>发现 <code>~BufferPoolManager</code> 不刷脏页 → 新增 <code>FlushAllPages</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="33-反馈原则">3.3 反馈原则</h3>
+<ul>
+<li><strong>先定位再修</strong>：用「直接运行二进制 + 缩小输入」定位崩溃点，而不是盲改。</li>
+<li><strong>改最小面</strong>：每次只针对一个根因修改，改完立刻重跑测试确认。</li>
+<li><strong>把教训沉淀</strong>：发现的坑回写进对应 prompt 文档的「问题与纠正」表，避免下次重犯。</li>
+</ul>
+<hr />
+<h2 id="4-如何审查集成和调试生成代码">4. 如何审查、集成和调试生成代码</h2>
+<h3 id="41-审查review">4.1 审查（Review）</h3>
+<ul>
+<li><strong>契约审查</strong>：AI 是否擅自改了接口/语义？签名是否与 <code>.h</code> 一致？</li>
+<li><strong>资源纪律审查</strong>：每个 <code>FetchPage</code> 是否都配对 <code>UnpinPage</code>、修改过的页是否标脏？（pin 泄漏是缓冲池类系统最常见隐患）</li>
+<li><strong>边界审查</strong>：空表/空树、首尾元素、容量临界（分裂/合并阈值）、越界索引是否处理。</li>
+<li><strong>一致性审查</strong>：错误处理是否统一（抛 <code>SqlException</code>）、命名与注释风格是否与周边一致。</li>
+</ul>
+<h3 id="42-集成integration">4.2 集成（Integration）</h3>
+<ul>
+<li><strong>构建系统自动收集</strong>：<code>CMakeLists.txt</code> 递归收集 <code>src/*.cpp</code> 编成静态库 <code>minisql_lib</code>，
+  主程序与每个测试都链接它；<code>test/</code> 下每个 <code>.cpp</code> 自动注册为一个 ctest。新增文件<strong>重跑 cmake 配置</strong>即可纳入。</li>
+<li><strong>接线集中在一处</strong>：<code>ExecuteEngine</code> 是唯一同时持有 Catalog/Index/Record 的「总线」，
+  模块协作集中可见，便于排查跨模块问题。</li>
+<li><strong>跨模块改动谨慎</strong>：集成阶段才暴露的需求（如多库层、UNIQUE/UPDATE）通过受控的小步签名调整接入，
+  每步都重跑全套测试确认未破坏既有功能。</li>
+</ul>
+<h3 id="43-调试debug">4.3 调试（Debug）</h3>
+<p>本项目环境为 Windows + MinGW，调试经验：</p>
+<ul>
+<li><strong>崩溃定位</strong>：ctest 报 <code>SegFault</code>/<code>0xc0000409</code> 时，直接用绝对路径运行该测试二进制看输出，
+  缩小到具体断言/子测试；必要时把输入规模调小（如 B+ 树用小扇出复现）。</li>
+<li><strong>区分"我的 bug"与"测试 bug"</strong>：曾出现断言失败实为测试预期过时（新增第二张表后 <code>show tables</code> 应返回 2 而非 1），
+  审查后修正测试而非乱改实现。</li>
+<li><strong>静态链接规避 DLL 问题</strong>：MinGW 下对运行时加 <code>-static</code>，避免运行时加载到版本不匹配的 DLL（<code>0xc0000139</code>）。</li>
+<li><strong>性能问题用计时定位</strong>：<code>time</code> 跑脚本，发现超时后回到算法层面找 O(n²)，而非微优化。</li>
+</ul>
+<hr />
+<h2 id="5-如何设计测试并验证系统正确性">5. 如何设计测试并验证系统正确性</h2>
+<h3 id="51-测试策略分层-端到端">5.1 测试策略：分层 + 端到端</h3>
+<ul>
+<li><strong>每模块一个不依赖第三方框架的 <code>assert</code> 单元测试</strong>（共 13 个，<code>ctest</code> 统一运行，全部通过）。
+  不引入 GoogleTest 等框架，降低构建复杂度，测试本身也成为模块用法的范例。</li>
+<li><strong>一个端到端测试</strong>（<code>execute_engine_test</code>）：经 Interpreter + ExecuteEngine + 多库存储栈跑真实 SQL，
+  覆盖建库/表/增删改查/索引/约束/投影，并含「关库—重开」的持久化验证。</li>
+<li><strong>一个真实验收脚本</strong>：约 10 万行综合脚本压力验证整体行为与性能。</li>
+</ul>
+<h3 id="52-测试用例设计要点举例">5.2 测试用例设计要点（举例）</h3>
+<ul>
+<li><strong>覆盖正常 + 边界 + 异常</strong>：如 B+ 树用<strong>小扇出(4,4)</strong> 以少量数据强制触发多级<strong>分裂/借位/合并/根塌缩</strong>，
+  比大扇出更能暴露结构性 bug；并验证重复插入返回 false、删空后根塌缩为空。</li>
+<li><strong>验证持久化用"关库—重开"</strong>：构造独立的存储栈、写入、Flush、销毁，再重新打开、加载、断言数据仍在
+  （Catalog 三会话、B+ 树 2000 键、DiskManager 空闲页 <code>.free</code> 等都用此法），确保状态真的落在磁盘而非对象里。</li>
+<li><strong>并发用多线程 + 时序断言</strong>：LockManager 用线程模拟「年轻事务被老事务阻塞 → 老者释放后获锁」。</li>
+<li><strong>恢复用"模拟崩溃"</strong>：写一段含已提交与未提交事务的 WAL 后「崩溃」，再恢复，断言 redo 保留已提交、
+  undo 回滚未提交（插入撤销、删除恢复前像）。</li>
+<li><strong>可程序化读取结果</strong>：<code>ExecuteEngine</code> 暴露 <code>LastRows/LastColumns/LastAffected</code>，让端到端测试能用
+  <code>assert</code> 校验查询结果与影响行数，而非只靠肉眼看打印。</li>
+</ul>
+<h3 id="53-正确性判定">5.3 正确性判定</h3>
+<ul>
+<li><strong>机器可判定</strong>：所有断言通过 + 退出码 0；<code>ctest</code> 汇总 13/13。</li>
+<li><strong>行为可比对</strong>：验收脚本输出与脚本注释的预期一致——例如脚本注释 <code>-- expect primary-key and
+  unique-key conflicts</code>，运行后恰好只在那两处报冲突，其余 10 万条操作结果正确，
+  <code>select * from account</code> 返回 100000 行，<code>update</code> 改主键后新键可查旧键消失，<code>drop table</code> 后空闲页被回收。</li>
+<li><strong>回归保证</strong>：每次改动后重跑全套测试 + 验收脚本，确保新功能/修复不破坏既有行为。</li>
+</ul>
+<hr />
+<h2 id="小结">小结</h2>
+<p>本项目的 AI 辅助开发可概括为：<strong>人定架构与契约、AI 填实现与测试、用编译/单测/端到端三道关监督、
+逐模块审查纠错、一模块一提交</strong>。AI 显著提升了编码与测试编写效率，而系统正确性来自人对架构的把控、
+对关键陷阱的预判、以及对每一处生成结果的审查与回归验证。</p>
+    </div>
+    <p class="back"><a class="ef-btn" href="../../../LAB5/实验报告.html">← 图书管理系统实验报告</a> <a class="ef-btn" href="实验报告.html">MiniSQL 实验报告 →</a> <a class="ef-btn" href="../../../../index.html">返回本课</a></p>
+  </div>
+  <aside class="ef-margin toc-aside" aria-label="本页目录">
+    <div class="toc">
+      <p class="rail-head ef-field"><span>本页目录</span><span>21 节</span></p>
+      <ol>
+      <li><a class="lvl2" href="#1-如何进行系统设计和模块拆分">1. 如何进行系统设计和模块拆分</a></li>
+      <li><a class="lvl3" href="#11-先定架构再拆模块而不是让-ai-一次生成整个系统">1.1 先定架构，再拆模块——而不是让 AI 一次生成整个系统</a></li>
+      <li><a class="lvl3" href="#12-拆分原则">1.2 拆分原则</a></li>
+      <li><a class="lvl3" href="#13-模块清单与实现顺序">1.3 模块清单与实现顺序</a></li>
+      <li><a class="lvl2" href="#2-如何设计提示词任务流程或-agent-工作方式">2. 如何设计提示词、任务流程或 Agent 工作方式</a></li>
+      <li><a class="lvl3" href="#21-任务流程一模块一循环">2.1 任务流程：一模块一循环</a></li>
+      <li><a class="lvl3" href="#22-提示词设计原则">2.2 提示词设计原则</a></li>
+      <li><a class="lvl3" href="#23-agent-工作方式">2.3 Agent 工作方式</a></li>
+      <li><a class="lvl2" href="#3-如何监督-ai-生成结果并进行反馈修改">3. 如何监督 AI 生成结果并进行反馈修改</a></li>
+      <li><a class="lvl3" href="#31-监督手段让对错可被机器和人同时判定">3.1 监督手段：让"对错"可被机器和人同时判定</a></li>
+      <li><a class="lvl3" href="#32-反馈修改的真实案例本项目实际发生">3.2 反馈—修改的真实案例（本项目实际发生）</a></li>
+      <li><a class="lvl3" href="#33-反馈原则">3.3 反馈原则</a></li>
+      <li><a class="lvl2" href="#4-如何审查集成和调试生成代码">4. 如何审查、集成和调试生成代码</a></li>
+      <li><a class="lvl3" href="#41-审查review">4.1 审查（Review）</a></li>
+      <li><a class="lvl3" href="#42-集成integration">4.2 集成（Integration）</a></li>
+      <li><a class="lvl3" href="#43-调试debug">4.3 调试（Debug）</a></li>
+      <li><a class="lvl2" href="#5-如何设计测试并验证系统正确性">5. 如何设计测试并验证系统正确性</a></li>
+      <li><a class="lvl3" href="#51-测试策略分层-端到端">5.1 测试策略：分层 + 端到端</a></li>
+      <li><a class="lvl3" href="#52-测试用例设计要点举例">5.2 测试用例设计要点（举例）</a></li>
+      <li><a class="lvl3" href="#53-正确性判定">5.3 正确性判定</a></li>
+      <li><a class="lvl2" href="#小结">小结</a></li>
+      </ol>
+    </div>
+  </aside>
+</article>
+
+<footer class="foot">
+  <span class="ef-field">KYSIIN.ARCHIVE · 2026.11.15 · 由 Markdown 渲染</span>
+  <span>用 endfield-ui 渲染 · Saira（SIL OFL）自托管</span>
+</footer>
+<script type="module">
+  import { wireTheme } from '../../../../../../assets/fx.js'
+  wireTheme()
+</script>
+<script defer src="../../../../../../assets/search.js?v=202611150558"></script>
+<script>
+  /* 左栏：每个分组可独立展开/收起 */
+  (function () {
+    document.querySelectorAll('.tree-toggle').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var li = btn.closest('.tree-group');
+        var list = li ? li.querySelector('.tree-items') : null;
+        var open = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', String(!open));
+        if (list) list.hidden = open;
+        if (li) li.classList.toggle('is-open', !open);
+      });
+    });
+  })();
+</script>
+<script>
+  /* 右栏目录跟随滚动：读到哪一节就把那一行标出来 */
+  (function () {
+    var links = [].slice.call(document.querySelectorAll('.toc-aside a[href^="#"]'));
+    if (!links.length) return;
+    var items = links.map(function (a) {
+      var el = document.getElementById(a.getAttribute('href').slice(1));
+      return el ? { a: a, el: el } : null;
+    }).filter(Boolean);
+    if (!items.length) return;
+    var ticking = false;
+    function spy() {
+      ticking = false;
+      var line = window.scrollY + 140;
+      var best = null;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].el.getBoundingClientRect().top + window.scrollY <= line) best = items[i];
+      }
+      links.forEach(function (a) { a.removeAttribute('aria-current'); });
+      if (best) best.a.setAttribute('aria-current', 'true');
+    }
+    window.addEventListener('scroll', function () {
+      if (!ticking) { ticking = true; requestAnimationFrame(spy); }
+    }, { passive: true });
+    spy();
+  })();
+</script>
+</body>
+</html>
