@@ -6,6 +6,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import render_md
 import publish
+import pymupdf          # 合订本 PDF 的拼接与封面
 
 HOME = os.path.dirname(os.path.abspath(__file__))
 WORKSPACE = os.path.dirname(HOME)
@@ -43,7 +44,6 @@ COLLECTIONS = [
          desc="计算机动画：16 部分期末复习讲义（章节 + 判断题 / 问答 / 附录），以及 ClothLab 布料模拟实验的源码与产出。",
          copies=[(os.path.join(ANIM, "期末复习", "content"), "content"),
                  (os.path.join(ANIM, "期末复习", "figs"), "figs"),
-                 (os.path.join(ANIM, "期末复习", "计算机动画期末复习资料.pdf"), ""),
                  (os.path.join(ANIM, "期末复习", "计算机动画期末复习资料.docx"), "")]),
     dict(slug="physics-review", group="专题复习", src="PHY",
          name="大学物理乙2", tag="MD", course="physics-review", label="复习资料",
@@ -311,15 +311,11 @@ for c in COLLECTIONS:
     c["_external_src"] = [p for p, _ in c.get("external", [])]
     c["external"] = list_external(c.get("external", []))
 
-# downloads (动画 PDF/DOCX 也放一份到 files/，便于首页直接下)
+# downloads（动画的 Word 版放一份到 files/，PDF 合订本在下面生成后再拷）
 os.makedirs(os.path.join(REPO, "files"), exist_ok=True)
-for src, name in ((os.path.join(ANIM, "期末复习", "计算机动画期末复习资料.pdf"), "计算机动画-期末复习资料.pdf"),
-                  (os.path.join(ANIM, "期末复习", "计算机动画期末复习资料.docx"), "计算机动画-期末复习资料.docx")):
+for src, name in ((os.path.join(ANIM, "期末复习", "计算机动画期末复习资料.docx"), "计算机动画-期末复习资料.docx"),):
     if os.path.isfile(src):
-        dst = os.path.join(REPO, "files", name)
-        shutil.copy2(src, dst)
-        if name.lower().endswith(".pdf"):
-            publish.clear_meta_of(dst, title=os.path.splitext(name)[0])
+        shutil.copy2(src, os.path.join(REPO, "files", name))
 
 # ------------------------------------------------------------------ render md
 articles = render_md.render_all(REPO, COLLECTIONS)
@@ -350,6 +346,43 @@ with ThreadPoolExecutor(max_workers=3) as pool:
                                    size=st.st_size, mtime=st.st_mtime, ext=".pdf"))
         else:
             print("  ! missing review PDF:", a["pdf"])
+
+# ------------------------------------------------------------------ 合订本
+# 有些课程需要一份"整本"的 PDF：把该分组的分篇 PDF 按文件名顺序拼起来，前面加一页封面。
+# 动画的旧合订本由 Word 导出，封面带考试时间/地点，已弃用（源 DOCX 也已清理）。
+ASSEMBLE_PDF = {
+    "animation-review": ("计算机动画-期末复习资料.pdf", "计算机动画 · 期末复习资料", "2026 年 11 月"),
+}
+for _slug, (_name, _title, _sub) in ASSEMBLE_PDF.items():
+    _c = next((c for c in COLLECTIONS if c["slug"] == _slug), None)
+    if _c is None:
+        continue
+    _parts = sorted(f["path"] for f in _c["files"]
+                    if f["path"].lower().endswith(".pdf") and "/content/" in f["path"])
+    if not _parts:
+        print("  ! assemble: no part PDFs for", _slug)
+        continue
+    _doc = pymupdf.open()
+    _cover = _doc.new_page(width=595, height=842)          # A4
+    _cover.insert_text((72, 300), _title, fontname="china-s", fontsize=24,
+                       color=(0.09, 0.09, 0.09))
+    _cover.insert_text((72, 336), _sub, fontname="china-s", fontsize=12,
+                       color=(0.42, 0.42, 0.42))
+    for _p in _parts:
+        _src = pymupdf.open(os.path.join(REPO, _p))
+        _doc.insert_pdf(_src)
+        _src.close()
+    _dst = os.path.join(REPO, "collections", _slug, "files", _name)
+    _doc.set_metadata(dict(title=os.path.splitext(_name)[0], author="", subject="",
+                           keywords="", creator="", producer="KYSIIN.ARCHIVE"))
+    _doc.save(_dst, garbage=3, deflate=True)
+    _doc.close()
+    _st = os.stat(_dst)
+    _c["files"] = [f for f in _c["files"] if os.path.basename(f["path"]) != _name]
+    _c["files"].append(dict(path=os.path.relpath(_dst, REPO).replace("\\", "/"),
+                            size=_st.st_size, mtime=_st.st_mtime, ext=".pdf"))
+    shutil.copy2(_dst, os.path.join(REPO, "files", _name))
+    print("  assembled %s（%d 篇）" % (_name, len(_parts)))
 
 # ------------------------------------------------------------------ stats
 def agg(files):
