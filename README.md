@@ -34,11 +34,18 @@ python -m http.server 8000
 # 打开 http://127.0.0.1:8000/
 ```
 
-## 发布到 GitHub Pages
+## 部署
 
-1. 新建仓库，把本目录推上去（`git init && git add . && git commit -m "init"`）；
-2. Settings → Pages → Source 选 `Deploy from a branch`，分支 `main`、目录 `/ (root)`；
-3. 稍等片刻，访问 `https://<用户名>.github.io/<仓库名>/`。
+| 项 | 值 |
+|---|---|
+| 站点地址 | **https://kysiin.github.io/** |
+| 仓库 | `Kysiin/kysiin.github.io`（public） |
+| Pages | *Deploy from a branch*，`main` / `/ (root)` |
+| 首次发布 | 2026-11-15，commit `9e9e86f` |
+
+仓库名等于 `<用户名>.github.io` 时，站点挂在根路径；仓库名是别的（例如 `KysiinArchive`）
+时地址会带一段路径（`https://kysiin.github.io/KysiinArchive/`），改仓库名会改地址，
+且旧地址不会保留重定向。
 
 仓库根的 `.nojekyll` 让 Pages 原样发布，不走 Jekyll（否则下划线开头的路径会被吞掉）。
 
