@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Kysiin Archive">
+  <rect width="256" height="256" fill="#161616"/>
+  <rect width="85.33" height="9" fill="#FF2DA8"/>
+  <rect x="85.33" width="85.33" height="9" fill="#FFFA00"/>
+  <rect x="170.67" width="85.33" height="9" fill="#2FD98A"/>
+  <g transform="translate(62.57 201.00) scale(0.18895 -0.18895)">
+    <path d="M60.50997605746209 0V688H266.50837988826817V423.86751795690344H295.52833200319236L462.755786113328 688H683.2258579409418L463.28172386272945 363.1508379888268L686.2258579409418 0H459.2274541101357L295.52833200319236 275.3966480446927H266.50837988826817V0Z" fill="#FFFA00"/>
+  </g>
+</svg>

@@ -195,15 +195,30 @@ def list_external(paths):
     return out
 
 
-def force_rmtree(path):
-    """Windows: source files may be read-only; clear the attribute then remove."""
+def force_rmtree(path, keep=(".git",)):
+    """Windows: source files may be read-only; clear the attribute then remove.
+
+    ``keep`` 里的条目原地保留：``site/.git`` 是发布仓库本身，构建不能把它抹掉
+    （否则每次重建都会丢掉本地历史，还来不及 push 就没了）。
+    """
     def fix(func, target, exc):
         try:
             os.chmod(target, stat.S_IWRITE)
             func(target)
         except OSError:
             pass
-    shutil.rmtree(path, onerror=fix)
+    for name in os.listdir(path):
+        if name in keep:
+            continue
+        target = os.path.join(path, name)
+        if os.path.isdir(target) and not os.path.islink(target):
+            shutil.rmtree(target, onerror=fix)
+        else:
+            try:
+                os.chmod(target, stat.S_IWRITE)
+                os.remove(target)
+            except OSError:
+                pass
 
 
 # 把元数据（方向/学期）挂到每个分组上，供渲染器使用
@@ -239,9 +254,14 @@ BUILD_YEAR = time.strftime("%Y")
 
 # ------------------------------------------------------------------ copy
 if os.path.isdir(REPO):
-    force_rmtree(REPO)
-os.makedirs(REPO)
+    force_rmtree(REPO)          # 只清内容，保留 .git（发布仓库）
+os.makedirs(REPO, exist_ok=True)
 shutil.copytree(KIT, os.path.join(REPO, "assets"))
+# 站点图标：图源放在 tools/（site/ 每次重建都清空），构建时拷进 assets/
+for _icon in ("favicon.svg", "favicon.ico", "favicon-32.png", "apple-touch-icon.png"):
+    _src = os.path.join(HOME, _icon)
+    if os.path.isfile(_src):
+        shutil.copy2(_src, os.path.join(REPO, "assets", _icon))
 shutil.copy2(os.path.join(HOME, "search.js"), os.path.join(REPO, "assets", "search.js"))
 # 自托管 Saira：可变字体 + 本地 @font-face（模板自带的那份）
 os.makedirs(os.path.join(REPO, "assets", "fonts"), exist_ok=True)
@@ -377,6 +397,9 @@ HEAD = """<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>{title}</title>
 <meta name="description" content="{desc}" />
+<link rel="icon" type="image/svg+xml" href="{up}assets/favicon.svg" />
+<link rel="icon" href="{up}assets/favicon.ico" sizes="any" />
+<link rel="apple-touch-icon" href="{up}assets/apple-touch-icon.png" />
 <script src="{up}assets/variant.js"></script>
 <link rel="stylesheet" href="{up}assets/local-fonts.css" />
 <link rel="stylesheet" href="{up}assets/endfield.css" />

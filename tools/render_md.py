@@ -456,6 +456,9 @@ HEAD = """<!doctype html>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>{title} · KYSIIN.ARCHIVE</title>
+<link rel="icon" type="image/svg+xml" href="{up}assets/favicon.svg" />
+<link rel="icon" href="{up}assets/favicon.ico" sizes="any" />
+<link rel="apple-touch-icon" href="{up}assets/apple-touch-icon.png" />
 <script src="{up}assets/variant.js"></script>
 <link rel="stylesheet" href="{up}assets/local-fonts.css" />
 <link rel="stylesheet" href="{up}assets/endfield.css" />
